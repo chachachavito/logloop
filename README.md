@@ -95,8 +95,10 @@ These layers combine into a **Weighted Confidence Score** to ensure high precisi
 Logloop is not just a logger; it's an evolving assistant:
 *   **/as <category>**: Reclassifies the last entry and saves the preference to your memory.
 *   **/feel <mood>**: Corrects the emotional context and trains the mood engine.
-*   **/brain-out <file>**: Export your learned patterns to a JSON file.
-*   **/brain-in <file>**: Import and **merge** an external brain with your local one.
+*   **Brain Sync**: Use `/brain-out <file>` and `/brain-in <file>` to move your learned patterns between machines.
+
+### Insights & Timeline
+*   **Visual History**: Run `logloop timeline` (or use `/timeline` inside the loop) to see an ASCII chart of your weekly activity and mood distribution.
 
 ### Referencing with IDs
 Every log entry now has a unique 4-character ID (e.g., `#a1b2`). 
@@ -117,6 +119,8 @@ Every log entry now has a unique 4-character ID (e.g., `#a1b2`).
 Logloop is **Local-First**. Your intelligence is your own.
 
 *   **`~/.logloop/memory.json`**: This is your "Personal Brain Assets". It stores every correction you've ever made.
+*   **Portability**: Sync your patterns across machines with Brain Sync.
+*   **Insights**: Visualize your productivity with `logloop timeline`.
 *   **Privacy**: No data leaves your machine. Classification happens 100% locally.
 *   **Hackable**: You can manually edit your `memory.json` to add complex patterns or export it to another machine.
 

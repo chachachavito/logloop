@@ -136,9 +136,52 @@ function updateLastLog(updates = {}) {
   return true;
 }
 
+function getStats(days = 7) {
+  const logFile = getLogFile();
+  if (!fs.existsSync(logFile)) return null;
+
+  const content = fs.readFileSync(logFile, 'utf8');
+  const sections = content.split('\n## [').slice(1);
+  
+  const stats = {
+    total: sections.length,
+    categories: {},
+    moods: {},
+    timeline: {}
+  };
+
+  sections.forEach(entry => {
+    const lines = entry.split('\n');
+    const timestamp = lines[0].replace(']', '');
+    const date = timestamp.split('T')[0];
+    
+    // Filtro por dias (opcional)
+    const entryDate = new Date(date);
+    const now = new Date();
+    const diff = (now - entryDate) / (1000 * 60 * 60 * 24);
+    if (diff > days) return;
+
+    const typeLine = lines.find(l => l.startsWith('type: '));
+    const type = typeLine ? typeLine.replace('type: ', '') : 'unknown';
+    
+    const moodLine = lines.find(l => l.startsWith('mood: '));
+    const mood = moodLine ? moodLine.replace('mood: ', '') : 'neutral';
+
+    stats.categories[type] = (stats.categories[type] || 0) + 1;
+    stats.moods[mood] = (stats.moods[mood] || 0) + 1;
+    
+    if (!stats.timeline[date]) stats.timeline[date] = { count: 0, moods: [] };
+    stats.timeline[date].count++;
+    if (!stats.timeline[date].moods.includes(mood)) stats.timeline[date].moods.push(mood);
+  });
+
+  return stats;
+}
+
 module.exports = {
   saveLog,
   getRecentLogs,
   getLogFile,
-  updateLastLog
+  updateLastLog,
+  getStats
 };

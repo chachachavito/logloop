@@ -115,8 +115,15 @@ if (args.includes('-h') || args.includes('--help')) {
   process.exit(0);
 }
 
-if (args[0] === 'config') {
-  handleConfig(args.slice(1));
+switch (args[0]) {
+  case 'timeline':
+  case 'stats':
+    const { showTimeline } = require('../src/ui');
+    showTimeline();
+    process.exit(0);
+  case 'config':
+    handleConfig(args.slice(1));
+    break;
 }
 
 if (args[0] === 'list' || args[0] === 'ls') {

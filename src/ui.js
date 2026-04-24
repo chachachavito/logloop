@@ -131,6 +131,11 @@ function startLoop(initialConfig, moodFlag, initialShouldCommit) {
       if (cmd === '/c' || cmd === '/commit') state.autoCommit = !state.autoCommit;
       else if (cmd === '/m' || cmd === '/mood') state.moodTracking = !state.moodTracking;
       else if (cmd === '/h' || cmd === '/help') state.showHelp = !state.showHelp;
+      else if (cmd === '/timeline' || cmd === '/stats') {
+        showTimeline();
+        setTimeout(refresh, 2000);
+        return;
+      }
       else if (cmd === '/q' || cmd === '/quit') return rl.close();
       else if (cmd === '/as') {
         if (!state.lastInput) {
@@ -204,4 +209,35 @@ function startLoop(initialConfig, moodFlag, initialShouldCommit) {
   });
 }
 
-module.exports = { startLoop };
+function showTimeline() {
+  const { getStats } = require('./core');
+  const stats = getStats(7);
+  
+  if (!stats) {
+    console.log(`\n  \x1b[90m${t('ui.noLogs')}\x1b[0m\n`);
+    return;
+  }
+
+  const moodMap = {
+    happy: '😊', excited: '🚀', tired: '😴', frustrated: '😤', confused: '🤔', neutral: '😐', focused: '🎯'
+  };
+
+  console.log(`\n  \x1b[1;35m--- ${t('ui.timelineTitle') || 'WEEKLY PRODUCTIVITY'} ---\x1b[0m\n`);
+
+  Object.keys(stats.timeline).sort().forEach(date => {
+    const day = stats.timeline[date];
+    const bars = '█'.repeat(Math.min(day.count, 20));
+    const emojis = day.moods.map(m => moodMap[m] || '📝').join(' ');
+    console.log(`  \x1b[1m${date}\x1b[0m \x1b[36m${bars}\x1b[0m \x1b[90m(${day.count})\x1b[0m  ${emojis}`);
+  });
+
+  console.log(`\n  \x1b[1mSUMMARY BY CATEGORY:\x1b[0m`);
+  Object.entries(stats.categories).forEach(([cat, count]) => {
+    const color = cat === 'decision' ? '\x1b[33m' : cat === 'action' ? '\x1b[32m' : '\x1b[36m';
+    console.log(`  ${color}[${cat.toUpperCase()}]\x1b[0m: ${count}`);
+  });
+
+  console.log('\n');
+}
+
+module.exports = { startLoop, showTimeline };
