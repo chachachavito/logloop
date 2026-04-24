@@ -13,11 +13,20 @@ const DEFAULTS = {
   lang: 'en'
 };
 
-function ensureGlobalDir() {
-  if (!fs.existsSync(GLOBAL_DIR)) {
-    fs.mkdirSync(GLOBAL_DIR, { recursive: true });
+function ensureDir(dir) {
+  if (!fs.existsSync(dir)) {
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+    } catch (err) {
+      console.error(`\x1b[31mError creating directory ${dir}: ${err.message}\x1b[0m`);
+      return false;
+    }
   }
+  return true;
 }
+
+ensureDir(GLOBAL_DIR);
+ensureDir(path.join(GLOBAL_DIR, 'logs'));
 
 function loadConfig() {
   let config = { ...DEFAULTS };

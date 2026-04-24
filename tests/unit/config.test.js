@@ -26,6 +26,20 @@ describe('Config Module', () => {
     expect(config.moodTracking).toBe(false);
   });
 
+  test('should log error if directory creation fails', () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+    fs.existsSync.mockReturnValue(false);
+    fs.mkdirSync.mockImplementation(() => { throw new Error('EACCES'); });
+    
+    // We re-import to trigger the immediate execution of ensureDir
+    jest.isolateModules(() => {
+      require('../../src/config');
+    });
+
+    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('EACCES'));
+    consoleSpy.mockRestore();
+  });
+
   test('should merge global and local configs correctly', () => {
     fs.existsSync.mockReturnValue(true);
     fs.readFileSync.mockImplementation((path) => {
