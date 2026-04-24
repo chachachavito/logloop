@@ -197,7 +197,10 @@ function getDailySummary() {
   // Coletar itens de hoje
   sections.forEach(entry => {
     const lines = entry.split('\n');
-    const timestamp = lines[0].replace(']', '');
+    const timestampLine = lines[0] || '';
+    // Se o split removeu o '[', tentamos pegar o que sobrou até o ']'
+    const timestamp = timestampLine.includes(']') ? timestampLine.split(']')[0] : timestampLine;
+    
     if (!timestamp.startsWith(today)) return;
 
     const typeLine = lines.find(l => l.startsWith('type: '));

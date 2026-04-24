@@ -258,27 +258,33 @@ function showSummary() {
     happy: '😊', excited: '🚀', tired: '😴', frustrated: '😤', confused: '🤔', neutral: '😐', focused: '🎯'
   };
 
-  console.log(`\n  \x1b[1;32m--- DAILY SUMMARY ---\x1b[0m`);
-  console.log(`  \x1b[90mFocus & Mood:\x1b[0m ${moodMap[summary.mood] || '😐'} (${summary.mood})\n`);
+  const today = new Date().toLocaleDateString();
+  const emoji = moodMap[summary.mood] || '😐';
+
+  console.log(`\n\x1b[1;32m--- COPY-PASTE MARKDOWN SUMMARY ---\x1b[0m\n`);
+  
+  let report = `### 📅 Daily Report: ${today}\n`;
+  report += `**Mood/Focus**: ${emoji} (${summary.mood})\n\n`;
 
   if (summary.decisions.length > 0) {
-    console.log(`  \x1b[1;33mDECISIONS MADE:\x1b[0m`);
-    summary.decisions.forEach(d => console.log(`  ✓ ${d}`));
-    console.log('');
+    report += `#### ⚖️ Decisions Made:\n`;
+    summary.decisions.forEach(d => report += `- ${d}\n`);
+    report += `\n`;
   }
 
   if (summary.questions.length > 0) {
-    console.log(`  \x1b[1;34mPENDING QUESTIONS:\x1b[0m`);
-    summary.questions.forEach(q => console.log(`  ? ${q}`));
-    console.log('');
+    report += `#### ❓ Pending / Questions:\n`;
+    summary.questions.forEach(q => report += `- ${q}\n`);
+    report += `\n`;
   }
 
   if (summary.topActions.length > 0) {
-    console.log(`  \x1b[1;32mKEY ACTIONS:\x1b[0m`);
-    summary.topActions.slice(0, 5).forEach(a => console.log(`  • ${a}`));
+    report += `#### 🚀 Key Actions:\n`;
+    summary.topActions.slice(0, 5).forEach(a => report += `- ${a}\n`);
   }
 
-  console.log('\n');
+  console.log(report);
+  console.log(`\x1b[1;32m------------------------------------\x1b[0m\n`);
 }
 
 module.exports = { startLoop, showTimeline, showSummary };
