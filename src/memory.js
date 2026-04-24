@@ -72,8 +72,46 @@ function learn(input, category, resolved, bucket = 'message') {
   saveMemory(memory);
 }
 
+function exportMemory(destPath) {
+  const memory = loadMemory();
+  const data = JSON.stringify(memory, null, 2);
+  fs.writeFileSync(destPath, data, 'utf8');
+  return true;
+}
+
+function importMemory(sourcePath) {
+  if (!fs.existsSync(sourcePath)) return false;
+  
+  const current = loadMemory();
+  const imported = JSON.parse(fs.readFileSync(sourcePath, 'utf8'));
+
+  // Merge Mappings (Message & Mood)
+  ['message', 'mood'].forEach(bucket => {
+    imported[bucket].mappings.forEach(impMap => {
+      const existing = current[bucket].mappings.find(m => m.input === impMap.input);
+      if (existing) {
+        existing.count = (existing.count || 1) + (impMap.count || 1);
+      } else {
+        current[bucket].mappings.push(impMap);
+      }
+    });
+
+    // Merge Learned Aliases
+    current[bucket].aliases_learned = { 
+      ...current[bucket].aliases_learned, 
+      ...imported[bucket].aliases_learned 
+    };
+  });
+
+  const memoryFile = path.join(GLOBAL_DIR, 'memory.json');
+  fs.writeFileSync(memoryFile, JSON.stringify(current, null, 2), 'utf8');
+  return true;
+}
+
 module.exports = {
   loadMemory,
   saveMemory,
-  learn
+  learn,
+  exportMemory,
+  importMemory
 };
