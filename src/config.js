@@ -25,7 +25,9 @@ function ensureDir(dir) {
   return true;
 }
 
+let _cleanupDone = false;
 function defensiveCleanup() {
+  if (_cleanupDone) return;
   try {
     const currentDir = process.cwd();
     const files = fs.readdirSync(currentDir);
@@ -42,6 +44,7 @@ function defensiveCleanup() {
         } catch (e) {}
       }
     });
+    _cleanupDone = true;
   } catch (e) {}
 }
 

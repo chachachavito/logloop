@@ -13,6 +13,16 @@ const getCore = () => require('../src/core');
 const config = loadConfig();
 const args = process.argv.slice(2);
 
+// Handle flags early
+if (args.includes('--debug')) {
+  getCore().setDebug(true);
+  args.splice(args.indexOf('--debug'), 1);
+}
+if (args.includes('--durable')) {
+  config.durable = true;
+  args.splice(args.indexOf('--durable'), 1);
+}
+
 function t(key) {
   return getI18n().t(key);
 }
