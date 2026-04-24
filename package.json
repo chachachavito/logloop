@@ -13,7 +13,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "jest",
+    "test": "jest --coverage",
     "dev": "node bin/index.js"
   },
   "keywords": [
