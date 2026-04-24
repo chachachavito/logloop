@@ -36,7 +36,9 @@ function loadConfig() {
     try {
       const globalData = JSON.parse(fs.readFileSync(GLOBAL_CONFIG, 'utf8'));
       config = { ...config, ...globalData };
-    } catch (e) {}
+    } catch (e) {
+      console.warn('\x1b[33m[logloop] Warning: Global config corrupted. Using defaults.\x1b[0m');
+    }
   }
 
   // 2. Carregar Local (Projeto) - Sobrescreve Global
@@ -44,7 +46,9 @@ function loadConfig() {
     try {
       const localData = JSON.parse(fs.readFileSync(LOCAL_CONFIG, 'utf8'));
       config = { ...config, ...localData };
-    } catch (e) {}
+    } catch (e) {
+      console.warn('\x1b[33m[logloop] Warning: Local .loglooprc corrupted. Ignoring.\x1b[0m');
+    }
   }
 
   return config;

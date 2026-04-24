@@ -102,4 +102,26 @@ Writing tests.
     expect(summary.topActions).toContain('Writing tests.');
     expect(summary.mood).toBe('happy');
   });
+
+  test('should handle extreme unicode and emojis without breaking metadata', () => {
+    const complexNote = 'Zalgo: H̴e̷l̶p̸ ̷m̶e̸ and Emojis: 👨‍👩‍👧‍👦 🏳️‍🌈 🚀';
+    const mockContent = `
+## [2026-04-24T12:00:00Z]
+id: e1f2
+type: thought
+mood: confused
+
+${complexNote}
+`;
+    fs.existsSync.mockReturnValue(true);
+    fs.readFileSync.mockReturnValue(mockContent);
+
+    const stats = getStats(1);
+    expect(stats.total).toBe(1);
+    expect(stats.timeline['2026-04-24']).toBeDefined();
+    
+    // Test retrieval
+    const logs = getRecentLogs(1);
+    expect(logs[0].note).toBe(complexNote);
+  });
 });
