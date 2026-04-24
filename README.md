@@ -78,20 +78,56 @@ Switched from axios to native fetch to reduce bundle size.
 
 ---
 
+## Logloop Brain (v0.2.0)
+
+Logloop is not just a logger; it's an evolving engine that learns your engineering dialect.
+
+### The Intelligence Pipeline (3 Layers of Truth)
+Every entry passes through a sophisticated inference pipeline before being saved:
+
+1.  **Memory (The Personal Truth)**: Prioritized above all. It consults your historical corrections in `memory.json`.
+2.  **Fuzzy (The Statistical Truth)**: Uses `fuse.js` to find lexical similarities, handling typos and variations.
+3.  **Heuristics (The Lexical Truth)**: Deterministic rules based on a curated technical dictionary (verbs, symbols, sentiment).
+
+These layers combine into a **Weighted Confidence Score** to ensure high precision without the need for cloud-based AI.
+
+### Active Learning Loop
+You can train Logloop in real-time. If the classification isn't what you expected, use the slash commands:
+
+*   **/as <category>**: Reclassifies the last entry and saves the preference to your memory.
+*   **/feel <mood>**: Corrects the emotional context and trains the mood engine.
+
+> **Example**:
+> You: `subir v1.0`
+> Logloop: `[THOUGHT]` (Falls back to thought because it's unsure)
+> You: `/as action`
+> Logloop: `Last log reclassified as action and learned! ✨`
+> *Next time you type `subir`, it will automatically be an `action`.*
+
+---
+
+## Privacy & Hackability
+
+Logloop is **Local-First**. Your intelligence is your own.
+
+*   **`~/.logloop/memory.json`**: This is your "Personal Brain Assets". It stores every correction you've ever made.
+*   **Privacy**: No data leaves your machine. Classification happens 100% locally.
+*   **Hackable**: You can manually edit your `memory.json` to add complex patterns or export it to another machine.
+
+---
+
 ## Core Features
 
 ### Semantic Classification
-The CLI analyzes your input to categorize the entry automatically:
-- **Decision**: Triggered by keywords like "decidi", "escolhi", "vou usar".
-- **Question**: Triggered by the presence of `?`.
-- **Noise**: Short or trivial messages (e.g., "test", "ss").
-- **Thought**: Default category for general notes.
+Logloop analyzes your input to categorize the entry automatically:
+- **Action**: Tasks, commits, and implementations. Triggered by leading verbs (PT/EN).
+- **Decision**: Architectural choices and trade-offs.
+- **Question**: Open doubts and research items (triggered by `?`).
+- **Thought**: General observations and context.
 
 ### Zero-Friction Mood Tracking
-Captures emotional context without manual prompts:
-- **Heuristics**: Uses a dictionary of emoticons ( `:)`, `T_T`, `O_O` ) and keywords ( "sucesso", "erro", "cansado" ).
-- **Opt-in**: Enable via config to start tracking.
-- **Manual override**: Use `--mood <value>` for explicit control.
+- **Emoticons**: High-priority detection ( `:)`, `T_T`, `O_O` ).
+- **Sentiment Analysis**: Dynamic scoring based on text tone and intensity.
 
 ### Atomic Operations
 Sync your thoughts with your code:
@@ -138,10 +174,10 @@ Default: `logloop.md`
 
 ## Roadmap
 
-- [x] Semantic Classification (v1)
-- [x] Git HEAD/Branch linking
-- [x] Mood Tracking Heuristics
-- [ ] Advanced Heuristics (Negation handling, Fuzzy matching)
+- [x] Semantic Classification (v2 - Advanced Pipeline)
+- [x] Active Learning Loop (`/as`, `/feel`)
+- [x] Local Memory Persistence
+- [x] Fuzzy Matching & Normalization
 - [ ] Log IDs (UUID)
 - [ ] Timeline visualization
 - [ ] AI-powered summaries
