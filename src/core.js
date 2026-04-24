@@ -1,8 +1,60 @@
 const fs = require('fs');
 const path = require('path');
 
-// Cache de locks adquiridos pelo processo atual (prevenir reentrância)
+// Cache e estado interno
 const _activeLocks = new Set();
+const _pathCache = new Map();
+let _lastTimestamp = 0;
+let _monotonicCounter = 0;
+let _debugEnabled = false;
+let _lastSyncTime = 0;
+
+function setDebug(enabled) { _debugEnabled = enabled; }
+
+function logDebug(...args) {
+  if (_debugEnabled) {
+    console.log(`\x1b[90m[DEBUG]\x1b[0m`, ...args);
+  }
+}
+
+function resetLocks() {
+  _activeLocks.clear();
+  _pathCache.clear();
+  _lastTimestamp = 0;
+  _monotonicCounter = 0;
+}
+
+/**
+ * Gera um timestamp único e crescente.
+ */
+function getMonotonicTimestamp() {
+  const now = Date.now();
+  if (now <= _lastTimestamp) {
+    _monotonicCounter++;
+  } else {
+    _lastTimestamp = now;
+    _monotonicCounter = 0;
+  }
+  return `${new Date(_lastTimestamp).toISOString().replace('Z', '')}.${_monotonicCounter.toString().padStart(3, '0')}Z`;
+}
+
+function resolvePath(targetPath) {
+  if (_pathCache.has(targetPath)) return _pathCache.get(targetPath);
+  let resolved;
+  try {
+    if (fs.existsSync(targetPath)) {
+      resolved = fs.realpathSync(targetPath);
+    } else {
+      const dirPath = path.dirname(targetPath);
+      const dir = fs.existsSync(dirPath) ? fs.realpathSync(dirPath) : path.resolve(dirPath);
+      resolved = path.join(dir, path.basename(targetPath));
+    }
+  } catch (e) {
+    resolved = path.resolve(targetPath);
+  }
+  _pathCache.set(targetPath, resolved);
+  return resolved;
+}
 
 function generateId() {
   const timestamp = Date.now().toString(16).slice(-4);
@@ -23,43 +75,20 @@ function getLogFile(config) {
     logPath = path.join(process.cwd(), user === 'shared' ? 'logloop.md' : `logloop.${userSlug}.md`);
   }
 
-  // Usar realpathSync para evitar problemas com symlinks (/var vs /private/var no Mac)
-  try {
-    if (fs.existsSync(logPath)) return fs.realpathSync(logPath);
-    // Se o arquivo não existir, resolvemos o diretório pai e juntamos o nome
-    const dir = fs.realpathSync(path.dirname(logPath));
-    return path.join(dir, path.basename(logPath));
-  } catch (e) {
-    return path.resolve(logPath);
-  }
+  return resolvePath(logPath);
 }
 
-/**
- * Sistema de trava resiliente com proteção contra reentrância e timeout absoluto.
- */
 function withLock(logFile, action) {
-  // Garantir que o logFile seja resolvido para seu caminho real antes de adicionar o .lock
-  const resolvedLogFile = (() => {
-    try {
-      if (fs.existsSync(logFile)) return fs.realpathSync(logFile);
-      const dir = fs.realpathSync(path.dirname(logFile));
-      return path.join(dir, path.basename(logFile));
-    } catch (e) {
-      return path.resolve(logFile);
-    }
-  })();
-  
+  const resolvedLogFile = resolvePath(logFile);
   const lockFile = resolvedLogFile + '.lock';
   
-  if (_activeLocks.has(lockFile)) {
-    return action();
-  }
+  if (_activeLocks.has(lockFile)) return action();
 
   const startTime = Date.now();
-  const timeout = 1000; // Timeout absoluto de 1s
+  const timeout = 1000;
   let delay = 50;
-
   let ownsLock = false;
+
   while (true) {
     try {
       fs.openSync(lockFile, 'wx');
@@ -67,12 +96,10 @@ function withLock(logFile, action) {
       ownsLock = true;
       break;
     } catch (e) {
-      if (Date.now() - startTime > timeout) {
-        throw new Error('LOCK_TIMEOUT');
-      }
+      if (Date.now() - startTime > timeout) throw new Error('LOCK_TIMEOUT');
       const wait = Date.now();
       while (Date.now() - wait < delay) {}
-      delay = Math.min(delay + 50, 200);
+      delay = Math.min(delay + 50, 150);
     }
   }
 
@@ -80,44 +107,103 @@ function withLock(logFile, action) {
     return action();
   } finally {
     if (ownsLock) {
-      try {
-        if (fs.existsSync(lockFile)) fs.unlinkSync(lockFile);
-      } catch (e) {}
+      try { if (fs.existsSync(lockFile)) fs.unlinkSync(lockFile); } catch (e) {}
       _activeLocks.delete(lockFile);
     }
   }
 }
 
 /**
- * Centralização da lógica de escrita segura.
+ * Rotaciona o arquivo se exceder o limite.
  */
-function safeWrite(logFile, content, mode = 'append') {
-  const tmpFile = `${logFile}.tmp`;
-  try {
-    if (mode === 'append') {
-      if (!fs.existsSync(logFile)) {
-        fs.writeFileSync(logFile, '# DevLog\n', 'utf8');
-      }
-      fs.appendFileSync(logFile, content, 'utf8');
-    } else {
-      // Escrita atômica via swap para updates
-      fs.writeFileSync(tmpFile, content, 'utf8');
-      fs.renameSync(tmpFile, logFile);
-    }
-    return true;
-  } finally {
-    // Garantir remoção de .tmp após falha
-    if (fs.existsSync(tmpFile)) {
-      try { fs.unlinkSync(tmpFile); } catch (e) {}
-    }
+function rotateIfNeeded(logFile, maxSize = 10 * 1024 * 1024) {
+  if (!fs.existsSync(logFile)) return;
+  const stats = fs.statSync(logFile);
+  if (stats.size > maxSize) {
+    const dateStr = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 16);
+    const rotatedPath = logFile.replace('.md', `-${dateStr}.md`);
+    fs.renameSync(logFile, rotatedPath);
+    logDebug(`Log rotated: ${rotatedPath}`);
   }
+}
+
+/**
+ * Escrita Blindada v4: Rotação, FD Seguro, Integridade Forte e Batch Fsync.
+ */
+function safeWrite(logFile, content, mode = 'append', config = {}) {
+  const tmpFile = `${logFile}.tmp`;
+  let retryCount = 0;
+  
+  const execute = () => {
+    let fd = null;
+    let sizeBefore = 0;
+    try {
+      if (fs.existsSync(logFile)) {
+        sizeBefore = fs.statSync(logFile).size;
+        if (mode === 'append') rotateIfNeeded(logFile);
+      }
+
+      // Garantir nova linha no final
+      const finalContent = content.endsWith('\n') ? content : content + '\n';
+      const contentLength = Buffer.byteLength(finalContent, 'utf8');
+
+      if (mode === 'append') {
+        if (!fs.existsSync(logFile)) fs.writeFileSync(logFile, '# DevLog\n', 'utf8');
+        fd = fs.openSync(logFile, 'a');
+        fs.writeSync(fd, finalContent);
+      } else {
+        fs.writeFileSync(tmpFile, finalContent, 'utf8');
+        fd = fs.openSync(tmpFile, 'r+');
+        fs.renameSync(tmpFile, logFile);
+      }
+
+      // Batch Fsync: Sincronizar apenas se durável e intervalo > 100ms
+      if (config.durable) {
+        const now = Date.now();
+        if (now - _lastSyncTime > 100) {
+          fs.fsyncSync(fd);
+          _lastSyncTime = now;
+          logDebug('Fsync executed (batch)');
+        }
+      }
+
+      fs.closeSync(fd);
+      fd = null;
+
+      // Verificação de Integridade Forte
+      const statsAfter = fs.statSync(logFile);
+      const verifyContent = fs.readFileSync(logFile, 'utf8');
+      
+      const sizeIntegrity = mode === 'append' ? (statsAfter.size >= sizeBefore + contentLength) : (statsAfter.size >= contentLength);
+      const contentIntegrity = verifyContent.endsWith(finalContent);
+
+      if (!sizeIntegrity || !contentIntegrity) {
+        throw new Error('INTEGRITY_FAILURE');
+      }
+
+      return { success: true };
+    } catch (err) {
+      if (fd !== null) try { fs.closeSync(fd); } catch (e) {}
+      
+      if (err.message === 'INTEGRITY_FAILURE' && retryCount < 1) {
+        retryCount++;
+        logDebug('Integrity failure, retrying...');
+        return execute();
+      }
+      
+      return { success: false, error: err.message };
+    } finally {
+      if (fs.existsSync(tmpFile)) try { fs.unlinkSync(tmpFile); } catch (e) {}
+    }
+  };
+
+  return execute();
 }
 
 function saveLog(note, config, options = {}) {
   const logFile = getLogFile(config);
   
   return withLock(logFile, () => {
-    // Lazy load de git para custo de startup zero se não for usado
     const { getGitMetadata, isGitRepo, commitLog } = require('./git');
     const { classifyMessage } = require('./classifier');
     
@@ -125,15 +211,16 @@ function saveLog(note, config, options = {}) {
     const { category } = classifyMessage(note);
     const id = generateId();
     const mood = options.mood || 'null';
+    const timestamp = getMonotonicTimestamp();
 
-    const entry = `\n## [${new Date().toISOString()}]\nid: ${id}\ncommit: ${hash || 'null'}\nbranch: ${branch || 'null'}\ntype: ${category}\nmood: ${mood}\n\n${note}\n`;
+    const entry = `\n## [${timestamp}]\nid: ${id}\ncommit: ${hash || 'null'}\nbranch: ${branch || 'null'}\ntype: ${category}\nmood: ${mood}\n\n${note}\n`;
 
-    const success = safeWrite(logFile, entry, 'append');
+    const result = safeWrite(logFile, entry, 'append', config);
 
-    if (success && options.shouldCommit && isGitRepo() && config.storage !== 'local') {
+    if (result.success && options.shouldCommit && isGitRepo() && config.storage !== 'local') {
       commitLog(logFile, note);
     }
-    return success;
+    return result.success;
   });
 }
 
@@ -156,36 +243,43 @@ function updateLastLog(updates, config) {
 
     if (updates.mood) {
       const idx = lines.findIndex(l => l.startsWith('mood: '));
-      if (idx > -1) lines[idx] = `mood: ${updates.mood}`;
+      const moodStr = `mood: ${updates.mood}`;
+      if (idx > -1) lines[idx] = moodStr;
       else {
         const emptyIdx = lines.findIndex((l, i) => i > 0 && l.trim() === '');
-        lines.splice(emptyIdx, 0, `mood: ${updates.mood}`);
+        lines.splice(emptyIdx, 0, moodStr);
       }
     }
 
     sections[sections.length - 1] = lines.join('\n');
-    return safeWrite(logFile, sections.join('\n## ['), 'write');
+    const result = safeWrite(logFile, sections.join('\n## ['), 'write', config);
+    return result.success;
   });
 }
 
 function getRecentLogs(config, limit = 5) {
   const logFile = getLogFile(config);
   if (!fs.existsSync(logFile)) return [];
-  const content = fs.readFileSync(logFile, 'utf8');
-  const entries = content.split('\n## [').slice(1);
-  return entries.slice(-limit).map(entry => {
-    const lines = entry.split('\n');
-    const timestamp = lines[0].replace(']', '');
-    const type = (lines.find(l => l.startsWith('type: ')) || '').replace('type: ', '') || 'unknown';
-    const mood = (lines.find(l => l.startsWith('mood: ')) || '').replace('mood: ', '') || null;
-    const note = lines.slice(lines.findIndex((l, i) => i > 0 && l.trim() === '') + 1).join('\n').trim();
-    const id = (lines.find(l => l.startsWith('id: ')) || '').replace('id: ', '') || 'null';
-    return {
-      time: new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      id, type, mood,
-      note: note.length > 60 ? note.substring(0, 57) + '...' : note
-    };
-  });
+  try {
+    const content = fs.readFileSync(logFile, 'utf8');
+    const entries = content.split('\n## [').slice(1);
+    return entries.slice(-limit).map(entry => {
+      const lines = entry.split('\n');
+      const timestamp = lines[0].replace(']', '');
+      const type = (lines.find(l => l.startsWith('type: ')) || '').replace('type: ', '') || 'unknown';
+      const mood = (lines.find(l => l.startsWith('mood: ')) || '').replace('mood: ', '') || null;
+      const note = lines.slice(lines.findIndex((l, i) => i > 0 && l.trim() === '') + 1).join('\n').trim();
+      const id = (lines.find(l => l.startsWith('id: ')) || '').replace('id: ', '') || 'null';
+      
+      const displayTime = new Date(timestamp.split('.')[0] + 'Z').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      return {
+        time: displayTime,
+        id, type, mood,
+        note: note.length > 60 ? note.substring(0, 57) + '...' : note
+      };
+    });
+  } catch (e) { return []; }
 }
 
-module.exports = { saveLog, updateLastLog, getRecentLogs, getLogFile, withLock };
+module.exports = { saveLog, updateLastLog, getRecentLogs, getLogFile, withLock, resetLocks, setDebug };
