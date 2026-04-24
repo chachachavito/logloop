@@ -41,12 +41,7 @@ Sim. O commit automático é desativado por padrão, mas você pode habilitá-lo
 Ela automatiza o fluxo: registra sua nota no log, executa `git add .` e cria um commit cujo comentário referencia o hash do log, criando um vínculo direto entre o log e o commit.
 
 **4. O Self-Log captura meu humor ou emoções?**
-
-Opcionalmente, sim. Você pode habilitar o `moodTracking` para adicionar contexto emocional aos seus logs. Esta funcionalidade utiliza heurísticas leves (normalização de texto, palavras-chave e fuzzy matching para lidar com typos) para sugerir um humor com base na mensagem, mas também permite override manual via flag `--mood`.
-
-O usuário tem controle total sobre essas heurísticas: é possível ajustar, expandir ou customizar o vocabulário utilizado para classificação, tornando o sistema adaptado ao seu próprio estilo de escrita.
-
-Todos os dados e configurações são armazenados localmente no ambiente do usuário (ex: `.selflogrc` e arquivos auxiliares), sem envio para serviços externos. O recurso é desabilitado por padrão para preservar a privacidade e evitar coleta de dados sensíveis sem consentimento explícito.
+Opcionalmente, sim. Você pode habilitar o `moodTracking` para adicionar contexto emocional aos seus logs. Esta funcionalidade utiliza heurísticas leves (normalização de texto, palavras-chave e fuzzy matching para lidar com typos) para sugerir um humor com base na mensagem, mas também permite override manual via flag `--mood`. O recurso é desabilitado por padrão para preservar a privacidade e evitar coleta de dados sensíveis sem consentimento explícito.
 
 ## Perguntas Internas (Stakeholders)
 

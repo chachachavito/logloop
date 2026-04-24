@@ -1,5 +1,3 @@
-
-
 # Self-Log
 
 > Git shows what changed. Self-Log shows why.
@@ -19,15 +17,13 @@ But it rarely answers:
 - What trade-offs were considered?
 - What problem were we actually solving?
 
-That context gets lost.
-
 Self-Log fixes that by making it frictionless to document your thinking as you work.
 
 ---
 
 ## Installation
 
-```
+```bash
 npm install -g self-log
 ```
 
@@ -37,58 +33,70 @@ npm install -g self-log
 
 Run inside any project:
 
-```
+```bash
 self-log
 ```
 
 Write a quick note about your decision, challenge, or idea.
 
-That’s it.
-
 ---
 
 ## What happens?
 
-Self-Log will:
+Self-Log automates the context capture:
 
-- Capture your message
-- Add a timestamp
-- Link it to the current Git commit (if available)
-- Append everything to `SELF-LOG.md`
+- **Semantic Classification**: Automatically tags entry as `decision`, `question`, `noise` or `thought`.
+- **Mood Heuristics**: Detects emotional state via keywords and emoticons (zero-friction).
+- **Git Linking**: Attaches current `HEAD` hash and branch name.
+- **ISO Timestamps**: Precise temporal tracking.
+- **Append-only storage**: Persists everything to `SELF-LOG.md`.
 
 ---
 
 ## Example
 
-```
-## [2026-04-24 14:32:00]
+```markdown
+## [2026-04-24T14:32:00.000Z]
 commit: 2cc9be8c15fc9045d72decbdabaea71caca8082d
 branch: main
+type: decision
+mood: focused
 
 Switched from axios to native fetch to reduce bundle size.
 ```
 
 ---
 
-## Advanced usage
+## Core Features
 
-### Commit + Log (atomic)
+### Semantic Classification
+The CLI analyzes your input to categorize the entry automatically:
+- **Decision**: Triggered by keywords like "decidi", "escolhi", "vou usar".
+- **Question**: Triggered by the presence of `?`.
+- **Noise**: Short or trivial messages (e.g., "test", "ss").
+- **Thought**: Default category for general notes.
 
-```
-self-log --commit
-```
+### Zero-Friction Mood Tracking
+Captures emotional context without manual prompts:
+- **Heuristics**: Uses a dictionary of emoticons ( `:)`, `T_T`, `O_O` ) and keywords ( "sucesso", "erro", "cansado" ).
+- **Opt-in**: Enable via config to start tracking.
+- **Manual override**: Use `--mood <value>` for explicit control.
 
-Logs your thought and creates a Git commit in one step. (Disabled by default; use `--commit` or configure `.selflogrc`).
+### Atomic Operations
+Sync your thoughts with your code:
+- `self-log --commit`: Logs and creates a Git commit in one step.
+- `--no-commit`: Overrides `autoCommit: true` in config for one-off logs.
 
 ---
 
-### Configuration
+## Configuration
 
 Self-Log uses a `.selflogrc` file for persistent settings.
 
 ```json
 {
-  "autoCommit": false
+  "autoCommit": false,
+  "moodTracking": true
 }
 ```
 
@@ -96,50 +104,26 @@ Self-Log uses a `.selflogrc` file for persistent settings.
 
 ## Philosophy
 
-Self-Log is not documentation.
+Self-Log is not documentation. It is memory.
 
-It is memory.
-
-A lightweight layer on top of Git that captures:
-- intent
-- reasoning
-- context
-
-So you and your team can understand not just the code,
-but the thinking behind it.
+A lightweight layer on top of Git that captures **intent**, **reasoning**, and **context**.
 
 ---
 
 ## Output file
 
-Default:
-
-```
-SELF-LOG.md
-```
-
-Why not DEVLOG.md?
-
-Because this is not just a dev log.
-
-It is a Self Log — a structured record of decision-making.
+Default: `SELF-LOG.md`
 
 ---
 
 ## Roadmap
 
-- Bidirectional commit linking
-- Log IDs (UUID)
-- Search and filtering
-- Timeline visualization
-- AI-powered summaries
-- Integration with self-commit
-
----
-
-## Contributing
-
-PRs are welcome.
+- [x] Semantic Classification (v1)
+- [x] Git HEAD/Branch linking
+- [x] Mood Tracking Heuristics
+- [ ] Log IDs (UUID)
+- [ ] Timeline visualization
+- [ ] AI-powered summaries
 
 ---
 

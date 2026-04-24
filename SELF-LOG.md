@@ -1,61 +1,156 @@
 # DevLog
 
-## [23/04/2026, 23:28:24]
-commit: d68af6290f66555e3ce5f2d0fcb8224ae553ea3c
+## [2026-04-24T02:45:48.717Z]
+commit: 4125c9609bb6f3cdc2346577ff43e9602ef9eac8
 branch: main
-
-apenas testando.
-
-## [23/04/2026, 23:29:50]
-commit: d68af6290f66555e3ce5f2d0fcb8224ae553ea3c
-branch: main
-
-utilizar o self-log para qualquer coisa.
-
-## [23/04/2026, 23:30:37]
-commit: d68af6290f66555e3ce5f2d0fcb8224ae553ea3c
-branch: main
-
-preciso ver se versiona ou não os logs. isso pode ser uma falha de segunrança. e informaçnoes vazarem. Precisa avaliar isso.
-
-## [23/04/2026, 23:32:42]
-commit: d68af6290f66555e3ce5f2d0fcb8224ae553ea3c
-branch: main
-
-testando como ficou 
-
-## [23/04/2026, 23:34:35]
-commit: d68af6290f66555e3ce5f2d0fcb8224ae553ea3c
-branch: main
+type: noise
 
 ss
 
-## [23/04/2026, 23:36:24]
-commit: d68af6290f66555e3ce5f2d0fcb8224ae553ea3c
+## [2026-04-24T02:45:48.880Z]
+commit: 4125c9609bb6f3cdc2346577ff43e9602ef9eac8
 branch: main
+type: question
 
-teste teste
+O que é isso?
 
-## [23/04/2026, 23:37:47]
-commit: d68af6290f66555e3ce5f2d0fcb8224ae553ea3c
+## [2026-04-24T02:45:48.993Z]
+commit: 4125c9609bb6f3cdc2346577ff43e9602ef9eac8
 branch: main
+type: decision
 
-isso é bem legal
+Decidi usar react
 
-## [23/04/2026, 23:38:10]
-commit: d68af6290f66555e3ce5f2d0fcb8224ae553ea3c
+## [2026-04-24T02:45:49.105Z]
+commit: 4125c9609bb6f3cdc2346577ff43e9602ef9eac8
 branch: main
+type: thought
 
-sera que LLMs podem uutilizar isso de uma forma boa?
+Estou trabalhando no projeto
 
-## [23/04/2026, 23:42:24]
-commit: d68af6290f66555e3ce5f2d0fcb8224ae553ea3c
+## [2026-04-24T02:46:32.046Z]
+commit: 4125c9609bb6f3cdc2346577ff43e9602ef9eac8
 branch: main
+type: thought
 
-isso que eu to fazendo, esta me deixando feliz <3
+to aqui. sou eu. bruno chaves
 
-## [23/04/2026, 23:42:59]
-commit: d68af6290f66555e3ce5f2d0fcb8224ae553ea3c
+## [2026-04-24T02:48:03.505Z]
+commit: 4125c9609bb6f3cdc2346577ff43e9602ef9eac8
 branch: main
+type: question
 
-teste se o commit ta funcionando.
+o que o chalk pode acrescentar para essa npm?
+
+## [2026-04-24T03:00:37.647Z]
+commit: 4125c9609bb6f3cdc2346577ff43e9602ef9eac8
+branch: main
+type: thought
+
+esse projeto ta muito fofo. estou feliz. e acredito que esse projeto vai ter muita gente usando. principamente para usar como contexto para LLMs
+
+## [2026-04-24T03:01:56.484Z]
+commit: 4125c9609bb6f3cdc2346577ff43e9602ef9eac8
+branch: main
+type: thought
+
+inclkusive. acho que podemos ter um typo. para registrar sentimentos.  até para o usuario ter uma analise de como estava psicologicamente.  rsrs nao sei. se to exagerando. mas penso que pode ser uma opção boa.
+
+## [2026-04-24T03:06:50.508Z]
+commit: 4125c9609bb6f3cdc2346577ff43e9602ef9eac8
+branch: main
+type: thought
+mood: focused
+
+Test mood feature
+
+## [2026-04-24T03:09:24.796Z]
+commit: 4125c9609bb6f3cdc2346577ff43e9602ef9eac8
+branch: main
+type: thought
+mood: pensativo
+
+definitivamente eu estou impressionado com o salto que eu tenho dado nos ultimoos dias. Em semanas e sinto que to evolunindo mais do que evolui em anos.
+
+## [2026-04-24T03:17:25.680Z]
+commit: 4125c9609bb6f3cdc2346577ff43e9602ef9eac8
+branch: main
+type: thought
+mood: benn
+
+Consegui resolver o bug de performance! :)
+
+## [2026-04-24T03:17:50.102Z]
+commit: 4125c9609bb6f3cdc2346577ff43e9602ef9eac8
+branch: main
+type: thought
+mood: happy
+
+Consegui! porrra! :)
+
+## [2026-04-24T03:20:04.162Z]
+commit: 4125c9609bb6f3cdc2346577ff43e9602ef9eac8
+branch: main
+type: thought
+
+pqp ta foda, nao cosigo evoluir por nada! :( 
+
+## [2026-04-24T03:20:28.177Z]
+commit: 4125c9609bb6f3cdc2346577ff43e9602ef9eac8
+branch: main
+type: thought
+mood: happy
+
+muito bom ser feliz!
+
+## [2026-04-24T03:25:27.485Z]
+commit: 4125c9609bb6f3cdc2346577ff43e9602ef9eac8
+branch: main
+type: thought
+mood: confused
+
+¯\_(ツ)_/¯
+
+## [2026-04-24T03:25:43.132Z]
+commit: 4125c9609bb6f3cdc2346577ff43e9602ef9eac8
+branch: main
+type: thought
+
+nso to entendendo nada
+
+## [2026-04-24T03:25:57.632Z]
+commit: 4125c9609bb6f3cdc2346577ff43e9602ef9eac8
+branch: main
+type: thought
+
+não estou entendendo nada
+
+## [2026-04-24T03:26:15.434Z]
+commit: 4125c9609bb6f3cdc2346577ff43e9602ef9eac8
+branch: main
+type: thought
+mood: confused
+
+estou confuso
+
+## [2026-04-24T03:26:43.593Z]
+commit: 4125c9609bb6f3cdc2346577ff43e9602ef9eac8
+branch: main
+type: thought
+
+precisamos revisar e melhorar muito o esquema de heuristicas
+
+## [2026-04-24T03:42:14.742Z]
+commit: 4125c9609bb6f3cdc2346577ff43e9602ef9eac8
+branch: main
+type: decision
+
+decidi usar a arquitetura modular
+
+## [2026-04-24T03:42:18.448Z]
+commit: 4125c9609bb6f3cdc2346577ff43e9602ef9eac8
+branch: main
+type: thought
+mood: happy
+
+estou muito feliz com o resultado :) 

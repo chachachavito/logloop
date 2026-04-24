@@ -573,9 +573,10 @@
             <div class="dot dot-g"></div>
           </div>
           <div class="terminal-body">
-            <div><span class="t-out">$</span> <span class="t-cmd">self-log "Refactored auth logic for scalability"</span></div>
+            <div><span class="t-out">$</span> <span class="t-cmd">self-log "Consegui resolver o bug de performance! :)"</span></div>
             <div class="t-out"> [self-log] Entry captured.</div>
-            <div class="t-out"> [self-log] Linked to commit: <span style="color: #d2a8ff">2cc9be8c15fc9045d72decbdabaea71caca8082d</span> (main)</div>
+            <div style="color: #bd93f9"> [self-log] Humor detectado: happy</div>
+            <div class="t-out"> [self-log] Linked to commit: <span style="color: #d2a8ff">4125c96</span> (main)</div>
             <div class="t-out"> [self-log] Saved to SELF-LOG.md<span class="t-cursor"></span></div>
           </div>
         </div>
@@ -615,6 +616,15 @@
                   <span>Standardized on <code>SELF-LOG.md</code> to ensure zero conflict with existing workflows.</span>
                 </div>
                 <div class="badge" style="background: #f8f9fa;">Branding</div>
+              </article>
+
+              <article class="package-item">
+                <div class="pkg-icon" aria-hidden="true">🧠</div>
+                <div class="pkg-meta">
+                  <strong>Mood Heuristics</strong>
+                  <span>Auto-detects mood from text and emoticons (e.g., <code>:)</code>, <code>:(</code>). Privacy-first, disabled by default.</span>
+                </div>
+                <div class="badge public">v1.1</div>
               </article>
             </div>
 
@@ -656,7 +666,10 @@
                 <span>--no-commit → force skip git commit</span>
               </div>
               <div class="status-line">
-                <span>config set autoCommit true/false</span>
+                <span>--mood <mood> → set mood explicitly</span>
+              </div>
+              <div class="status-line">
+                <span>config set moodTracking true/false</span>
               </div>
             </section>
 

@@ -1,11 +1,17 @@
 {
   "name": "self-log",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Git shows what changed. Self-Log shows why.",
   "main": "bin/index.js",
   "bin": {
     "self-log": "bin/index.js"
   },
+  "files": [
+    "bin/",
+    "src/",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

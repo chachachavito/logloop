@@ -1,3 +1,4 @@
 {
-  "autoCommit": false
+  "autoCommit": false,
+  "moodTracking": true
 }
