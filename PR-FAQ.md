@@ -11,13 +11,13 @@ Chavito anuncia a versão **v1 do Self-Log**, introduzindo o **Commit Linking**.
 Mesmo com commits bem escritos, o Git foca na mutação do estado do código. O contexto humano — o "porquê" de uma refatoração ou a lógica por trás de um workaround — frequentemente se perde no vácuo entre o terminal e o editor de texto. Ferramentas de documentação tradicionais falham por estarem desconectadas do fluxo de commit, resultando em logs obsoletos e falta de contexto histórico.
 
 ## A Solução
-O Self-Log v1 unifica o registro histórico ao Git. Ao capturar uma entrada, a ferramenta identifica automaticamente o **commit hash** e a **branch** atual, persistindo essas informações no `SELF-LOG.md`. Por padrão, o Self-Log não realiza commits automaticamente, garantindo controle total do desenvolvedor. Através da flag `--commit` ou configuração via `.selflogrc`, é possível registrar o log e realizar o commit simultaneamente, garantindo que o "porquê" esteja sempre a um commit de distância.
+O Self-Log v1 introduz o **Loop Contínuo de Contexto**. A ferramenta é desenhada para permanecer aberta em um terminal dedicado, servindo como uma "caixa preta" de decisões que mantém o histórico recente sempre visível. Ao capturar uma entrada, a ferramenta identifica automaticamente o **commit hash** e a **branch** atual, persistindo essas informações no `SELF-LOG.md`. Por padrão, o Self-Log não realiza commits automaticamente, garantindo controle total do desenvolvedor. Através da flag `--commit` ou configuração via `.selflogrc`, é possível registrar o log e realizar o commit simultaneamente.
 
 ## Citação do Líder
 "Git mostra o que mudou; Self-Log mostra o porquê," diz o arquiteto líder. "Com o Commit Linking, fechamos o ciclo de feedback da documentação. Agora, cada nota no seu log tem uma âncora imutável no tempo e no código."
 
 ## Experiência do Usuário
-O fluxo é intuitivo. Ao rodar `self-log`, o desenvolvedor registra sua nota e a ferramenta anexa metadados do Git automaticamente. Usuários podem usar `self-log --commit` para registrar o log e realizar o commit do código em um único passo atômico. O comportamento padrão (commit automático) pode ser configurado via `.selflogrc`.
+O fluxo principal é o **terminal aberto**. Ao rodar `self-log`, o desenvolvedor entra em um loop interativo onde cada nova nota é exibida instantaneamente sobre o histórico recente, criando um fluxo contínuo de consciência do projeto. Para registros rápidos, o modo comando único (`self-log "mensagem"`) continua disponível. Usuários podem usar `self-log --commit` para registrar o log e realizar o commit do código em um único passo atômico.
 
 ## Citação do Cliente
 "A possibilidade de ver o hash do commit ao lado da minha explicação técnica no `SELF-LOG.md` mudou meu processo de debugging. Não preciso mais adivinhar qual era minha intenção naquele commit de três dias atrás," afirma um desenvolvedor sênior :).

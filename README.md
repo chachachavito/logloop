@@ -29,15 +29,20 @@ npm install -g self-log
 
 ---
 
-## Usage
+Self-Log is designed to stay open alongside your code.
 
-Run inside any project:
-
+### Continuous Mode (The Core Experience)
+Run without arguments to enter the interactive loop:
 ```bash
 self-log
 ```
+This keeps your recent history visible and stays ready for your next thought. It's the "black box" for your development process.
 
-Write a quick note about your decision, challenge, or idea.
+### One-shot Mode
+For a quick note without entering the loop:
+```bash
+self-log "Switched to native fetch"
+```
 
 ---
 
