@@ -136,6 +136,11 @@ function startLoop(initialConfig, moodFlag, initialShouldCommit) {
         setTimeout(refresh, 2000);
         return;
       }
+      else if (cmd === '/summary') {
+        showSummary();
+        setTimeout(refresh, 3000);
+        return;
+      }
       else if (cmd === '/q' || cmd === '/quit') return rl.close();
       else if (cmd === '/as') {
         if (!state.lastInput) {
@@ -240,4 +245,40 @@ function showTimeline() {
   console.log('\n');
 }
 
-module.exports = { startLoop, showTimeline };
+function showSummary() {
+  const { getDailySummary } = require('./core');
+  const summary = getDailySummary();
+  
+  if (!summary || (summary.decisions.length === 0 && summary.topActions.length === 0)) {
+    console.log(`\n  \x1b[90m${t('ui.noSummary') || 'No significant activity today yet.'}\x1b[0m\n`);
+    return;
+  }
+
+  const moodMap = {
+    happy: '😊', excited: '🚀', tired: '😴', frustrated: '😤', confused: '🤔', neutral: '😐', focused: '🎯'
+  };
+
+  console.log(`\n  \x1b[1;32m--- DAILY SUMMARY ---\x1b[0m`);
+  console.log(`  \x1b[90mFocus & Mood:\x1b[0m ${moodMap[summary.mood] || '😐'} (${summary.mood})\n`);
+
+  if (summary.decisions.length > 0) {
+    console.log(`  \x1b[1;33mDECISIONS MADE:\x1b[0m`);
+    summary.decisions.forEach(d => console.log(`  ✓ ${d}`));
+    console.log('');
+  }
+
+  if (summary.questions.length > 0) {
+    console.log(`  \x1b[1;34mPENDING QUESTIONS:\x1b[0m`);
+    summary.questions.forEach(q => console.log(`  ? ${q}`));
+    console.log('');
+  }
+
+  if (summary.topActions.length > 0) {
+    console.log(`  \x1b[1;32mKEY ACTIONS:\x1b[0m`);
+    summary.topActions.slice(0, 5).forEach(a => console.log(`  • ${a}`));
+  }
+
+  console.log('\n');
+}
+
+module.exports = { startLoop, showTimeline, showSummary };

@@ -178,10 +178,51 @@ function getStats(days = 7) {
   return stats;
 }
 
+function getDailySummary() {
+  const stats = getStats(1); // Últimas 24h
+  if (!stats) return null;
+
+  const logFile = getLogFile();
+  const content = fs.readFileSync(logFile, 'utf8');
+  const sections = content.split('\n## [').slice(1);
+  const today = new Date().toISOString().split('T')[0];
+
+  const summary = {
+    decisions: [],
+    questions: [],
+    topActions: [],
+    mood: 'neutral'
+  };
+
+  // Coletar itens de hoje
+  sections.forEach(entry => {
+    const lines = entry.split('\n');
+    const timestamp = lines[0].replace(']', '');
+    if (!timestamp.startsWith(today)) return;
+
+    const typeLine = lines.find(l => l.startsWith('type: '));
+    const type = typeLine ? typeLine.replace('type: ', '') : 'unknown';
+    
+    const note = lines.slice(lines.findIndex((l, i) => i > 0 && l.trim() === '') + 1).join('\n').trim();
+
+    if (type === 'decision') summary.decisions.push(note);
+    if (type === 'question') summary.questions.push(note);
+    if (type === 'action') summary.topActions.push(note);
+  });
+
+  // Mood predominante
+  if (Object.keys(stats.moods).length > 0) {
+    summary.mood = Object.entries(stats.moods).sort((a, b) => b[1] - a[1])[0][0];
+  }
+
+  return summary;
+}
+
 module.exports = {
   saveLog,
   getRecentLogs,
   getLogFile,
   updateLastLog,
-  getStats
+  getStats,
+  getDailySummary
 };

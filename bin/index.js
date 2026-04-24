@@ -121,6 +121,10 @@ switch (args[0]) {
     const { showTimeline } = require('../src/ui');
     showTimeline();
     process.exit(0);
+  case 'summary':
+    const { showSummary } = require('../src/ui');
+    showSummary();
+    process.exit(0);
   case 'config':
     handleConfig(args.slice(1));
     break;
