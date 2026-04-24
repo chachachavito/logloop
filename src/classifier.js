@@ -100,10 +100,16 @@ function runPipeline(input, contextMemory, categories, threshold = 0.4) {
   };
 }
 
-function classifyMessage(message) {
+function classifyMessage(text) {
+  if (!text) return { category: 'noise', score: 1 };
+  
+  // Normalização determinística: limpa espaços, tabs e newlines duplicados
+  const normalizedText = text.trim().replace(/\s+/g, ' ').toLowerCase();
+  if (!normalizedText) return { category: 'noise', score: 1 };
+  
   const memory = loadMemory().message;
-  const res = runPipeline(message, memory, MESSAGE_CATEGORIES);
-  const norm = normalize(message);
+  const res = runPipeline(normalizedText, memory, MESSAGE_CATEGORIES);
+  const norm = normalize(normalizedText);
   
   let heuristicScore = 0;
   let heuristicCat = res.category;

@@ -21,6 +21,11 @@ describe('Logloop Heuristics - Message Type', () => {
     expect(classifyMessage('ok').category).toBe('noise');
     expect(classifyMessage('feito').category).toBe('noise');
   });
+
+  test('should normalize excessive whitespace', () => {
+    const res = classifyMessage('   subir     v1.0   ');
+    expect(res.category).toBe('action');
+  });
 });
 
 describe('Logloop Heuristics - Mood', () => {
