@@ -10,3 +10,4 @@ scratch/
 # Self-Log files
 SELF-LOG*.md
 coverage/
+test_results.log
