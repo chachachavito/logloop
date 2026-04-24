@@ -1,4 +1,4 @@
-const { classifyMessage, classifyMood } = require('../src/classifier');
+const { classifyMessage, classifyMood } = require('../../src/classifier');
 
 describe('Logloop Heuristics - Message Type', () => {
   test('should classify leading verbs as action', () => {
@@ -38,5 +38,10 @@ describe('Logloop Heuristics - Mood', () => {
   test('should detect confused mood', () => {
     expect(classifyMood('uai, o que aconteceu aqui? 🤔').category).toBe('confused');
     expect(classifyMood('wtf, sumiu tudo').category).toBe('confused');
+  });
+
+  test('should handle negation correctly', () => {
+    expect(classifyMood('nao estou feliz').category).toBe('neutral');
+    expect(classifyMood('nao funciona nada').category).toBe('frustrated');
   });
 });
