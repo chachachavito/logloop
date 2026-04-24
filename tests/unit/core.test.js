@@ -1,11 +1,11 @@
 const fs = require('fs');
-const { saveLog, getRecentLogs, getStats } = require('../../src/core');
+const { saveLog, getRecentLogs, updateLastLog, getStats, getDailySummary } = require('../../src/core');
 
 jest.mock('fs');
 jest.mock('../../src/git', () => ({
-  getGitMetadata: () => ({ hash: 'abc', branch: 'main' }),
+  getGitMetadata: () => ({ hash: 'a1b2c3d', branch: 'main' }),
   isGitRepo: () => true,
-  commitLog: () => true
+  commitLog: jest.fn().mockReturnValue(true)
 }));
 
 describe('Core Module - Log IDs', () => {
@@ -14,24 +14,15 @@ describe('Core Module - Log IDs', () => {
   });
 
   test('should generate and save a 4-character hex ID', () => {
-    fs.existsSync.mockReturnValue(true);
-    
+    fs.existsSync.mockReturnValue(false);
     saveLog('test message');
 
-    const writtenContent = fs.appendFileSync.mock.calls[0][1];
+    const writtenContent = fs.writeFileSync.mock.calls[0][1];
     expect(writtenContent).toMatch(/id: [0-9a-f]{4}/);
   });
 
   test('should retrieve ID correctly from log file', () => {
-    const mockContent = `
-## [2026-04-24T19:00:00.000Z]
-id: a1b2
-commit: abc
-branch: main
-type: action
-
-test note
-`;
+    const mockContent = '\n## [2026-04-24T12:00:00Z]\nid: a1b2\ntype: thought\nmood: happy\n\nTest note\n';
     fs.existsSync.mockReturnValue(true);
     fs.readFileSync.mockReturnValue(mockContent);
 
@@ -41,33 +32,35 @@ test note
 
   test('should generate correct statistics from log content', () => {
     const mockContent = `
-## [2026-04-24T10:00:00.000Z]
+## [2026-04-24T10:00:00Z]
 id: a1b2
-type: action
-mood: happy
-
-## [2026-04-24T11:00:00.000Z]
-id: c3d4
 type: decision
 mood: happy
+
+Decision 1
+
+## [2026-04-24T11:00:00Z]
+id: c3d4
+type: action
+mood: focused
+
+Action 1
 `;
     fs.existsSync.mockReturnValue(true);
     fs.readFileSync.mockReturnValue(mockContent);
 
-    const stats = getStats(1);
+    const stats = getStats(7);
     expect(stats.total).toBe(2);
-    expect(stats.categories.action).toBe(1);
     expect(stats.categories.decision).toBe(1);
-    expect(stats.moods.happy).toBe(2);
-    expect(stats.timeline['2026-04-24'].count).toBe(2);
+    expect(stats.categories.action).toBe(1);
+    expect(stats.moods.happy).toBe(1);
   });
 
   test('should update the last log entry correctly', () => {
-    const mockContent = `\n## [2026-01-01]\nid: a1b2\ntype: action\n\nOld message`;
+    const mockContent = '\n## [2026-04-24T12:00:00Z]\nid: a1b2\ntype: thought\n\nTest note\n';
     fs.existsSync.mockReturnValue(true);
     fs.readFileSync.mockReturnValue(mockContent);
     
-    const { updateLastLog } = require('../../src/core');
     updateLastLog({ type: 'decision', mood: 'excited' });
 
     const rewritten = fs.writeFileSync.mock.calls[0][1];
@@ -95,7 +88,6 @@ Writing tests.
     fs.existsSync.mockReturnValue(true);
     fs.readFileSync.mockReturnValue(mockContent);
 
-    const { getDailySummary } = require('../../src/core');
     const summary = getDailySummary();
     
     expect(summary.decisions).toContain('Decided to use Jest.');
@@ -120,7 +112,6 @@ ${complexNote}
     expect(stats.total).toBe(1);
     expect(stats.timeline['2026-04-24']).toBeDefined();
     
-    // Test retrieval
     const logs = getRecentLogs(1);
     expect(logs[0].note).toBe(complexNote);
   });

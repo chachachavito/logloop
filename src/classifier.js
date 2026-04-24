@@ -46,7 +46,7 @@ function analyzeSentiment(text) {
   let score = 0.5;
   let isNegated = false;
 
-  words.forEach((word, index) => {
+  words.forEach((word) => {
     if (negations.includes(word)) {
       isNegated = true;
       return;
@@ -58,7 +58,7 @@ function analyzeSentiment(text) {
 
     if (wordScore !== 0) {
       score += isNegated ? -wordScore : wordScore;
-      isNegated = false; // Reset negation after applying to the next word
+      isNegated = false;
     }
   });
 
@@ -103,7 +103,6 @@ function runPipeline(input, contextMemory, categories, threshold = 0.4) {
 function classifyMessage(text) {
   if (!text) return { category: 'noise', score: 1 };
   
-  // Normalização determinística: limpa espaços, tabs e newlines duplicados
   const normalizedText = text.trim().replace(/\s+/g, ' ').toLowerCase();
   if (!normalizedText) return { category: 'noise', score: 1 };
   
@@ -124,7 +123,7 @@ function classifyMessage(text) {
   });
 
   const finalConfidence = Math.max(0, Math.min(1, (res.confidence * 0.6) + (heuristicScore * 0.4)));
-  const isReliable = finalConfidence >= 0.3; // Threshold do fallback ajustado para 0.3
+  const isReliable = finalConfidence >= 0.3; 
   const category = isReliable ? heuristicCat : 'thought';
 
   return { 
@@ -160,25 +159,18 @@ function classifyMood(message) {
   let heuristicScore = 0;
   let heuristicCat = res.category;
   let source = res.metadata.source;
-  const words = normalize(message).split(/\s+/);
+  let heuristicMatch = false;
+
   const negations = ['nao', 'nunca', 'jamais', 'nem', 'not', 'never', 'no'];
-  let isNegated = false;
 
   MOOD_CATEGORIES.forEach(cat => {
     const hasPattern = cat.patterns.some(p => p.test(msg));
     if (hasPattern) {
-      // Se houver negação e a categoria for positiva (happy/excited), invalidamos
       const isPositive = ['happy', 'excited'].includes(cat.name);
-      const isNegative = ['frustrated', 'tired'].includes(cat.name);
-      
-      // Verifica se houve negação na frase antes do padrão
       const msgWords = msg.split(/\s+/);
       const hasNegationBefore = msgWords.some(w => negations.includes(w));
 
-      if (hasNegationBefore && isPositive) {
-        // Se negou algo positivo, vira neutro ou frustrado (vamos deixar o sentiment decidir)
-        return;
-      }
+      if (hasNegationBefore && isPositive) return;
 
       heuristicScore = 0.8;
       heuristicCat = cat.name;
@@ -187,7 +179,6 @@ function classifyMood(message) {
     }
   });
 
-  // Se houver match de heurística, ignoramos a confiança do fuzzy para o cálculo de confiabilidade
   const effectiveFuzzyConfidence = heuristicMatch ? 0 : res.confidence;
   const finalScore = Math.max(0, Math.min(1, (effectiveFuzzyConfidence * 0.5) + (heuristicScore * 0.4) + sentimentInfluence));
   

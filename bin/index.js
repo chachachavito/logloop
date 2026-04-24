@@ -60,8 +60,8 @@ function run(note, moodFlag, shouldCommit) {
   const detected = classifyMood(note);
   let finalMood = moodFlag;
 
-  if (!moodFlag && config.moodTracking && detected !== 'unidentified') {
-    finalMood = detected;
+  if (!moodFlag && config.moodTracking && detected.category !== 'neutral') {
+    finalMood = detected.category;
   }
 
   saveLog(note, { shouldCommit, mood: finalMood });
