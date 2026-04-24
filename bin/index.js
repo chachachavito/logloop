@@ -111,13 +111,6 @@ if (noCommitFlag) {
 if (noteArg) {
   run(noteArg, moodFlag, shouldCommit);
 } else {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-  });
-
-  rl.question('\x1b[36m›\x1b[0m ', (answer) => {
-    rl.close();
-    run(answer, moodFlag, shouldCommit);
-  });
+  const { startLoop } = require('../src/ui');
+  startLoop(config, moodFlag, shouldCommit);
 }

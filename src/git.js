@@ -30,8 +30,19 @@ function commitLog(file, message) {
   }
 }
 
+function isDirty() {
+  if (!isGitRepo()) return false;
+  try {
+    const status = execSync('git status --porcelain', { stdio: 'pipe' }).toString().trim();
+    return status.length > 0;
+  } catch (e) {
+    return false;
+  }
+}
+
 module.exports = {
   isGitRepo,
   getGitMetadata,
-  commitLog
+  commitLog,
+  isDirty
 };

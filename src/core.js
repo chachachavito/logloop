@@ -40,6 +40,35 @@ function saveLog(note, options = {}) {
   }
 }
 
+function getRecentLogs(limit = 5) {
+  if (!fs.existsSync(logFile)) return [];
+  
+  const content = fs.readFileSync(logFile, 'utf8');
+  const entries = content.split('\n## [').slice(1);
+  
+  return entries.slice(-limit).map(entry => {
+    const lines = entry.split('\n');
+    const timestamp = lines[0].replace(']', '');
+    const typeLine = lines.find(l => l.startsWith('type: '));
+    const type = typeLine ? typeLine.replace('type: ', '') : 'unknown';
+    
+    const moodLine = lines.find(l => l.startsWith('mood: '));
+    const mood = moodLine ? moodLine.replace('mood: ', '') : null;
+    
+    // Encontrar o início da nota (após os metadados)
+    const emptyLineIndex = lines.findIndex((l, i) => i > 0 && l.trim() === '');
+    const note = lines.slice(emptyLineIndex + 1).join('\n').trim();
+    
+    return {
+      time: new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      type,
+      mood,
+      note: note.length > 60 ? note.substring(0, 57) + '...' : note
+    };
+  });
+}
+
 module.exports = {
-  saveLog
+  saveLog,
+  getRecentLogs
 };
