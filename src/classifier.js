@@ -20,8 +20,9 @@ const MOOD_CATEGORIES = [
 ];
 
 const EMOTICONS = {
-  happy: [':)', ':-)', '^_^', 'uwu', '<3', '♥', ':D', ':-D', ':*', '(^_^)/', '(*^_^*)', 'owo', '✨', '🚀', '✅'],
-  frustrated: [':(', ':-(', 'T_T', ';_;', 'T^T', ":'(", 'T_T_T', 'Q_Q', 'TT', '>:(', '>.>', '>.<', 'orz', '/_\\', 'angry', '❌', '🔥', '💀'],
+  happy: [':)', ':-)', '^_^', 'uwu', '<3', '♥', ':D', ':-D', ':*', '(^_^)/', '(*^_^*)', 'owo', '✅'],
+  excited: ['🚀', '✨', '🤩'],
+  frustrated: [':(', ':-(', 'T_T', ';_;', 'T^T', ":'(", 'T_T_T', 'Q_Q', 'TT', '>:(', '>.>', '>.<', 'orz', '/_\\', 'angry', '❌', '💀'],
   confused: [':O', 'O_O', 'D:', 'D_x', 'O.o', '0_0', 'dx', '-_ -||', '???', '¯\\_(ツ)_/¯', '¬_¬', '.-.', '🤔', '❓'],
   neutral: ['|_)', ':/', ':\\', ')_(', ':P', ':-P', 'rolled eyes', '😐'],
   tired: ['-_-', '😴', '💤']
@@ -39,9 +40,28 @@ function normalize(text) {
 
 function analyzeSentiment(text) {
   const norm = normalize(text);
-  let score = 0.5; // Neutral start (0-1)
-  SENTIMENT_DICT.positive.forEach(word => { if (norm.includes(word)) score += 0.1; });
-  SENTIMENT_DICT.negative.forEach(word => { if (norm.includes(word)) score -= 0.1; });
+  const words = norm.split(/\s+/);
+  const negations = ['nao', 'nunca', 'jamais', 'nem', 'not', 'never', 'no'];
+  
+  let score = 0.5;
+  let isNegated = false;
+
+  words.forEach((word, index) => {
+    if (negations.includes(word)) {
+      isNegated = true;
+      return;
+    }
+
+    let wordScore = 0;
+    if (SENTIMENT_DICT.positive.includes(word)) wordScore = 0.1;
+    if (SENTIMENT_DICT.negative.includes(word)) wordScore = -0.1;
+
+    if (wordScore !== 0) {
+      score += isNegated ? -wordScore : wordScore;
+      isNegated = false; // Reset negation after applying to the next word
+    }
+  });
+
   if (text.includes('!!')) score += 0.05;
   if (text.includes('??')) score -= 0.05;
   return Math.max(0, Math.min(1, score)); 
@@ -134,16 +154,37 @@ function classifyMood(message) {
   let heuristicScore = 0;
   let heuristicCat = res.category;
   let source = res.metadata.source;
+  const words = normalize(message).split(/\s+/);
+  const negations = ['nao', 'nunca', 'jamais', 'nem', 'not', 'never', 'no'];
+  let isNegated = false;
 
   MOOD_CATEGORIES.forEach(cat => {
-    if (cat.patterns.some(p => p.test(msg))) {
+    const hasPattern = cat.patterns.some(p => p.test(msg));
+    if (hasPattern) {
+      // Se houver negação e a categoria for positiva (happy/excited), invalidamos
+      const isPositive = ['happy', 'excited'].includes(cat.name);
+      const isNegative = ['frustrated', 'tired'].includes(cat.name);
+      
+      // Verifica se houve negação na frase antes do padrão
+      const msgWords = msg.split(/\s+/);
+      const hasNegationBefore = msgWords.some(w => negations.includes(w));
+
+      if (hasNegationBefore && isPositive) {
+        // Se negou algo positivo, vira neutro ou frustrado (vamos deixar o sentiment decidir)
+        return;
+      }
+
       heuristicScore = 0.8;
       heuristicCat = cat.name;
       source = 'heuristic';
+      heuristicMatch = true;
     }
   });
 
-  const finalScore = Math.max(0, Math.min(1, (res.confidence * 0.5) + (heuristicScore * 0.4) + sentimentInfluence));
+  // Se houver match de heurística, ignoramos a confiança do fuzzy para o cálculo de confiabilidade
+  const effectiveFuzzyConfidence = heuristicMatch ? 0 : res.confidence;
+  const finalScore = Math.max(0, Math.min(1, (effectiveFuzzyConfidence * 0.5) + (heuristicScore * 0.4) + sentimentInfluence));
+  
   const isReliable = finalScore >= 0.2 && validMoods.includes(heuristicCat);
   const category = isReliable ? heuristicCat : 'neutral';
   
