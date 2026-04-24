@@ -35,6 +35,7 @@
     "noLocalLogs": "No local logs found in ~/.logloop/logs/",
     "moodDetected": "[logloop] Mood detected:",
     "gitWarning": "Warning: Not a git repository. Commit ignored.",
-    "commitSuccess": "✓ Commit successful."
+    "commitSuccess": "✓ Commit successful.",
+    "lockError": "Error: File is locked by another process. Please try again."
   }
 }

@@ -13,12 +13,12 @@ describe('Core Module - Log IDs', () => {
     jest.clearAllMocks();
   });
 
-  test('should generate and save a 4-character hex ID', () => {
+  test('should generate and save an 8-character hex ID', () => {
     fs.existsSync.mockReturnValue(false);
     saveLog('test message');
 
-    const writtenContent = fs.writeFileSync.mock.calls[0][1];
-    expect(writtenContent).toMatch(/id: [0-9a-f]{4}/);
+    const writtenContent = fs.appendFileSync.mock.calls[0][1];
+    expect(writtenContent).toMatch(/id: [0-9a-f]{8}/);
   });
 
   test('should retrieve ID correctly from log file', () => {

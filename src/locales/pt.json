@@ -35,6 +35,7 @@
     "noLocalLogs": "Nenhum log local encontrado em ~/.logloop/logs/",
     "moodDetected": "[logloop] Humor detectado:",
     "gitWarning": "Aviso: Não é um repositório git. Commit ignorado.",
-    "commitSuccess": "✓ Commit realizado com sucesso."
+    "commitSuccess": "✓ Commit realizado com sucesso.",
+    "lockError": "Erro: O arquivo está travado por outro processo. Tente novamente."
   }
 }

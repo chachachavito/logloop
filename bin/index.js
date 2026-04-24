@@ -158,7 +158,12 @@ if (noCommitFlag) {
 }
 
 if (noteArg) {
-  run(noteArg, moodFlag, shouldCommit);
+  try {
+    run(noteArg, moodFlag, shouldCommit);
+  } catch (err) {
+    console.error(`\x1b[31m[logloop] Error: ${err.message}\x1b[0m`);
+    process.exit(1);
+  }
 } else {
   const { startLoop } = require('../src/ui');
   const { getGitUser } = require('../src/git');

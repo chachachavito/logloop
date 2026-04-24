@@ -1,0 +1,17 @@
+/Users/bruchave/Documents/_projetos/logloop/src/classifier.js:191
+  const effectiveFuzzyConfidence = heuristicMatch ? 0 : res.confidence;
+                                   ^
+
+ReferenceError: heuristicMatch is not defined
+    at classifyMood (/Users/bruchave/Documents/_projetos/logloop/src/classifier.js:191:36)
+    at run (/Users/bruchave/Documents/_projetos/logloop/bin/index.js:60:20)
+    at Object.<anonymous> (/Users/bruchave/Documents/_projetos/logloop/bin/index.js:161:3)
+    at Module._compile (node:internal/modules/cjs/loader:1706:14)
+    at Object..js (node:internal/modules/cjs/loader:1839:10)
+    at Module.load (node:internal/modules/cjs/loader:1441:32)
+    at Function._load (node:internal/modules/cjs/loader:1263:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+
+Node.js v22.21.0

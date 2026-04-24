@@ -50,7 +50,7 @@ describe('Integration: User Workflow', () => {
   test('should handle IDs across saves and retrievals', () => {
     saveLog('Fix bug');
     const writtenEntry = fs.appendFileSync.mock.calls[0][1];
-    const idMatch = writtenEntry.match(/id: ([0-9a-f]{4})/);
+    const idMatch = writtenEntry.match(/id: ([0-9a-f]{8})/);
     const id = idMatch[1];
 
     // Mock the file content for retrieval

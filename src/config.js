@@ -25,8 +25,32 @@ function ensureDir(dir) {
   return true;
 }
 
+// Cleanup defensivo na inicialização
+function defensiveCleanup() {
+  try {
+    const currentDir = process.cwd();
+    const files = fs.readdirSync(currentDir);
+    const now = Date.now();
+    
+    files.forEach(file => {
+      // Limpa qualquer .lock ou .tmp órfão do logloop (mais de 10s de idade)
+      if ((file.endsWith('.lock') || file.endsWith('.tmp')) && file.includes('logloop')) {
+        const filePath = path.join(currentDir, file);
+        try { 
+          const stats = fs.statSync(filePath);
+          const age = (now - stats.mtimeMs) / 1000;
+          if (age > 10) {
+            fs.unlinkSync(filePath); 
+          }
+        } catch (e) {}
+      }
+    });
+  } catch (e) {}
+}
+
 ensureDir(GLOBAL_DIR);
 ensureDir(path.join(GLOBAL_DIR, 'logs'));
+defensiveCleanup();
 
 function loadConfig() {
   let config = { ...DEFAULTS };
