@@ -53,8 +53,14 @@ Sim. O Logloop utiliza um "Cérebro Local-First" armazenado em `~/.logloop/memor
 O sistema utiliza o que chamamos de **"3 Camadas de Verdade"**:
 *   **Memória (Verdade Pessoal)**: Prioridade total. O sistema consulta suas correções históricas.
 *   **Fuzzy (Verdade Estatística)**: Busca similaridades léxicas para lidar com typos e variações.
-*   **Heurística (Verdade Léxica)**: Regras determinísticas baseadas em verbos e dicionários curados.
+*   **Heurística (Verdade Léxica)**: Regras determinísticas baseadas em verbos e dicionários curados. Agora com suporte a **Negação Semântica**.
 Os resultados são combinados em um **Score de Confiança Ponderado** para garantir precisão sem falsos positivos.
+
+**8. Como os Log IDs ajudam no fluxo de trabalho?**
+Cada entrada recebe um ID curto e único (ex: `#a1b2`). Isso permite que você cite uma decisão específica no logbook diretamente em uma mensagem de commit ou em um comentário de Code Review, criando uma ponte de rastreabilidade entre o log humano e o código.
+
+**9. Como sincronizo meu "aprendizado" entre máquinas?**
+Através dos comandos `/brain-out` e `/brain-in`. Você pode exportar seu cérebro treinado em uma máquina e importá-lo em outra. O sistema realiza um **merge inteligente**, preservando o conhecimento local e adicionando as novas experiências importadas.
 
 ## Perguntas Internas (Stakeholders)
 

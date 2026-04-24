@@ -87,17 +87,23 @@ Every entry passes through a sophisticated inference pipeline before being saved
 
 1.  **Memory (The Personal Truth)**: Prioritized above all. It consults your historical corrections in `memory.json`.
 2.  **Fuzzy (The Statistical Truth)**: Uses `fuse.js` to find lexical similarities, handling typos and variations.
-3.  **Heuristics (The Lexical Truth)**: Deterministic rules based on a curated technical dictionary (verbs, symbols, sentiment).
+3.  **Heuristics (The Lexical Truth)**: Deterministic rules based on a curated technical dictionary (verbs, symbols, sentiment). Now with **Negation Handling** (e.g., "not happy" correctly classified as neutral).
 
 These layers combine into a **Weighted Confidence Score** to ensure high precision without the need for cloud-based AI.
 
-### Active Learning Loop
-You can train Logloop in real-time. If the classification isn't what you expected, use the slash commands:
-
+### Active Learning & Portability
+Logloop is not just a logger; it's an evolving assistant:
 *   **/as <category>**: Reclassifies the last entry and saves the preference to your memory.
 *   **/feel <mood>**: Corrects the emotional context and trains the mood engine.
+*   **/brain-out <file>**: Export your learned patterns to a JSON file.
+*   **/brain-in <file>**: Import and **merge** an external brain with your local one.
 
-> **Example**:
+### Referencing with IDs
+Every log entry now has a unique 4-character ID (e.g., `#a1b2`). 
+*   **Traceability**: Use these IDs in your PRs or commit messages to point to specific decisions recorded in your logs.
+*   **Visibility**: IDs are displayed in the terminal history for quick reference.
+
+> **Learning Example**:
 > You: `subir v1.0`
 > Logloop: `[THOUGHT]` (Falls back to thought because it's unsure)
 > You: `/as action`
