@@ -78,7 +78,9 @@ Switched from axios to native fetch to reduce bundle size.
 
 ---
 
-## Logloop Brain (v0.2.0)
+---
+
+## Logloop Brain (v0.4.0)
 
 Logloop is not just a logger; it's an evolving engine that learns your engineering dialect.
 
@@ -97,8 +99,9 @@ Logloop is not just a logger; it's an evolving assistant:
 *   **/feel <mood>**: Corrects the emotional context and trains the mood engine.
 *   **Brain Sync**: Use `/brain-out <file>` and `/brain-in <file>` to move your learned patterns between machines.
 
-### Insights & Timeline
-*   **Visual History**: Run `logloop timeline` (or use `/timeline` inside the loop) to see an ASCII chart of your weekly activity and mood distribution.
+### Insights & Analytics
+*   **Visual History**: Run `logloop timeline` (or `/timeline`) for a weekly ASCII productivity chart.
+*   **Smart Summary**: Run `logloop summary` (or `/summary`) to generate a **Markdown Daily Report** with decisions, questions, and mood, ready to copy-paste into your standup.
 
 ### Referencing with IDs
 Every log entry now has a unique 4-character ID (e.g., `#a1b2`). 
@@ -188,9 +191,9 @@ Default: `logloop.md`
 - [x] Active Learning Loop (`/as`, `/feel`)
 - [x] Local Memory Persistence
 - [x] Fuzzy Matching & Normalization
-- [ ] Log IDs (UUID)
-- [ ] Timeline visualization
-- [ ] AI-powered summaries
+- [x] Log IDs & Traceability
+- [x] Timeline Visualization
+- [x] Smart Deterministic Summaries
 
 ---
 

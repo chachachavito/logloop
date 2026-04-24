@@ -62,13 +62,16 @@ Cada entrada recebe um ID curto e único (ex: `#a1b2`). Isso permite que você c
 **9. Como sincronizo meu "aprendizado" entre máquinas?**
 Através dos comandos `/brain-out` e `/brain-in`. Você pode exportar seu cérebro treinado em uma máquina e importá-lo em outra. O sistema realiza um **merge inteligente**, preservando o conhecimento local e adicionando as novas experiências importadas.
 
+**10. Como o Sumário Diário me ajuda no dia a dia?**
+Através do comando `logloop summary`, o sistema gera um relatório Markdown instantâneo das últimas 24h, consolidando decisões e pendências. É a ferramenta perfeita para quem precisa participar de *Daily Standups* ou escrever relatórios de progresso, garantindo que nenhum detalhe técnico seja esquecido.
+
 ## Perguntas Internas (Stakeholders)
 
 **1. Por que mudar o arquivo padrão para `logloop.md`?**
 Para reforçar o branding da suíte e manter a consistência visual com o nome da ferramenta.
 
-**2. Qual o impacto da execução de comandos Git no tempo de resposta da CLI?**
-Mínimo. Usamos comandos leves (`rev-parse`, `branch --show-current`) que executam em milissegundos.
+**3. Qual o roadmap para integrações futuras?**
+Com a v0.4.0 estável (IDs, Timeline e Summary), o foco agora é a **Integração com Editores (VS Code Extension)** e a criação de um **Dashboard Web** que consiga ler os arquivos Markdown locais para gerar gráficos de produtividade mais avançados.
 
 **3. Qual o roadmap para integrações futuras?**
 A v2 focará em links bidirecionais automáticos e UUIDs para cada entrada de log, facilitando a indexação e busca.
