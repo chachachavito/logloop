@@ -5,7 +5,7 @@ const os = require('os');
 const core = require('../../src/core');
 
 describe('Resilience & High-Performance Suite', () => {
-  const testDir = path.join(os.tmpdir(), `logloop-elite-${Date.now()}`);
+  const testDir = path.join(os.tmpdir(), `logloop-fortress-${Date.now()}`);
   const binPath = path.join(__dirname, '../../bin/index.js');
   const logFile = path.join(testDir, 'logloop.md');
   const lockFile = `${logFile}.lock`;
@@ -22,17 +22,21 @@ describe('Resilience & High-Performance Suite', () => {
     }
   });
 
-  test('should handle high-frequency sequential writes', () => {
+  beforeEach(() => {
+    core.resetLocks();
+  });
+
+  test('should handle intensive high-frequency sequential writes', () => {
     const config = { storage: 'repo', userName: 'shared' };
-    const numWrites = 20;
+    const numWrites = 50; // Aumentado para validar cache
     
-    // Garantir que o cwd é o testDir para getLogFile funcionar
     const originalCwd = process.cwd();
     process.chdir(testDir);
     
     try {
       for (let i = 0; i < numWrites; i++) {
-        core.saveLog(`Sequential write ${i}`, config);
+        const success = core.saveLog(`Intensive write ${i}`, config);
+        expect(success).toBe(true);
       }
 
       const content = fs.readFileSync(logFile, 'utf8');

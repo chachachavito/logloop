@@ -9,12 +9,15 @@ jest.mock('fs', () => ({
   readFileSync: jest.fn(),
   writeFileSync: jest.fn(),
   appendFileSync: jest.fn(),
+  writeSync: jest.fn(),
+  fsyncSync: jest.fn(),
+  closeSync: jest.fn(),
   renameSync: jest.fn(),
-  openSync: jest.fn(),
+  openSync: jest.fn(() => 1),
   unlinkSync: jest.fn(),
   realpathSync: jest.fn(p => p),
   mkdirSync: jest.fn(),
-  statSync: jest.fn()
+  statSync: jest.fn(() => ({ size: 0 }))
 }));
 jest.mock('../../src/git', () => ({
   getGitMetadata: () => ({ hash: 'abc123', branch: 'main' }),
@@ -35,10 +38,9 @@ describe('Integration: User Workflow', () => {
     const note = 'deploying to prod';
     saveLog(note, config);
     
-    expect(fs.appendFileSync).toHaveBeenCalledWith(
-      expect.stringContaining('logloop.md'),
-      expect.stringContaining('deploying to prod'),
-      'utf8'
+    expect(fs.writeSync).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.stringContaining('deploying to prod')
     );
 
     learn('deploying to prod', 'action', 'action', 'message');
@@ -52,11 +54,11 @@ describe('Integration: User Workflow', () => {
 
   test('should handle IDs across saves and retrievals', () => {
     saveLog('Fix bug', config);
-    const writtenEntry = fs.appendFileSync.mock.calls[0][1];
+    const writtenEntry = fs.writeSync.mock.calls[0][1];
     const idMatch = writtenEntry.match(/id: ([0-9a-f]{8})/);
     const id = idMatch[1];
 
-    fs.readFileSync.mockReturnValue(`\n## [2026-01-01]\nid: ${id}\ntype: action\n\nFix bug`);
+    fs.readFileSync.mockReturnValue(`\n## [2026-01-01T00:00:00.000Z]\nid: ${id}\ntype: action\n\nFix bug`);
     
     const logs = getRecentLogs(config, 1);
     expect(logs[0].id).toBe(id);
