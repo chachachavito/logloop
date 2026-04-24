@@ -1,14 +1,14 @@
-# Self-Log
+# Logloop
 
-> Git shows what changed. Self-Log shows why.
+> Continuous loop of personal logs in the terminal.
 
-Self-Log is a minimal CLI that captures the reasoning behind your code — in real time, without leaving your terminal.
+Logloop is a minimal CLI that captures the reasoning behind your code — in real time, without leaving your terminal.
 
 It turns your project history into a living narrative of decisions, not just diffs.
 
 ---
 
-## Why Self-Log?
+## Why Logloop?
 
 Git is great at tracking what changed.
 
@@ -17,44 +17,50 @@ But it rarely answers:
 - What trade-offs were considered?
 - What problem were we actually solving?
 
-Self-Log fixes that by making it frictionless to document your thinking as you work.
+Logloop fixes that by making it frictionless to document your thinking as you work.
 
 ---
 
 ## Installation
 
 ```bash
-npm install -g self-log
+npm install -g logloop
 ```
 
 ---
 
-Self-Log is designed to stay open alongside your code.
+Logloop is designed to stay open alongside your code.
 
 ### Continuous Mode (The Core Experience)
 Run without arguments to enter the interactive loop:
 ```bash
-self-log
+logloop
 ```
 This keeps your recent history visible and stays ready for your next thought. It's the "black box" for your development process.
 
 ### One-shot Mode
 For a quick note without entering the loop:
 ```bash
-self-log "Switched to native fetch"
+logloop "Switched to native fetch"
+```
+
+### Global History
+List all your local projects and their activity:
+```bash
+logloop list
 ```
 
 ---
 
 ## What happens?
 
-Self-Log automates the context capture:
+Logloop automates the context capture:
 
 - **Semantic Classification**: Automatically tags entry as `decision`, `question`, `noise` or `thought`.
 - **Mood Heuristics**: Detects emotional state via keywords and emoticons (zero-friction).
 - **Git Linking**: Attaches current `HEAD` hash and branch name.
 - **ISO Timestamps**: Precise temporal tracking.
-- **Append-only storage**: Persists everything to `SELF-LOG.md`.
+- **Append-only storage**: Persists everything to `logloop.md`.
 
 ---
 
@@ -89,27 +95,36 @@ Captures emotional context without manual prompts:
 
 ### Atomic Operations
 Sync your thoughts with your code:
-- `self-log --commit`: Logs and creates a Git commit in one step.
+- `logloop --commit`: Logs and creates a Git commit in one step.
 - `--no-commit`: Overrides `autoCommit: true` in config for one-off logs.
 
 ---
 
 ## Configuration
 
-Self-Log uses a `.selflogrc` file for persistent settings.
+Logloop uses a cascading configuration system. It looks for a `.loglooprc` file in your project root, falling back to a global config in `~/.logloop/config.json`.
 
 ```json
 {
+  "userName": "your-name",
+  "storage": "repo",
   "autoCommit": false,
-  "moodTracking": true
+  "moodTracking": true,
+  "lang": "en"
 }
 ```
+
+### Storage Modes
+- **repo** (Default): Saves logs to `logloop.{user}.md` in the current directory. Perfect for team transparency.
+- **local**: Saves logs to `~/.logloop/logs/{project}.{user}.md`. Ideal for private journals in public repositories.
+
+> **Tip**: Use the `/s` slash command inside the interactive loop to hot-swap between storage modes. This allows you to maintain a dual-channel history: one for your team (Shared) and one for yourself (Private).
 
 ---
 
 ## Philosophy
 
-Self-Log is not documentation. It is memory.
+Logloop is not documentation. It is memory.
 
 A lightweight layer on top of Git that captures **intent**, **reasoning**, and **context**.
 
@@ -117,7 +132,7 @@ A lightweight layer on top of Git that captures **intent**, **reasoning**, and *
 
 ## Output file
 
-Default: `SELF-LOG.md`
+Default: `logloop.md`
 
 ---
 
@@ -126,6 +141,7 @@ Default: `SELF-LOG.md`
 - [x] Semantic Classification (v1)
 - [x] Git HEAD/Branch linking
 - [x] Mood Tracking Heuristics
+- [ ] Advanced Heuristics (Negation handling, Fuzzy matching)
 - [ ] Log IDs (UUID)
 - [ ] Timeline visualization
 - [ ] AI-powered summaries

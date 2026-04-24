@@ -23,7 +23,7 @@ function getGitMetadata() {
 function commitLog(file, message) {
   try {
     execSync(`git add "${file}"`);
-    execSync(`git commit -m "self-log: ${message.replace(/"/g, '\\"')}"`);
+    execSync(`git commit -m "logloop: ${message.replace(/"/g, '\\"')}"`);
     return true;
   } catch (e) {
     return false;
@@ -40,9 +40,18 @@ function isDirty() {
   }
 }
 
+function getGitUser() {
+  try {
+    return execSync('git config user.name', { stdio: 'pipe' }).toString().trim();
+  } catch (e) {
+    return null;
+  }
+}
+
 module.exports = {
   isGitRepo,
   getGitMetadata,
   commitLog,
-  isDirty
+  isDirty,
+  getGitUser
 };

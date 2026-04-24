@@ -1,0 +1,40 @@
+{
+  "ui": {
+    "title": "LOGLOOP INTERACTIVE",
+    "version": "v1.0.0",
+    "branch": "Branch:",
+    "config": "Config:",
+    "commit": "Commit:",
+    "mood": "Mood:",
+    "noLogs": "No logs recorded yet.",
+    "footerDivider": "─────────────────────────────────────────────────",
+    "helpTitle": "HELP MENU:",
+    "cmdCommit": "/c - Toggle Auto-commit",
+    "cmdMood": "/m - Toggle Mood Tracking",
+    "cmdStorage": "/s - Toggle Storage (Repo/Local)",
+    "cmdEdit": "/e - Open logloop.md for editing",
+    "cmdQuit": "/q - Quit loop",
+    "cmdHelpClose": "/h - Close help / Zen Mode",
+    "promptHelp": "Type your note or /h for help",
+    "promptName": "Enter your name for the log: ",
+    "unknownCommand": "Unknown command.",
+    "errorEditor": "Error opening editor.",
+    "goodbye": "Goodbye!"
+  },
+  "cli": {
+    "usage": "Usage: logloop [message] [options]",
+    "options": "Options:",
+    "optCommit": "--commit       Force git commit",
+    "optNoCommit": "--no-commit    Disable git commit (overrides config)",
+    "optMood": "--mood <mood>  Set mood manually",
+    "optVersion": "-v, --version  Show version",
+    "optHelp": "-h, --help     Show help",
+    "configTitle": "Configuration:",
+    "configUsage": "  logloop config get <key> | set <key> <value>",
+    "listHeader": "PROJECT              ENTRIES    LAST UPDATED",
+    "noLocalLogs": "No local logs found in ~/.logloop/logs/",
+    "moodDetected": "[logloop] Mood detected:",
+    "gitWarning": "Warning: Not a git repository. Commit ignored.",
+    "commitSuccess": "✓ Commit successful."
+  }
+}

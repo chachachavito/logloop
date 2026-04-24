@@ -1,10 +1,10 @@
 {
-  "name": "self-log",
+  "name": "logloop",
   "version": "0.1.0",
-  "description": "Git shows what changed. Self-Log shows why.",
+  "description": "Continuous loop of personal logs in the terminal",
   "main": "bin/index.js",
   "bin": {
-    "self-log": "bin/index.js"
+    "logloop": "bin/index.js"
   },
   "files": [
     "bin/",
@@ -25,5 +25,5 @@
     "engineering"
   ],
   "author": "bruchave",
-  "license": "ISC"
+  "license": "MIT"
 }

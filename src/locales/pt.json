@@ -1,0 +1,40 @@
+{
+  "ui": {
+    "title": "LOGLOOP INTERATIVO",
+    "version": "v1.0.0",
+    "branch": "Branch:",
+    "config": "Config:",
+    "commit": "Commit:",
+    "mood": "Humor:",
+    "noLogs": "Nenhum log registrado ainda.",
+    "footerDivider": "─────────────────────────────────────────────────",
+    "helpTitle": "MENU DE AJUDA:",
+    "cmdCommit": "/c - Alternar Auto-commit",
+    "cmdMood": "/m - Alternar Mood Tracking",
+    "cmdStorage": "/s - Alternar Armazenamento (Repo/Local)",
+    "cmdEdit": "/e - Abrir logloop.md para editar",
+    "cmdQuit": "/q - Sair",
+    "cmdHelpClose": "/h - Fechar ajuda / Zen Mode",
+    "promptHelp": "Digite sua nota ou /h para ajuda",
+    "promptName": "Digite seu nome para o log: ",
+    "unknownCommand": "Comando desconhecido.",
+    "errorEditor": "Erro ao abrir editor.",
+    "goodbye": "Até logo!"
+  },
+  "cli": {
+    "usage": "Uso: logloop [mensagem] [opções]",
+    "options": "Opções:",
+    "optCommit": "--commit       Forçar git commit",
+    "optNoCommit": "--no-commit    Desabilitar git commit (sobrescreve config)",
+    "optMood": "--mood <mood>  Definir humor manualmente",
+    "optVersion": "-v, --version  Mostrar versão",
+    "optHelp": "-h, --help     Mostrar ajuda",
+    "configTitle": "Configuração:",
+    "configUsage": "  logloop config get <key> | set <key> <value>",
+    "listHeader": "PROJETO              NOTAS      ÚLTIMA ATUALIZAÇÃO",
+    "noLocalLogs": "Nenhum log local encontrado em ~/.logloop/logs/",
+    "moodDetected": "[logloop] Humor detectado:",
+    "gitWarning": "Aviso: Não é um repositório git. Commit ignorado.",
+    "commitSuccess": "✓ Commit realizado com sucesso."
+  }
+}

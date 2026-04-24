@@ -6,3 +6,6 @@ yarn-error.log*
 Thumbs.db
 scratch/
 .env
+
+# Self-Log files
+SELF-LOG*.md
