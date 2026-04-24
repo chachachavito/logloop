@@ -20,6 +20,12 @@ function render(logs, state) {
   process.stdout.write('\x1Bc');
   const config = loadConfig();
   
+  if (!state.showHelp) {
+    const storageMode = config.storage === 'local' ? '\x1b[33mLOCAL\x1b[0m' : '\x1b[32mREPO\x1b[0m';
+    console.log(`\x1b[90mStorage:\x1b[0m ${storageMode}`);
+    console.log(`\x1b[90m${'─'.repeat(50)}\x1b[0m\n`);
+  }
+
   if (state.showHelp) {
     const git = getGitMetadata() || { branch: 'no-repo' };
     const dirty = isDirty() ? '\x1b[31m(dirty)\x1b[0m' : '\x1b[32m(clean)\x1b[0m';
@@ -37,10 +43,11 @@ function render(logs, state) {
     console.log(`  \x1b[90m${t('ui.noLogs')}\x1b[0m`);
   } else {
     logs.forEach(log => {
-      const emoji = moodMap[log.mood] || '•';
       const color = log.type === 'decision' ? '\x1b[1;33m' : 
-                    log.type === 'question' ? '\x1b[1;34m' : '\x1b[36m';
-      console.log(` \x1b[90m${log.time}\x1b[0m ${emoji} ${color}[${log.type.charAt(0).toUpperCase()}]\x1b[0m ${log.note}`);
+                    log.type === 'question' ? '\x1b[1;34m' : 
+                    log.type === 'action' ? '\x1b[1;32m' : '\x1b[36m';
+      const moodEmoji = moodMap[log.mood] || '';
+      console.log(` \x1b[90m${log.time}\x1b[0m ${color}[${log.type.toUpperCase()}]\x1b[0m ${moodEmoji} ${log.note}`);
     });
   }
 
@@ -50,9 +57,11 @@ function render(logs, state) {
     console.log(` \x1b[1m${t('ui.cmdCommit')}\x1b[0m`);
     console.log(` \x1b[1m${t('ui.cmdMood')}\x1b[0m`);
     console.log(` \x1b[1m${t('ui.cmdStorage')}\x1b[0m`);
-    console.log(` \x1b[1m${t('ui.cmdEdit')}\x1b[0m`);
-    console.log(` \x1b[1m${t('ui.cmdQuit')}\x1b[0m`);
-    console.log(` \x1b[1m${t('ui.cmdHelpClose')}\x1b[0m`);
+    console.log(` \x1b[1m/as <cat>\x1b[0m  ${t('ui.cmdAs') || 'Reclassify last log and learn'}`);
+    console.log(` \x1b[1m/feel <m>\x1b[0m  ${t('ui.cmdFeel') || 'Correct last mood and learn'}`);
+    console.log(` \x1b[1m/e\x1b[0m          ${t('ui.cmdEdit')}`);
+    console.log(` \x1b[1m/q\x1b[0m          ${t('ui.cmdQuit')}`);
+    console.log(` \x1b[1m/h\x1b[0m          ${t('ui.cmdHelpClose')}`);
     console.log(`\x1b[90m${'─'.repeat(50)}\x1b[0m`);
   } else {
     console.log(`\x1b[90m${t('ui.promptHelp')}\x1b[0m`);
@@ -60,7 +69,12 @@ function render(logs, state) {
 }
 
 function startLoop(initialConfig, moodFlag, initialShouldCommit) {
-  const state = { autoCommit: initialShouldCommit, moodTracking: initialConfig.moodTracking, showHelp: false };
+  const state = { 
+    autoCommit: initialShouldCommit, 
+    moodTracking: initialConfig.moodTracking, 
+    showHelp: false,
+    lastInput: null 
+  };
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout, terminal: true });
   let watcher = null;
 
@@ -88,12 +102,45 @@ function startLoop(initialConfig, moodFlag, initialShouldCommit) {
     if (!input) return rl.prompt();
 
     if (input.startsWith('/')) {
-      const cmd = input.toLowerCase();
+      const parts = input.split(' ');
+      const cmd = parts[0].toLowerCase();
+      const arg = parts[1];
+
       if (cmd === '/c' || cmd === '/commit') state.autoCommit = !state.autoCommit;
       else if (cmd === '/m' || cmd === '/mood') state.moodTracking = !state.moodTracking;
       else if (cmd === '/h' || cmd === '/help') state.showHelp = !state.showHelp;
       else if (cmd === '/q' || cmd === '/quit') return rl.close();
-      else if (cmd === '/s' || cmd === '/storage') {
+      else if (cmd === '/as') {
+        if (!state.lastInput) {
+          console.log(`\x1b[31mNo recent log to reclassify\x1b[0m`);
+        } else if (!arg) {
+          console.log(`\x1b[31mUsage: /as <category>\x1b[0m`);
+        } else {
+          const { updateLastLog } = require('./core');
+          const { learn } = require('./classifier');
+          if (updateLastLog({ type: arg })) {
+            learn(state.lastInput, arg, arg, 'message');
+            console.log(`\x1b[32mLast log reclassified as ${arg} and learned! ✨\x1b[0m`);
+          }
+        }
+        setTimeout(refresh, 1000);
+        return;
+      } else if (cmd === '/feel') {
+        if (!state.lastInput) {
+          console.log(`\x1b[31mNo recent log to re-mood\x1b[0m`);
+        } else if (!arg) {
+          console.log(`\x1b[31mUsage: /feel <mood>\x1b[0m`);
+        } else {
+          const { updateLastLog } = require('./core');
+          const { learn } = require('./classifier');
+          if (updateLastLog({ mood: arg })) {
+            learn(state.lastInput, arg, arg, 'mood');
+            console.log(`\x1b[32mLast log mood updated to ${arg} and learned! ✨\x1b[0m`);
+          }
+        }
+        setTimeout(refresh, 1000);
+        return;
+      } else if (cmd === '/s' || cmd === '/storage') {
         const config = loadConfig();
         config.storage = config.storage === 'local' ? 'repo' : 'local';
         saveConfig(config);
@@ -119,7 +166,11 @@ function startLoop(initialConfig, moodFlag, initialShouldCommit) {
       return;
     }
 
-    saveLog(input, { shouldCommit: state.autoCommit, mood: moodFlag || (state.moodTracking && classifyMood(input) !== 'unidentified' ? classifyMood(input) : null) });
+    const moodData = state.moodTracking ? classifyMood(input) : null;
+    const finalMood = moodFlag || (moodData && moodData.category !== 'neutral' ? moodData.category : null);
+    
+    saveLog(input, { shouldCommit: state.autoCommit, mood: finalMood });
+    state.lastInput = input;
     state.showHelp = false;
     refresh();
   });

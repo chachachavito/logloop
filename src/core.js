@@ -32,8 +32,10 @@ function saveLog(note, options = {}) {
   const branch = gitMeta ? gitMeta.branch : 'null';
   
   const timestamp = new Date().toISOString();
-  const type = classifyMessage(note);
-  const moodLine = options.mood ? `mood: ${options.mood}\n` : '';
+  const classification = classifyMessage(note);
+  const type = classification.category;
+  const moodResult = options.mood ? (typeof options.mood === 'object' ? options.mood.category : options.mood) : null;
+  const moodLine = moodResult ? `mood: ${moodResult}\n` : '';
 
   const entry = `\n## [${timestamp}]\ncommit: ${hash}\nbranch: ${branch}\ntype: ${type}\n${moodLine}\n${note}\n`;
 
@@ -94,8 +96,40 @@ function getRecentLogs(limit = 5) {
   });
 }
 
+function updateLastLog(updates = {}) {
+  const logFile = getLogFile();
+  if (!fs.existsSync(logFile)) return false;
+
+  let content = fs.readFileSync(logFile, 'utf8');
+  const sections = content.split('\n## [');
+  if (sections.length < 2) return false;
+
+  let lastSection = sections[sections.length - 1];
+  const lines = lastSection.split('\n');
+
+  if (updates.type) {
+    const typeIndex = lines.findIndex(l => l.startsWith('type: '));
+    if (typeIndex > -1) lines[typeIndex] = `type: ${updates.type}`;
+  }
+
+  if (updates.mood) {
+    const moodIndex = lines.findIndex(l => l.startsWith('mood: '));
+    if (moodIndex > -1) lines[moodIndex] = `mood: ${updates.mood}`;
+    else {
+      // Se não tinha mood, insere antes da primeira linha vazia (que separa metadados da nota)
+      const emptyLineIndex = lines.findIndex((l, i) => i > 0 && l.trim() === '');
+      lines.splice(emptyLineIndex, 0, `mood: ${updates.mood}`);
+    }
+  }
+
+  sections[sections.length - 1] = lines.join('\n');
+  fs.writeFileSync(logFile, sections.join('\n## ['), 'utf8');
+  return true;
+}
+
 module.exports = {
   saveLog,
   getRecentLogs,
-  getLogFile
+  getLogFile,
+  updateLastLog
 };
