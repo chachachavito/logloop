@@ -43,11 +43,9 @@ function render(logs, state) {
     console.log(`  \x1b[90m${t('ui.noLogs')}\x1b[0m`);
   } else {
     logs.forEach(log => {
-      const color = log.type === 'decision' ? '\x1b[1;33m' : 
-                    log.type === 'question' ? '\x1b[1;34m' : 
-                    log.type === 'action' ? '\x1b[1;32m' : '\x1b[36m';
-      const moodEmoji = moodMap[log.mood] || '';
-      console.log(` \x1b[90m${log.time}\x1b[0m ${color}[${log.type.toUpperCase()}]\x1b[0m ${moodEmoji} ${log.note}`);
+      const moodEmoji = moodMap[log.mood] || '📝';
+      const typeInitial = log.type ? log.type[0].toUpperCase() : 'T';
+      console.log(` \x1b[90m${log.time}\x1b[0m \x1b[2m[#${log.id}]\x1b[0m ${moodEmoji} \x1b[1m[${typeInitial}]\x1b[0m ${log.note}`);
     });
   }
 
@@ -59,6 +57,8 @@ function render(logs, state) {
     console.log(` \x1b[1m${t('ui.cmdStorage')}\x1b[0m`);
     console.log(` \x1b[1m/as <cat>\x1b[0m  ${t('ui.cmdAs') || 'Reclassify last log and learn'}`);
     console.log(` \x1b[1m/feel <m>\x1b[0m  ${t('ui.cmdFeel') || 'Correct last mood and learn'}`);
+    console.log(` \x1b[1m/brain-out <f>\x1b[0m Export brain to file`);
+    console.log(` \x1b[1m/brain-in <f>\x1b[0m Import brain from file`);
     console.log(` \x1b[1m/e\x1b[0m          ${t('ui.cmdEdit')}`);
     console.log(` \x1b[1m/q\x1b[0m          ${t('ui.cmdQuit')}`);
     console.log(` \x1b[1m/h\x1b[0m          ${t('ui.cmdHelpClose')}`);
@@ -105,6 +105,28 @@ function startLoop(initialConfig, moodFlag, initialShouldCommit) {
       const parts = input.split(' ');
       const cmd = parts[0].toLowerCase();
       const arg = parts[1];
+
+      if (cmd === '/brain-out') {
+        const dest = arg || 'logloop-brain.json';
+        const { exportMemory } = require('./memory');
+        if (exportMemory(dest)) console.log(`\x1b[32mBrain exported to ${dest}\x1b[0m`);
+        setTimeout(refresh, 1000);
+        return;
+      }
+
+      if (cmd === '/brain-in') {
+        const source = arg;
+        if (!source) {
+          console.log('\x1b[31mPlease provide a file path\x1b[0m');
+          setTimeout(refresh, 1000);
+          return;
+        }
+        const { importMemory } = require('./memory');
+        if (importMemory(source)) console.log('\x1b[32mBrain synchronized successfully!\x1b[0m');
+        else console.log('\x1b[31mFile not found\x1b[0m');
+        setTimeout(refresh, 1000);
+        return;
+      }
 
       if (cmd === '/c' || cmd === '/commit') state.autoCommit = !state.autoCommit;
       else if (cmd === '/m' || cmd === '/mood') state.moodTracking = !state.moodTracking;

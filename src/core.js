@@ -5,6 +5,10 @@ const { classifyMessage, classifyMood } = require('./classifier');
 const { t } = require('./i18n');
 const { loadConfig, GLOBAL_DIR } = require('./config');
 
+function generateId() {
+  return Math.random().toString(16).substring(2, 6);
+}
+
 function getLogFile() {
   const config = loadConfig();
   const user = config.userName || 'shared';
@@ -30,6 +34,7 @@ function saveLog(note, options = {}) {
   const gitMeta = getGitMetadata();
   const hash = gitMeta ? gitMeta.hash : 'null';
   const branch = gitMeta ? gitMeta.branch : 'null';
+  const id = generateId();
   
   const timestamp = new Date().toISOString();
   const classification = classifyMessage(note);
@@ -37,7 +42,7 @@ function saveLog(note, options = {}) {
   const moodResult = options.mood ? (typeof options.mood === 'object' ? options.mood.category : options.mood) : null;
   const moodLine = moodResult ? `mood: ${moodResult}\n` : '';
 
-  const entry = `\n## [${timestamp}]\ncommit: ${hash}\nbranch: ${branch}\ntype: ${type}\n${moodLine}\n${note}\n`;
+  const entry = `\n## [${timestamp}]\nid: ${id}\ncommit: ${hash}\nbranch: ${branch}\ntype: ${type}\n${moodLine}\n${note}\n`;
 
   try {
     const logFile = getLogFile();
@@ -87,8 +92,12 @@ function getRecentLogs(limit = 5) {
     const emptyLineIndex = lines.findIndex((l, i) => i > 0 && l.trim() === '');
     const note = lines.slice(emptyLineIndex + 1).join('\n').trim();
     
+    const idLine = lines.find(l => l.startsWith('id: '));
+    const id = idLine ? idLine.replace('id: ', '') : 'null';
+
     return {
       time: new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      id,
       type,
       mood,
       note: note.length > 60 ? note.substring(0, 57) + '...' : note
