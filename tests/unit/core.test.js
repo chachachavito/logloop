@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { saveLog, getRecentLogs } = require('../../src/core');
+const { saveLog, getRecentLogs, getStats } = require('../../src/core');
 
 jest.mock('fs');
 jest.mock('../../src/git', () => ({
@@ -37,5 +37,28 @@ test note
 
     const logs = getRecentLogs(1);
     expect(logs[0].id).toBe('a1b2');
+  });
+
+  test('should generate correct statistics from log content', () => {
+    const mockContent = `
+## [2026-04-24T10:00:00.000Z]
+id: a1b2
+type: action
+mood: happy
+
+## [2026-04-24T11:00:00.000Z]
+id: c3d4
+type: decision
+mood: happy
+`;
+    fs.existsSync.mockReturnValue(true);
+    fs.readFileSync.mockReturnValue(mockContent);
+
+    const stats = getStats(1);
+    expect(stats.total).toBe(2);
+    expect(stats.categories.action).toBe(1);
+    expect(stats.categories.decision).toBe(1);
+    expect(stats.moods.happy).toBe(2);
+    expect(stats.timeline['2026-04-24'].count).toBe(2);
   });
 });
