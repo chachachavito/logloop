@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Self-Log | Documentation</title>
+  <style>
+    :root {
+      --primary: #24292f;
+      --background: #ffffff;
+      --sidebar: #f5f5f5;
+      --text: #212529;
+      --muted: #6c757d;
+      --border: #dee2e6;
+      --tab-active: #1f3a5f;
+      --focus: #8ec5ff;
+      --row-hover: #f8f9fa;
+      --danger-soft: #fdecec;
+      --shadow-soft: 0 6px 18px rgba(33, 37, 41, 0.08);
+    }
+
+    /* Terminal Mockup Styles */
+    .terminal-window {
+      background: #0d1117;
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+      overflow: hidden;
+      margin-bottom: 32px;
+      border: 1px solid #30363d;
+    }
+    .terminal-header {
+      background: #161b22;
+      padding: 12px 16px;
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid #30363d;
+    }
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .dot-r { background: #ff5f56; }
+    .dot-y { background: #ffbd2e; }
+    .dot-g { background: #27c93f; }
+    .terminal-body {
+      padding: 24px;
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      font-size: 13px;
+      color: #e6edf3;
+      line-height: 1.6;
+    }
+    .t-cmd { color: #7ee787; }
+    .t-out { color: #8b949e; }
+    .t-cursor {
+      display: inline-block;
+      width: 8px;
+      height: 15px;
+      background: #58a6ff;
+      margin-left: 4px;
+      animation: blink 1s infinite;
+      vertical-align: middle;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* Tab Logic Utility */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      font-size: 14px;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.5;
+      color: var(--text);
+      background: var(--background);
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    .app-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 248px 1fr;
+    }
+
+    .sidebar {
+      padding: 24px 16px;
+      border-right: 1px solid var(--border);
+      background: var(--sidebar);
+    }
+
+    .brand {
+      margin-bottom: 24px;
+      padding: 0 8px;
+    }
+
+    .brand-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      color: #fff;
+      background: var(--primary);
+      font-weight: 700;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .brand p {
+      margin: 4px 0 0;
+      color: var(--muted);
+    }
+
+    .nav-group {
+      display: grid;
+      gap: 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      color: var(--muted);
+      text-transform: lowercase;
+    }
+
+    .nav-item:hover {
+      background: #ebebeb;
+      border-color: var(--border);
+      color: var(--text);
+    }
+
+    .nav-item.active {
+      background: #ffffff;
+      border-color: var(--border);
+      color: var(--text);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .nav-icon {
+      width: 18px;
+      text-align: center;
+      color: var(--primary);
+      font-size: 0.95rem;
+    }
+
+    .content {
+      padding: 24px 32px 40px;
+    }
+
+    .breadcrumbs {
+      margin-bottom: 14px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .breadcrumbs span:last-child {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .header-copy h2 {
+      margin: 0;
+      font-size: 2rem;
+      font-weight: 700;
+    }
+
+    .header-copy p {
+      margin: 6px 0 0;
+      max-width: 760px;
+      color: var(--muted);
+    }
+
+    .button-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      padding: 0 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+
+    .button:hover {
+      box-shadow: var(--shadow-soft);
+    }
+
+    .button.primary {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .button.primary:hover {
+      background: #e6353d;
+    }
+
+    .button.secondary:hover {
+      background: #f8f9fa;
+      border-color: #cfd4da;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 18px;
+      margin-bottom: 22px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+    }
+
+    .tab {
+      padding: 8px 0;
+      border: 0;
+      border-bottom: 2px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .tab:hover {
+      color: #17304f;
+    }
+
+    .tab.active {
+      border-bottom-color: var(--tab-active);
+      color: var(--tab-active);
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .panel {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .panel-header h3 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .panel-header p {
+      margin: 4px 0 0;
+      color: var(--muted);
+    }
+
+    .package-list {
+      display: grid;
+    }
+
+    .package-item {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto auto;
+      gap: 14px;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      background: #fff;
+      transition: background 0.18s ease, border-color 0.18s ease;
+    }
+
+    .package-item:hover {
+      background: var(--row-hover);
+    }
+
+    .package-item:last-child {
+      border-bottom: 0;
+    }
+
+    .pkg-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: #fff1f2;
+      color: var(--primary);
+      font-weight: 700;
+      box-shadow: inset 0 0 0 1px #ffd6d8;
+    }
+
+    .pkg-meta strong {
+      display: block;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .pkg-meta span {
+      color: var(--muted);
+    }
+
+    .pkg-version {
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 0 10px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #fff;
+      font-size: 0.86rem;
+      color: var(--text);
+    }
+
+    .badge.private {
+      background: #f8f9fa;
+    }
+
+    .badge.public {
+      background: #eef8f0;
+      border-color: #cfe7d4;
+    }
+
+    .sidebar-panel {
+      display: grid;
+      gap: 16px;
+    }
+
+    .form-card,
+    .status-card {
+      padding: 18px;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    .field:last-child {
+      margin-bottom: 0;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 6px;
+      color: #495057;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .field input {
+      width: 100%;
+      min-height: 38px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #f8f9fa;
+      color: var(--text);
+    }
+
+    .field input:focus {
+      border-color: var(--focus);
+      background: #fff;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(142, 197, 255, 0.2);
+    }
+
+    .status-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .status-line:last-child {
+      padding-bottom: 0;
+      border-bottom: 0;
+    }
+
+    .status-line span:first-child {
+      color: var(--muted);
+    }
+
+    .alert {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+      padding: 14px 16px;
+      border: 1px solid #f5c2c7;
+      border-radius: 10px;
+      background: var(--danger-soft);
+      color: #842029;
+    }
+
+    .alert strong {
+      display: block;
+      margin-bottom: 2px;
+      font-weight: 700;
+    }
+
+    .empty-state {
+      padding: 28px 20px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .loading {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid #d0d7de;
+      border-top-color: var(--tab-active);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @media (max-width: 980px) {
+      .app-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .content {
+        padding: 20px 16px 32px;
+      }
+
+      .header-row,
+      .panel-header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .package-item {
+        grid-template-columns: auto 1fr;
+      }
+
+      .pkg-version,
+      .badge {
+        grid-column: 2;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Settings navigation">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">Log</div>
+        <h1>Self-Log</h1>
+        <p>Capturing the reasoning behind code</p>
+      </div>
+
+    </aside>
+
+    <main class="content">
+      <div class="breadcrumbs" aria-label="Breadcrumb">
+        <span>Docs</span> / <span>Overview</span>
+      </div>
+
+      <div class="header-row">
+        <div class="header-copy">
+          <h2>Git shows what changed. <br><span style="color: var(--muted)">Self-Log shows why.</span></h2>
+          <p>
+            Introducing **v1: Commit Linking**. A CLI that transforms your development log into a traceability map, linking every technical decision directly to your Git history.
+          </p>
+        </div>
+
+        <div class="button-row">
+          <button class="button secondary" type="button">View v1 Release</button>
+          <button class="button primary" type="button">Install v1.0.0</button>
+        </div>
+      </div>
+
+      <div class="tabs" role="tablist" aria-label="Package sections">
+        <button class="tab active" type="button" role="tab" onclick="switchTab('overview', this)">Overview</button>
+        <button class="tab" type="button" role="tab" onclick="switchTab('linking', this)">Commit Linking</button>
+        <button class="tab" type="button" role="tab" onclick="switchTab('faq', this)">FAQ</button>
+        <button class="tab" type="button" role="tab" onclick="switchTab('roadmap', this)">Roadmap</button>
+      </div>
+
+      <div id="overview" class="tab-content active">
+        <div class="terminal-window">
+          <div class="terminal-header">
+            <div class="dot dot-r"></div>
+            <div class="dot dot-y"></div>
+            <div class="dot dot-g"></div>
+          </div>
+          <div class="terminal-body">
+            <div><span class="t-out">$</span> <span class="t-cmd">self-log "Refactored auth logic for scalability"</span></div>
+            <div class="t-out"> [self-log] Entry captured.</div>
+            <div class="t-out"> [self-log] Linked to commit: <span style="color: #d2a8ff">2cc9be8c15fc9045d72decbdabaea71caca8082d</span> (main)</div>
+            <div class="t-out"> [self-log] Saved to SELF-LOG.md<span class="t-cursor"></span></div>
+          </div>
+        </div>
+
+        <div class="main-grid">
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Traceability & Context</h3>
+                <p>The gap between the terminal and your intent, finally closed.</p>
+              </div>
+            </div>
+
+            <div class="package-list">
+              <article class="package-item">
+                <div class="pkg-icon" aria-hidden="true">🔗</div>
+                <div class="pkg-meta">
+                  <strong>Commit Linking</strong>
+                  <span>Every note is automatically anchored to the current <code>commit hash</code> and <code>branch</code>.</span>
+                </div>
+                <div class="badge public">v1 Feature</div>
+              </article>
+
+              <article class="package-item">
+                <div class="pkg-icon" aria-hidden="true">⚛</div>
+                <div class="pkg-meta">
+                  <strong>Atomic Operations</strong>
+                  <span>Use <code>--commit</code> to log your thought and commit code in one single step.</span>
+                </div>
+                <div class="badge public">Productivity</div>
+              </article>
+
+              <article class="package-item">
+                <div class="pkg-icon" aria-hidden="true">📁</div>
+                <div class="pkg-meta">
+                  <strong>Smart Defaults</strong>
+                  <span>Standardized on <code>SELF-LOG.md</code> to ensure zero conflict with existing workflows.</span>
+                </div>
+                <div class="badge" style="background: #f8f9fa;">Branding</div>
+              </article>
+            </div>
+
+            <div class="panel-header" style="border-top: 1px solid var(--border);">
+              <h3>Common Questions</h3>
+            </div>
+            <div class="package-list">
+              <div style="padding: 20px; font-size: 0.95rem; color: var(--text);">
+                <p><strong>Outside a Git repo?</strong> Works normally, setting metadata to <code>null</code>.</p>
+                <p><strong>Commit control?</strong> Disabled by default. Use <code>--commit</code> or configure via <code>.selflogrc</code>.</p>
+                <p><strong>Impact?</strong> Execution takes milliseconds; no overhead to your flow.</p>
+              </div>
+            </div>
+          </section>
+
+          <aside class="sidebar-panel">
+            <section class="panel form-card">
+              <div class="field">
+                <label>Install</label>
+                <input type="text" readonly value="npm install -g self-log" style="font-family: monospace; font-size: 0.85rem;">
+              </div>
+
+              <div class="field">
+                <label>Run</label>
+                <input type="text" readonly value="self-log" style="font-family: monospace; font-size: 0.85rem;">
+              </div>
+
+              <div class="button-row">
+                <button class="button primary" style="width: 100%">Copy install command</button>
+              </div>
+            </section>
+
+            <section class="panel status-card">
+              <label style="font-weight: 700; margin-bottom: 8px; display: block;">Advanced usage</label>
+              <div class="status-line">
+                <span>--commit → log + commit in one step</span>
+              </div>
+              <div class="status-line">
+                <span>--no-commit → force skip git commit</span>
+              </div>
+              <div class="status-line">
+                <span>config set autoCommit true/false</span>
+              </div>
+            </section>
+
+            <div class="alert" role="alert" aria-live="assertive">
+              <div aria-hidden="true">↗</div>
+              <div>
+                <strong>Roadmap</strong>
+                Turn your logs into timelines, summaries, and searchable decision history.
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+
+      <div id="linking" class="tab-content">
+        <section class="panel">
+          <div class="panel-header"><h3>Deep Commit Linking</h3></div>
+          <div style="padding: 24px;">
+            <p>Self-Log v1 unifica o registro histórico ao Git. Ao capturar uma entrada, a ferramenta identifica automaticamente o commit hash e a branch atual.</p>
+          </div>
+        </section>
+      </div>
+
+      <div id="faq" class="tab-content">
+        <section class="panel">
+          <div class="panel-header"><h3>Technical FAQ</h3></div>
+          <div style="padding: 24px;">
+            <p><strong>1. O que acontece se eu usar o Self-Log em um diretório que não é um repositório Git?</strong><br>A ferramenta funcionará normalmente, mas definirá os campos commit e branch como null.</p>
+            <p style="margin-top: 15px;"><strong>2. Como habilito o commit automático?</strong><br>O commit é desativado por padrão. Use <code>self-log config set autoCommit true</code> para mudar o comportamento global.</p>
+          </div>
+        </section>
+      </div>
+
+      <div id="roadmap" class="tab-content">
+        <section class="panel">
+          <div class="panel-header"><h3>Future of Context</h3></div>
+          <div style="padding: 24px;">
+            <p>A v2 focará em links bidirecionais automáticos e UUIDs para cada entrada de log, facilitando a indexação e busca.</p>
+          </div>
+        </section>
+      </div>
+
+    </main>
+  </div>
+  <script>
+    function switchTab(tabId, el) {
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      
+      document.getElementById(tabId).classList.add('active');
+      el.classList.add('active');
+    }
+  </script>
+</body>
+</html>
