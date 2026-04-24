@@ -13,7 +13,7 @@ describe('Config Module', () => {
 
   test('should load default config if no files exist', () => {
     fs.existsSync.mockReturnValue(false);
-    const config = loadConfig();
+    const config = loadConfig(true);
     expect(config.moodTracking).toBe(true);
     expect(config.autoCommit).toBe(false);
   });
@@ -22,7 +22,7 @@ describe('Config Module', () => {
     fs.existsSync.mockImplementation((path) => path.includes('.loglooprc'));
     fs.readFileSync.mockReturnValue(JSON.stringify({ moodTracking: false }));
     
-    const config = loadConfig();
+    const config = loadConfig(true);
     expect(config.moodTracking).toBe(false);
   });
 
@@ -42,17 +42,17 @@ describe('Config Module', () => {
 
   test('should merge global and local configs correctly', () => {
     fs.existsSync.mockReturnValue(true);
-    fs.readFileSync.mockImplementation((path) => {
-      if (path.includes('config.json')) {
-        return JSON.stringify({ autoCommit: true, lang: 'en' });
-      }
-      if (path.includes('.loglooprc')) {
+    fs.readFileSync.mockImplementation((file) => {
+      if (file.includes('.logloop') && file.includes('logs') === false && file.includes('.loglooprc')) {
+        // Global
+        if (file.startsWith('/home/user')) return JSON.stringify({ autoCommit: true, lang: 'en' });
+        // Local
         return JSON.stringify({ lang: 'pt' });
       }
       return '{}';
     });
 
-    const config = loadConfig();
+    const config = loadConfig(true);
     expect(config.autoCommit).toBe(true); // From global
     expect(config.lang).toBe('pt');        // Local overrides global
   });

@@ -1,62 +1,126 @@
 const fs = require('fs');
 const path = require('path');
-const { getGitMetadata, isGitRepo, commitLog } = require('./git');
-const { classifyMessage } = require('./classifier');
-const { t } = require('./i18n');
-const { loadConfig, GLOBAL_DIR } = require('./config');
+
+// Cache de locks adquiridos pelo processo atual (prevenir reentrância)
+const _activeLocks = new Set();
 
 function generateId() {
-  // Entropia: Time (hex) + Random (hex) para evitar qualquer colisão
   const timestamp = Date.now().toString(16).slice(-4);
   const random = Math.random().toString(16).substring(2, 6);
   return `${timestamp}${random}`;
 }
 
-function getLogFile() {
-  const config = loadConfig();
+function getLogFile(config) {
   const user = config.userName || 'shared';
   const userSlug = user.toLowerCase().replace(/\s+/g, '-');
-
+  
+  let logPath;
   if (config.storage === 'local') {
-    const logsDir = path.join(GLOBAL_DIR, 'logs');
-    if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir, { recursive: true });
-    return path.join(logsDir, `${path.basename(process.cwd())}.${userSlug}.md`);
+    const os = require('os');
+    const logsDir = path.join(os.homedir(), '.logloop', 'logs');
+    logPath = path.join(logsDir, `${path.basename(process.cwd())}.${userSlug}.md`);
+  } else {
+    logPath = path.join(process.cwd(), user === 'shared' ? 'logloop.md' : `logloop.${userSlug}.md`);
   }
 
-  return path.join(process.cwd(), user === 'shared' ? 'logloop.md' : `logloop.${userSlug}.md`);
+  // Usar realpathSync para evitar problemas com symlinks (/var vs /private/var no Mac)
+  try {
+    if (fs.existsSync(logPath)) return fs.realpathSync(logPath);
+    // Se o arquivo não existir, resolvemos o diretório pai e juntamos o nome
+    const dir = fs.realpathSync(path.dirname(logPath));
+    return path.join(dir, path.basename(logPath));
+  } catch (e) {
+    return path.resolve(logPath);
+  }
 }
 
+/**
+ * Sistema de trava resiliente com proteção contra reentrância e timeout absoluto.
+ */
 function withLock(logFile, action) {
-  const lockFile = `${logFile}.lock`;
-  let retries = 5;
-  let delay = 100;
+  // Garantir que o logFile seja resolvido para seu caminho real antes de adicionar o .lock
+  const resolvedLogFile = (() => {
+    try {
+      if (fs.existsSync(logFile)) return fs.realpathSync(logFile);
+      const dir = fs.realpathSync(path.dirname(logFile));
+      return path.join(dir, path.basename(logFile));
+    } catch (e) {
+      return path.resolve(logFile);
+    }
+  })();
+  
+  const lockFile = resolvedLogFile + '.lock';
+  
+  if (_activeLocks.has(lockFile)) {
+    return action();
+  }
 
-  let acquired = false;
-  while (retries > 0) {
+  const startTime = Date.now();
+  const timeout = 1000; // Timeout absoluto de 1s
+  let delay = 50;
+
+  let ownsLock = false;
+  while (true) {
     try {
       fs.openSync(lockFile, 'wx');
-      acquired = true;
+      _activeLocks.add(lockFile);
+      ownsLock = true;
       break;
     } catch (e) {
-      retries--;
-      if (retries === 0) throw new Error(t('cli.lockError') || 'File is locked.');
-      const start = Date.now();
-      while (Date.now() - start < delay) {} 
-      delay += 100;
+      if (Date.now() - startTime > timeout) {
+        throw new Error('LOCK_TIMEOUT');
+      }
+      const wait = Date.now();
+      while (Date.now() - wait < delay) {}
+      delay = Math.min(delay + 50, 200);
     }
   }
 
   try {
     return action();
   } finally {
-    if (acquired && fs.existsSync(lockFile)) fs.unlinkSync(lockFile);
+    if (ownsLock) {
+      try {
+        if (fs.existsSync(lockFile)) fs.unlinkSync(lockFile);
+      } catch (e) {}
+      _activeLocks.delete(lockFile);
+    }
   }
 }
 
-function saveLog(note, options = {}) {
-  const logFile = getLogFile();
+/**
+ * Centralização da lógica de escrita segura.
+ */
+function safeWrite(logFile, content, mode = 'append') {
+  const tmpFile = `${logFile}.tmp`;
+  try {
+    if (mode === 'append') {
+      if (!fs.existsSync(logFile)) {
+        fs.writeFileSync(logFile, '# DevLog\n', 'utf8');
+      }
+      fs.appendFileSync(logFile, content, 'utf8');
+    } else {
+      // Escrita atômica via swap para updates
+      fs.writeFileSync(tmpFile, content, 'utf8');
+      fs.renameSync(tmpFile, logFile);
+    }
+    return true;
+  } finally {
+    // Garantir remoção de .tmp após falha
+    if (fs.existsSync(tmpFile)) {
+      try { fs.unlinkSync(tmpFile); } catch (e) {}
+    }
+  }
+}
+
+function saveLog(note, config, options = {}) {
+  const logFile = getLogFile(config);
   
   return withLock(logFile, () => {
+    // Lazy load de git para custo de startup zero se não for usado
+    const { getGitMetadata, isGitRepo, commitLog } = require('./git');
+    const { classifyMessage } = require('./classifier');
+    
     const { hash, branch } = getGitMetadata() || { hash: 'null', branch: 'null' };
     const { category } = classifyMessage(note);
     const id = generateId();
@@ -64,26 +128,20 @@ function saveLog(note, options = {}) {
 
     const entry = `\n## [${new Date().toISOString()}]\nid: ${id}\ncommit: ${hash || 'null'}\nbranch: ${branch || 'null'}\ntype: ${category}\nmood: ${mood}\n\n${note}\n`;
 
-    if (!fs.existsSync(logFile)) {
-      fs.writeFileSync(logFile, '# DevLog\n', 'utf8');
-    }
-    
-    // Otimização: Append direto sob lock (evita carregar o arquivo todo)
-    fs.appendFileSync(logFile, entry, 'utf8');
+    const success = safeWrite(logFile, entry, 'append');
 
-    if (options.shouldCommit && isGitRepo() && loadConfig().storage !== 'local') {
+    if (success && options.shouldCommit && isGitRepo() && config.storage !== 'local') {
       commitLog(logFile, note);
     }
-    return true;
+    return success;
   });
 }
 
-function updateLastLog(updates = {}) {
-  const logFile = getLogFile();
+function updateLastLog(updates, config) {
+  const logFile = getLogFile(config);
   if (!fs.existsSync(logFile)) return false;
 
   return withLock(logFile, () => {
-    const tmpFile = `${logFile}.tmp`;
     let content = fs.readFileSync(logFile, 'utf8');
     const sections = content.split('\n## [');
     if (sections.length < 2) return false;
@@ -106,16 +164,12 @@ function updateLastLog(updates = {}) {
     }
 
     sections[sections.length - 1] = lines.join('\n');
-    
-    // Para updates, usamos escrita atômica (swap)
-    fs.writeFileSync(tmpFile, sections.join('\n## ['), 'utf8');
-    fs.renameSync(tmpFile, logFile);
-    return true;
+    return safeWrite(logFile, sections.join('\n## ['), 'write');
   });
 }
 
-function getRecentLogs(limit = 5) {
-  const logFile = getLogFile();
+function getRecentLogs(config, limit = 5) {
+  const logFile = getLogFile(config);
   if (!fs.existsSync(logFile)) return [];
   const content = fs.readFileSync(logFile, 'utf8');
   const entries = content.split('\n## [').slice(1);
@@ -134,49 +188,4 @@ function getRecentLogs(limit = 5) {
   });
 }
 
-function getStats(days = 7) {
-  const logFile = getLogFile();
-  if (!fs.existsSync(logFile)) return null;
-  const content = fs.readFileSync(logFile, 'utf8');
-  const sections = content.split('\n## [').slice(1);
-  const stats = { total: sections.length, categories: {}, moods: {}, timeline: {} };
-  sections.forEach(entry => {
-    const lines = entry.split('\n');
-    const date = (lines[0] || '').split('T')[0];
-    const entryDate = new Date(date);
-    if ((new Date() - entryDate) / (1000 * 60 * 60 * 24) > days) return;
-    const type = (lines.find(l => l.startsWith('type: ')) || '').replace('type: ', '') || 'unknown';
-    const mood = (lines.find(l => l.startsWith('mood: ')) || '').replace('mood: ', '') || 'neutral';
-    stats.categories[type] = (stats.categories[type] || 0) + 1;
-    stats.moods[mood] = (stats.moods[mood] || 0) + 1;
-    if (!stats.timeline[date]) stats.timeline[date] = { count: 0, moods: [] };
-    stats.timeline[date].count++;
-    if (!stats.timeline[date].moods.includes(mood)) stats.timeline[date].moods.push(mood);
-  });
-  return stats;
-}
-
-function getDailySummary() {
-  const stats = getStats(1);
-  if (!stats) return null;
-  const logFile = getLogFile();
-  const content = fs.readFileSync(logFile, 'utf8');
-  const sections = content.split('\n## [').slice(1);
-  const today = new Date().toISOString().split('T')[0];
-  const summary = { decisions: [], questions: [], topActions: [], mood: 'neutral' };
-  sections.forEach(entry => {
-    const lines = entry.split('\n');
-    if (!lines[0].startsWith(today)) return;
-    const type = (lines.find(l => l.startsWith('type: ')) || '').replace('type: ', '') || 'unknown';
-    const note = lines.slice(lines.findIndex((l, i) => i > 0 && l.trim() === '') + 1).join('\n').trim();
-    if (type === 'decision') summary.decisions.push(note);
-    if (type === 'question') summary.questions.push(note);
-    if (type === 'action') summary.topActions.push(note);
-  });
-  if (Object.keys(stats.moods).length > 0) {
-    summary.mood = Object.entries(stats.moods).sort((a, b) => b[1] - a[1])[0][0];
-  }
-  return summary;
-}
-
-module.exports = { saveLog, getRecentLogs, getLogFile, updateLastLog, getStats, getDailySummary };
+module.exports = { saveLog, updateLastLog, getRecentLogs, getLogFile, withLock };

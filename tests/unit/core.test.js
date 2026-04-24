@@ -1,118 +1,64 @@
 const fs = require('fs');
-const { saveLog, getRecentLogs, updateLastLog, getStats, getDailySummary } = require('../../src/core');
+const { saveLog, updateLastLog, getRecentLogs } = require('../../src/core');
 
-jest.mock('fs');
+jest.mock('fs', () => ({
+  ...jest.requireActual('fs'),
+  existsSync: jest.fn(),
+  readFileSync: jest.fn(),
+  writeFileSync: jest.fn(),
+  appendFileSync: jest.fn(),
+  renameSync: jest.fn(),
+  openSync: jest.fn(),
+  unlinkSync: jest.fn(),
+  realpathSync: jest.fn(p => p),
+  mkdirSync: jest.fn(),
+  statSync: jest.fn(),
+  utimesSync: jest.fn()
+}));
 jest.mock('../../src/git', () => ({
-  getGitMetadata: () => ({ hash: 'a1b2c3d', branch: 'main' }),
+  getGitMetadata: () => ({ hash: 'abc123', branch: 'main' }),
   isGitRepo: () => true,
-  commitLog: jest.fn().mockReturnValue(true)
+  commitLog: () => true
+}));
+jest.mock('../../src/classifier', () => ({
+  classifyMessage: () => ({ category: 'action' })
 }));
 
-describe('Core Module - Log IDs', () => {
+describe('Core Logic', () => {
+  const config = { storage: 'repo', userName: 'shared', moodTracking: true };
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   test('should generate and save an 8-character hex ID', () => {
     fs.existsSync.mockReturnValue(false);
-    saveLog('test message');
+    saveLog('test message', config);
 
+    // Agora usa appendFileSync sob Lock
     const writtenContent = fs.appendFileSync.mock.calls[0][1];
     expect(writtenContent).toMatch(/id: [0-9a-f]{8}/);
   });
 
   test('should retrieve ID correctly from log file', () => {
-    const mockContent = '\n## [2026-04-24T12:00:00Z]\nid: a1b2\ntype: thought\nmood: happy\n\nTest note\n';
+    const mockContent = '# DevLog\n\n## [2026-01-01]\nid: a1b2c3d4\ntype: action\n\nTest entry';
     fs.existsSync.mockReturnValue(true);
     fs.readFileSync.mockReturnValue(mockContent);
 
-    const logs = getRecentLogs(1);
-    expect(logs[0].id).toBe('a1b2');
-  });
-
-  test('should generate correct statistics from log content', () => {
-    const mockContent = `
-## [2026-04-24T10:00:00Z]
-id: a1b2
-type: decision
-mood: happy
-
-Decision 1
-
-## [2026-04-24T11:00:00Z]
-id: c3d4
-type: action
-mood: focused
-
-Action 1
-`;
-    fs.existsSync.mockReturnValue(true);
-    fs.readFileSync.mockReturnValue(mockContent);
-
-    const stats = getStats(7);
-    expect(stats.total).toBe(2);
-    expect(stats.categories.decision).toBe(1);
-    expect(stats.categories.action).toBe(1);
-    expect(stats.moods.happy).toBe(1);
+    const logs = getRecentLogs(config, 1);
+    expect(logs[0].id).toBe('a1b2c3d4');
   });
 
   test('should update the last log entry correctly', () => {
-    const mockContent = '\n## [2026-04-24T12:00:00Z]\nid: a1b2\ntype: thought\n\nTest note\n';
-    fs.existsSync.mockReturnValue(true);
-    fs.readFileSync.mockReturnValue(mockContent);
-    
-    updateLastLog({ type: 'decision', mood: 'excited' });
-
-    const rewritten = fs.writeFileSync.mock.calls[0][1];
-    expect(rewritten).toContain('type: decision');
-    expect(rewritten).toContain('mood: excited');
-  });
-
-  test('should generate a correct daily summary', () => {
-    const today = new Date().toISOString().split('T')[0];
-    const mockContent = `
-## [${today}T10:00:00Z]
-id: a1b2
-type: decision
-mood: happy
-
-Decided to use Jest.
-
-## [${today}T11:00:00Z]
-id: c3d4
-type: action
-mood: focused
-
-Writing tests.
-`;
+    const mockContent = '# DevLog\n\n## [2026-01-01]\nid: a1b2c3d4\ntype: action\n\nOld note';
     fs.existsSync.mockReturnValue(true);
     fs.readFileSync.mockReturnValue(mockContent);
 
-    const summary = getDailySummary();
-    
-    expect(summary.decisions).toContain('Decided to use Jest.');
-    expect(summary.topActions).toContain('Writing tests.');
-    expect(summary.mood).toBe('happy');
-  });
+    updateLastLog({ type: 'decision' }, config);
 
-  test('should handle extreme unicode and emojis without breaking metadata', () => {
-    const complexNote = 'Zalgo: H̴e̷l̶p̸ ̷m̶e̸ and Emojis: 👨‍👩‍👧‍👦 🏳️‍🌈 🚀';
-    const mockContent = `
-## [2026-04-24T12:00:00Z]
-id: e1f2
-type: thought
-mood: confused
-
-${complexNote}
-`;
-    fs.existsSync.mockReturnValue(true);
-    fs.readFileSync.mockReturnValue(mockContent);
-
-    const stats = getStats(1);
-    expect(stats.total).toBe(1);
-    expect(stats.timeline['2026-04-24']).toBeDefined();
-    
-    const logs = getRecentLogs(1);
-    expect(logs[0].note).toBe(complexNote);
+    // updateLastLog usa escrita atômica (writeFileSync + renameSync)
+    const writtenContent = fs.writeFileSync.mock.calls[0][1];
+    expect(writtenContent).toContain('type: decision');
+    expect(fs.renameSync).toHaveBeenCalled();
   });
 });

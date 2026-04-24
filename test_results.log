@@ -1,0 +1,65 @@
+PASS tests/unit/i18n.test.js
+PASS tests/unit/memory.test.js
+FAIL tests/unit/config.test.js
+  ● Config Module › should prioritize local config over default
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: false
+    Received: true
+
+      24 |     
+      25 |     const config = loadConfig();
+    > 26 |     expect(config.moodTracking).toBe(false);
+         |                                 ^
+      27 |   });
+      28 |
+      29 |   test('should log error if directory creation fails', () => {
+
+      at Object.toBe (tests/unit/config.test.js:26:33)
+
+  ● Config Module › should log error if directory creation fails
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: StringContaining "EACCES"
+
+    Number of calls: 0
+
+      37 |     });
+      38 |
+    > 39 |     expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('EACCES'));
+         |                        ^
+      40 |     consoleSpy.mockRestore();
+      41 |   });
+      42 |
+
+      at Object.toHaveBeenCalledWith (tests/unit/config.test.js:39:24)
+
+  ● Config Module › should merge global and local configs correctly
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      54 |
+      55 |     const config = loadConfig();
+    > 56 |     expect(config.autoCommit).toBe(true); // From global
+         |                               ^
+      57 |     expect(config.lang).toBe('pt');        // Local overrides global
+      58 |   });
+      59 | });
+
+      at Object.toBe (tests/unit/config.test.js:56:31)
+
+PASS tests/unit/core.test.js
+PASS tests/integration/workflow.test.js
+PASS tests/unit/classifier.test.js
+PASS tests/integration/resilience.test.js
+
+Test Suites: 1 failed, 6 passed, 7 total
+Tests:       3 failed, 28 passed, 31 total
+Snapshots:   0 total
+Time:        2.244 s
+Ran all test suites.

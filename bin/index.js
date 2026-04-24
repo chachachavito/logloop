@@ -1,22 +1,26 @@
 #!/usr/bin/env node
 
-const readline = require('readline');
 const path = require('path');
 const fs = require('fs');
 const pkg = require('../package.json');
-const { loadConfig, saveConfig, GLOBAL_DIR } = require('../src/config');
-const { classifyMood, allowedMoods } = require('../src/classifier');
-const { saveLog } = require('../src/core');
-const { t } = require('../src/i18n');
+const { loadConfig, saveConfig } = require('../src/config');
+
+// Lazy load helpers
+const getI18n = () => require('../src/i18n');
+const getClassifier = () => require('../src/classifier');
+const getCore = () => require('../src/core');
 
 const config = loadConfig();
 const args = process.argv.slice(2);
+
+function t(key) {
+  return getI18n().t(key);
+}
 
 // --- Command Handlers ---
 
 function handleConfig(args) {
   const [cmd, key, value] = args;
-
   if (!cmd || (cmd !== 'get' && cmd !== 'set')) {
     console.log(`${t('cli.configUsage')}`);
     process.exit(0);
@@ -30,17 +34,56 @@ function handleConfig(args) {
     }
   } else if (cmd === 'set') {
     if (!key || value === undefined) {
-      console.error('\x1b[31m%s\x1b[0m', 'Error: Key and value are required for "set".');
-      process.exit(1);
+      console.log(`${t('cli.configUsage')}`);
+    } else {
+      let val = value;
+      if (value === 'true') val = true;
+      if (value === 'false') val = false;
+      config[key] = val;
+      saveConfig(config);
+      console.log(`Config "${key}" set to ${val}`);
     }
-    config[key] = value === 'true' ? true : value === 'false' ? false : value;
-    saveConfig(config);
-    console.log('\x1b[32m%s\x1b[0m', `✓ Config "${key}" updated to: ${config[key]}`);
   }
   process.exit(0);
 }
 
-function showHelp() {
+function run(note, moodFlag, shouldCommit) {
+  const classifier = getClassifier();
+  const core = getCore();
+  
+  const detected = classifier.classifyMood(note);
+  let finalMood = moodFlag;
+
+  if (!moodFlag && config.moodTracking && detected.category !== 'neutral') {
+    finalMood = detected.category;
+  }
+
+  try {
+    const success = core.saveLog(note, config, { shouldCommit, mood: finalMood });
+    if (success) {
+      console.log('\x1b[32m%s\x1b[0m', t('cli.success') || '✓ Saved.');
+      if (finalMood && config.moodTracking && !moodFlag) {
+        console.log(`\x1b[35m${t('cli.moodDetected')} ${finalMood}\x1b[0m`);
+      }
+    }
+  } catch (err) {
+    if (err.message === 'LOCK_TIMEOUT') {
+      console.error(`\x1b[31m[logloop] ${t('cli.lockError')}\x1b[0m`);
+    } else {
+      console.error(`\x1b[31m[logloop] Error: ${err.message}\x1b[0m`);
+    }
+    process.exit(1);
+  }
+}
+
+// --- CLI Entry Point ---
+
+if (args.includes('-v') || args.includes('--version')) {
+  console.log(`logloop ${pkg.version}`);
+  process.exit(0);
+}
+
+if (args.includes('-h') || args.includes('--help')) {
   console.log(`
 ${t('cli.usage')}
 
@@ -54,119 +97,39 @@ ${t('cli.options')}
 ${t('cli.configTitle')}
   ${t('cli.configUsage')}
   `);
-}
-
-function run(note, moodFlag, shouldCommit) {
-  const detected = classifyMood(note);
-  let finalMood = moodFlag;
-
-  if (!moodFlag && config.moodTracking && detected.category !== 'neutral') {
-    finalMood = detected.category;
-  }
-
-  saveLog(note, { shouldCommit, mood: finalMood });
-
-  if (finalMood && config.moodTracking && !moodFlag) {
-    console.log(`\x1b[35m${t('cli.moodDetected')} ${finalMood}\x1b[0m`);
-  }
-}
-
-function handleList() {
-  const logsDir = path.join(GLOBAL_DIR, 'logs');
-  if (!fs.existsSync(logsDir)) {
-    console.log(`\x1b[90m${t('cli.noLocalLogs')}\x1b[0m`);
-    process.exit(0);
-  }
-
-  const files = fs.readdirSync(logsDir).filter(f => f.endsWith('.md'));
-  if (files.length === 0) {
-    console.log(`\x1b[90m${t('cli.noLocalLogs')}\x1b[0m`);
-    process.exit(0);
-  }
-
-  console.log(`\n\x1b[1m${t('cli.listHeader')}\x1b[0m`);
-  console.log(`\x1b[90m${'─'.repeat(60)}\x1b[0m`);
-
-  files.forEach(file => {
-    const fullPath = path.join(logsDir, file);
-    const stats = fs.statSync(fullPath);
-    const content = fs.readFileSync(fullPath, 'utf8');
-    const entryCount = (content.match(/\n## \[/g) || []).length;
-    
-    const project = file.split('.')[0];
-    const lastUpdate = stats.mtime.toLocaleString();
-    
-    const pad = (s, n) => s + ' '.repeat(Math.max(0, n - s.length));
-    console.log(`${pad(project, 20)} ${pad(entryCount.toString(), 10)} ${lastUpdate}`);
-  });
-  console.log('');
   process.exit(0);
 }
 
-// --- Main execution ---
-
-if (args.includes('-v') || args.includes('--version')) {
-  console.log(`logloop v${pkg.version}`);
+if (args[0] === 'config') {
+  handleConfig(args.slice(1));
+} else if (args[0] === 'list') {
+  // Lazy load list handler if needed
+  require('../src/ui').handleList(config);
   process.exit(0);
 }
 
-if (args.includes('-h') || args.includes('--help')) {
-  showHelp();
-  process.exit(0);
+let moodFlag = null;
+const moodIdx = args.indexOf('--mood');
+if (moodIdx > -1 && args[moodIdx + 1]) {
+  moodFlag = args[moodIdx + 1];
+  args.splice(moodIdx, 2);
 }
 
-switch (args[0]) {
-  case 'timeline':
-  case 'stats':
-    const { showTimeline } = require('../src/ui');
-    showTimeline();
-    process.exit(0);
-  case 'summary':
-    const { showSummary } = require('../src/ui');
-    showSummary();
-    process.exit(0);
-  case 'config':
-    handleConfig(args.slice(1));
-    break;
-}
-
-if (args[0] === 'list' || args[0] === 'ls') {
-  handleList();
-}
-
-const noCommitFlag = args.includes('--no-commit');
 const commitFlag = args.includes('--commit');
-const moodIndex = args.indexOf('--mood');
-const moodFlag = moodIndex !== -1 ? args[moodIndex + 1] : null;
-
-const filteredArgs = args.filter((a, i) => {
-  if (['--commit', '--no-commit'].includes(a)) return false;
-  if (a === '--mood') return false;
-  if (i > 0 && args[i - 1] === '--mood') return false;
-  if (['config', 'list', 'ls'].includes(a)) return false;
-  return true;
-});
+const noCommitFlag = args.includes('--no-commit');
+const filteredArgs = args.filter(a => a !== '--commit' && a !== '--no-commit');
 const noteArg = filteredArgs.join(' ');
 
-let shouldCommit = false;
-if (noCommitFlag) {
-  shouldCommit = false;
-} else if (commitFlag) {
-  shouldCommit = true;
-} else if (config.autoCommit !== undefined) {
-  shouldCommit = !!config.autoCommit;
-}
+let shouldCommit = config.autoCommit;
+if (noCommitFlag) shouldCommit = false;
+else if (commitFlag) shouldCommit = true;
 
 if (noteArg) {
-  try {
-    run(noteArg, moodFlag, shouldCommit);
-  } catch (err) {
-    console.error(`\x1b[31m[logloop] Error: ${err.message}\x1b[0m`);
-    process.exit(1);
-  }
+  run(noteArg, moodFlag, shouldCommit);
 } else {
   const { startLoop } = require('../src/ui');
   const { getGitUser } = require('../src/git');
+  const readline = require('readline');
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
   const start = () => {

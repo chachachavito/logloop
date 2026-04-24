@@ -2,16 +2,16 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-const LOCAL_CONFIG = path.join(process.cwd(), '.loglooprc');
 const GLOBAL_DIR = path.join(os.homedir(), '.logloop');
-const GLOBAL_CONFIG = path.join(GLOBAL_DIR, 'config.json');
-
 const DEFAULTS = {
   autoCommit: false,
   moodTracking: true,
-  storage: 'repo', // 'repo' or 'local'
-  lang: 'en'
+  storage: 'repo',
+  lang: 'en',
+  userName: ''
 };
+
+let _configCache = null;
 
 function ensureDir(dir) {
   if (!fs.existsSync(dir)) {
@@ -25,7 +25,6 @@ function ensureDir(dir) {
   return true;
 }
 
-// Cleanup defensivo na inicialização
 function defensiveCleanup() {
   try {
     const currentDir = process.cwd();
@@ -33,13 +32,11 @@ function defensiveCleanup() {
     const now = Date.now();
     
     files.forEach(file => {
-      // Limpa qualquer .lock ou .tmp órfão do logloop (mais de 10s de idade)
       if ((file.endsWith('.lock') || file.endsWith('.tmp')) && file.includes('logloop')) {
         const filePath = path.join(currentDir, file);
         try { 
           const stats = fs.statSync(filePath);
-          const age = (now - stats.mtimeMs) / 1000;
-          if (age > 10) {
+          if ((now - stats.mtimeMs) > 10000) {
             fs.unlinkSync(filePath); 
           }
         } catch (e) {}
@@ -52,44 +49,35 @@ ensureDir(GLOBAL_DIR);
 ensureDir(path.join(GLOBAL_DIR, 'logs'));
 defensiveCleanup();
 
-function loadConfig() {
+function loadConfig(forceRefresh = false) {
+  if (_configCache && !forceRefresh) return _configCache;
+
   let config = { ...DEFAULTS };
+  const globalPath = path.join(GLOBAL_DIR, '.loglooprc');
+  const localPath = path.join(process.cwd(), '.loglooprc');
 
-  // 1. Carregar Global
-  if (fs.existsSync(GLOBAL_CONFIG)) {
+  if (fs.existsSync(globalPath)) {
     try {
-      const globalData = JSON.parse(fs.readFileSync(GLOBAL_CONFIG, 'utf8'));
+      const globalData = JSON.parse(fs.readFileSync(globalPath, 'utf8'));
       config = { ...config, ...globalData };
-    } catch (e) {
-      console.warn('\x1b[33m[logloop] Warning: Global config corrupted. Using defaults.\x1b[0m');
-    }
+    } catch (e) {}
   }
 
-  // 2. Carregar Local (Projeto) - Sobrescreve Global
-  if (fs.existsSync(LOCAL_CONFIG)) {
+  if (fs.existsSync(localPath)) {
     try {
-      const localData = JSON.parse(fs.readFileSync(LOCAL_CONFIG, 'utf8'));
+      const localData = JSON.parse(fs.readFileSync(localPath, 'utf8'));
       config = { ...config, ...localData };
-    } catch (e) {
-      console.warn('\x1b[33m[logloop] Warning: Local .loglooprc corrupted. Ignoring.\x1b[0m');
-    }
+    } catch (e) {}
   }
 
+  _configCache = config;
   return config;
 }
 
-function saveConfig(config, global = false) {
-  const data = JSON.stringify(config, null, 2);
-  if (global) {
-    ensureGlobalDir();
-    fs.writeFileSync(GLOBAL_CONFIG, data, 'utf8');
-  } else {
-    fs.writeFileSync(LOCAL_CONFIG, data, 'utf8');
-  }
+function saveConfig(config) {
+  const globalPath = path.join(GLOBAL_DIR, '.loglooprc');
+  fs.writeFileSync(globalPath, JSON.stringify(config, null, 2));
+  _configCache = config;
 }
 
-module.exports = {
-  loadConfig,
-  saveConfig,
-  GLOBAL_DIR
-};
+module.exports = { loadConfig, saveConfig, GLOBAL_DIR, DEFAULTS };
