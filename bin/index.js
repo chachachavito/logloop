@@ -129,6 +129,9 @@ if (args[0] === 'config') {
   const { renderSummary } = require('../src/ui');
   renderSummary(getCore().getAnalytics(config));
   process.exit(0);
+} else if (args[0] === 'commit') {
+  require('../src/commit').handleCommit(args.slice(1), config);
+  process.exit(0);
 }
 
 let moodFlag = null;
