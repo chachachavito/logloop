@@ -22,6 +22,10 @@ if (args.includes('--durable')) {
   config.durable = true;
   args.splice(args.indexOf('--durable'), 1);
 }
+if (args.includes('--standalone')) {
+  config.standalone = true;
+  args.splice(args.indexOf('--standalone'), 1);
+}
 
 function t(key) {
   return getI18n().t(key);
@@ -156,7 +160,7 @@ if (noteArg) {
   };
 
   if (!config.userName) {
-    const gitUser = getGitUser();
+    const gitUser = config.standalone ? null : getGitUser();
     if (gitUser) {
       config.userName = gitUser;
       saveConfig(config);

@@ -44,6 +44,12 @@ For a quick note without entering the loop:
 logloop "Switched to native fetch"
 ```
 
+### Standalone Mode (Git Optional)
+Logloop can run without any Git dependency. If you are not in a Git repository, it degrades gracefully and continues to work. You can also explicitly force it to ignore Git:
+```bash
+logloop --standalone
+```
+
 ### Global History
 List all your local projects and their activity:
 ```bash
@@ -194,6 +200,7 @@ Default: `logloop.md`
 - [x] Log IDs & Traceability
 - [x] Timeline Visualization
 - [x] Smart Deterministic Summaries
+- [x] Standalone Mode (Git fully optional & hardened)
 
 ---
 

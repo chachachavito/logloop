@@ -84,7 +84,7 @@ function startLoop(config, initialMood = null, initialCommit = null) {
     clear();
     console.log(`\x1b[1m${t('ui.title')} ${t('ui.version')}\x1b[0m`);
     const git = require('./git').getGitMetadata() || {};
-    const branchName = git.branch || 'n/a';
+    const branchName = git.branch || 'no git context';
     console.log(`\x1b[90m${t('ui.branch')} ${branchName} | ${t('ui.config')} ${config.storage} | ${t('ui.commit')} ${autoCommit ? 'ON' : 'OFF'} | ${t('ui.mood')} ${config.moodTracking ? 'ON' : 'OFF'}\x1b[0m\n`);
     
     if (lastLogs.length > 0) {
