@@ -1,7 +1,7 @@
 {
   "ui": {
     "title": "LOGLOOP INTERATIVO",
-    "version": "v0.1.0",
+    "version": "v0.4.0",
     "branch": "Branch:",
     "config": "Config:",
     "commit": "Commit:",
@@ -13,6 +13,8 @@
     "cmdMood": "/m - Alternar Mood Tracking",
     "cmdStorage": "/s - Alternar Armazenamento (Repo/Local)",
     "cmdEdit": "/e - Abrir logloop.md para editar",
+    "cmdTimeline": "/timeline - Análise Visual",
+    "cmdSummary": "/summary  - Resumo Diário",
     "cmdQuit": "/q - Sair",
     "cmdHelpClose": "/h - Fechar ajuda / Zen Mode",
     "promptHelp": "Digite sua nota ou /h para ajuda",
@@ -37,5 +39,13 @@
     "gitWarning": "Aviso: Não é um repositório git. Commit ignorado.",
     "commitSuccess": "✓ Commit realizado com sucesso.",
     "lockError": "Erro: O arquivo está travado por outro processo. Tente novamente."
+  },
+  "analytics": {
+    "timelineTitle": "LINHA DO TEMPO (Últimas 24h)",
+    "summaryTitle": "RESUMO INTELIGENTE DIÁRIO",
+    "questionsTitle": "PERGUNTAS SEM RESPOSTA:",
+    "decisionsTitle": "DECISÕES CHAVE:",
+    "moodBalance": "BALANÇO DE HUMOR:",
+    "noActivity": "Nenhuma atividade encontrada no período."
   }
 }

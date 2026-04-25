@@ -1,5 +1,5 @@
 const readline = require('readline');
-const { saveLog, getRecentLogs, updateLastLog } = require('./core');
+const { saveLog, getRecentLogs, updateLastLog, getAnalytics } = require('./core');
 const { saveConfig } = require('./config');
 const { t } = require('./i18n');
 const fs = require('fs');
@@ -35,6 +35,38 @@ function handleList(config) {
   });
 }
 
+function renderTimeline(analytics) {
+  if (!analytics) return console.log(t('analytics.noActivity'));
+  console.log(`\n\x1b[1m${t('analytics.timelineTitle')}\x1b[0m`);
+  const max = Math.max(...analytics.timeline, 1);
+  analytics.timeline.forEach((count, hour) => {
+    const label = `${hour.toString().padStart(2, '0')}:00`;
+    const bar = '█'.repeat(Math.round((count / max) * 20));
+    const color = count > 0 ? '\x1b[36m' : '\x1b[90m';
+    console.log(`${color}${label} ${bar.padEnd(20)} (${count})\x1b[0m`);
+  });
+}
+
+function renderSummary(analytics) {
+  if (!analytics) return console.log(t('analytics.noActivity'));
+  console.log(`\n\x1b[1m${t('analytics.summaryTitle')}\x1b[0m`);
+  
+  if (analytics.decisions.length > 0) {
+    console.log(`\n\x1b[32m[${t('analytics.decisionsTitle')}]\x1b[0m`);
+    analytics.decisions.forEach(d => console.log(` \x1b[32m✓\x1b[0m ${d}`));
+  }
+
+  if (analytics.questions.length > 0) {
+    console.log(`\n\x1b[33m[${t('analytics.questionsTitle')}]\x1b[0m`);
+    analytics.questions.forEach(q => console.log(` \x1b[33m?\x1b[0m ${q}`));
+  }
+
+  console.log(`\n\x1b[35m[${t('analytics.moodBalance')}]\x1b[0m`);
+  Object.entries(analytics.moods).forEach(([mood, count]) => {
+    console.log(` ${mood}: ${'█'.repeat(count)} (${count})`);
+  });
+}
+
 function startLoop(config, initialMood = null, initialCommit = null) {
   let currentMood = initialMood;
   let autoCommit = initialCommit !== null ? initialCommit : config.autoCommit;
@@ -66,6 +98,7 @@ function startLoop(config, initialMood = null, initialCommit = null) {
       console.log(`\x1b[90m${t('ui.helpTitle')}\x1b[0m`);
       console.log(`\x1b[90m${t('ui.cmdCommit')}   ${t('ui.cmdMood')}\x1b[0m`);
       console.log(`\x1b[90m${t('ui.cmdStorage')}  ${t('ui.cmdEdit')}\x1b[0m`);
+      console.log(`\x1b[90m${t('ui.cmdTimeline')} ${t('ui.cmdSummary')}\x1b[0m`);
       console.log(`\x1b[90m${t('ui.cmdQuit')}     ${t('ui.cmdHelpClose')}\x1b[0m`);
     }
     console.log(`\x1b[33m${t('ui.promptHelp')}\x1b[0m`);
@@ -101,6 +134,20 @@ function startLoop(config, initialMood = null, initialCommit = null) {
             console.log(t('ui.errorEditor'));
           }
           break;
+        case '/timeline':
+          clear();
+          renderTimeline(getAnalytics(config));
+          console.log(`\n\x1b[90m${t('ui.footerDivider')}\x1b[0m`);
+          console.log(`\x1b[33m${t('ui.promptHelp')}\x1b[0m`);
+          rl.prompt();
+          return;
+        case '/summary':
+          clear();
+          renderSummary(getAnalytics(config));
+          console.log(`\n\x1b[90m${t('ui.footerDivider')}\x1b[0m`);
+          console.log(`\x1b[33m${t('ui.promptHelp')}\x1b[0m`);
+          rl.prompt();
+          return;
         default:
           console.log(`\x1b[31m${t('ui.unknownCommand')}\x1b[0m`);
           setTimeout(refresh, 1000);
@@ -126,4 +173,4 @@ function startLoop(config, initialMood = null, initialCommit = null) {
   });
 }
 
-module.exports = { startLoop, handleList };
+module.exports = { startLoop, handleList, renderTimeline, renderSummary };

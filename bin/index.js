@@ -116,6 +116,14 @@ if (args[0] === 'config') {
   // Lazy load list handler if needed
   require('../src/ui').handleList(config);
   process.exit(0);
+} else if (args[0] === 'timeline') {
+  const { renderTimeline } = require('../src/ui');
+  renderTimeline(getCore().getAnalytics(config));
+  process.exit(0);
+} else if (args[0] === 'summary') {
+  const { renderSummary } = require('../src/ui');
+  renderSummary(getCore().getAnalytics(config));
+  process.exit(0);
 }
 
 let moodFlag = null;

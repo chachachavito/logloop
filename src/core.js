@@ -275,6 +275,7 @@ function getRecentLogs(config, limit = 5) {
 
       return {
         time: displayTime,
+        rawTime: timestamp,
         id, type, mood,
         note: note.length > 60 ? note.substring(0, 57) + '...' : note
       };
@@ -282,4 +283,32 @@ function getRecentLogs(config, limit = 5) {
   } catch (e) { return []; }
 }
 
-module.exports = { saveLog, updateLastLog, getRecentLogs, getLogFile, withLock, resetLocks, setDebug };
+function getAnalytics(config) {
+  const logs = getRecentLogs(config, 50);
+  if (logs.length === 0) return null;
+
+  const timeline = new Array(24).fill(0);
+  const categories = {};
+  const moods = {};
+  const questions = [];
+  const decisions = [];
+
+  logs.forEach(log => {
+    try {
+      const hour = new Date(log.rawTime.split('.')[0] + 'Z').getHours();
+      timeline[hour]++;
+      
+      categories[log.type] = (categories[log.type] || 0) + 1;
+      if (log.mood && log.mood !== 'null') {
+        moods[log.mood] = (moods[log.mood] || 0) + 1;
+      }
+
+      if (log.type === 'question') questions.push(log.note);
+      if (log.type === 'decision') decisions.push(log.note);
+    } catch (e) {}
+  });
+
+  return { timeline, categories, moods, questions, decisions };
+}
+
+module.exports = { saveLog, updateLastLog, getRecentLogs, getLogFile, withLock, resetLocks, setDebug, getAnalytics };

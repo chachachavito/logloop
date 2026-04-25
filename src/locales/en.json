@@ -1,7 +1,7 @@
 {
   "ui": {
     "title": "LOGLOOP INTERACTIVE",
-    "version": "v0.1.0",
+    "version": "v0.4.0",
     "branch": "Branch:",
     "config": "Config:",
     "commit": "Commit:",
@@ -13,6 +13,8 @@
     "cmdMood": "/m - Toggle Mood Tracking",
     "cmdStorage": "/s - Toggle Storage (Repo/Local)",
     "cmdEdit": "/e - Open logloop.md for editing",
+    "cmdTimeline": "/timeline - Visual Analytics",
+    "cmdSummary": "/summary  - Daily Insights",
     "cmdQuit": "/q - Quit loop",
     "cmdHelpClose": "/h - Close help / Zen Mode",
     "promptHelp": "Type your note or /h for help",
@@ -37,5 +39,13 @@
     "gitWarning": "Warning: Not a git repository. Commit ignored.",
     "commitSuccess": "✓ Commit successful.",
     "lockError": "Error: File is locked by another process. Please try again."
+  },
+  "analytics": {
+    "timelineTitle": "LOG ACTIVITY TIMELINE (Last 24h)",
+    "summaryTitle": "DAILY INSIGHTS SUMMARY",
+    "questionsTitle": "UNANSWERED QUESTIONS:",
+    "decisionsTitle": "KEY DECISIONS:",
+    "moodBalance": "MOOD BALANCE:",
+    "noActivity": "No activity found for the analytics period."
   }
 }
