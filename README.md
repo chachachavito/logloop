@@ -68,6 +68,7 @@ Logloop automates the context capture:
 - **ISO Timestamps**: Precise temporal tracking.
 - **Paste Support**: Handles multi-line pastes from Word/Slack as single entries.
 - **Training Mode**: Optional interactive confirmation of detected tags and mood (`/t`).
+- **Media & Path Detection**: Auto-tagging of screenshots and file links.
 - **Append-only storage**: Persists everything to `logloop.md`.
 
 ---
@@ -103,10 +104,14 @@ These layers combine into a **Weighted Confidence Score** to ensure high precisi
 
 ### Active Learning & Portability
 Logloop is not just a logger; it's an evolving assistant:
+*   **/t**: Toggles **Training Mode**. In this mode, Logloop asks for confirmation/correction after each entry using a sleek, numeric selection interface.
 *   **/as <category>**: Reclassifies the last entry and saves the preference to your memory.
 *   **/feel <mood>**: Corrects the emotional context and trains the mood engine.
-*   **/t**: Toggles **Training Mode**. In this mode, Logloop asks for confirmation/correction after each entry using a sleek, numeric selection interface.
-*   **Brain Sync**: Use `/brain-out <file>` and `/brain-in <file>` to move your learned patterns between machines.
+*   **/timeline**: Displays an ASCII activity chart.
+*   **/summary**: Generates a standup-ready daily report.
+*   **/brain-out <file> / /brain-in <file>**: Export/Import your learned patterns.
+*   **/c, /m, /s**: Toggle Auto-commit, Mood Tracking, or Storage mode (Repo/Local).
+*   **/e, /h, /q**: Open editor, toggle help, or quit the session.
 
 ### Insights & Analytics
 *   **Visual History**: Run `logloop timeline` (or `/timeline`) for a weekly ASCII productivity chart.
