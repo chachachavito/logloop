@@ -2,6 +2,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const pc = require('picocolors');
 const pkg = require('../package.json');
 const { loadConfig, saveConfig } = require('../src/config');
 
@@ -75,16 +76,16 @@ function run(note, moodFlag, shouldCommit) {
   try {
     const success = core.saveLog(note, config, { shouldCommit, mood: finalMood });
     if (success) {
-      console.log('\x1b[32m%s\x1b[0m', t('cli.success') || '✓ Saved.');
+      console.log(pc.green(t('cli.success') || '✓ Saved.'));
       if (finalMood && config.moodTracking && !moodFlag) {
-        console.log(`\x1b[35m${t('cli.moodDetected')} ${finalMood}\x1b[0m`);
+        console.log(pc.magenta(`${t('cli.moodDetected')} ${finalMood}`));
       }
     }
   } catch (err) {
     if (err.message === 'LOCK_TIMEOUT') {
-      console.error(`\x1b[31m[logloop] ${t('cli.lockError')}\x1b[0m`);
+      console.error(pc.red(`[logloop] ${t('cli.lockError')}`));
     } else {
-      console.error(`\x1b[31m[logloop] Error: ${err.message}\x1b[0m`);
+      console.error(pc.red(`[logloop] Error: ${err.message}`));
     }
     process.exit(1);
   }
@@ -166,7 +167,7 @@ if (noteArg) {
       saveConfig(config);
       start();
     } else {
-      rl.question(`\x1b[35m› \x1b[0m${t('ui.promptName')}`, (answer) => {
+      rl.question(`${pc.magenta('› ')}${t('ui.promptName')}`, (answer) => {
         if (answer.trim()) {
           config.userName = answer.trim();
           saveConfig(config);

@@ -28,7 +28,8 @@
   "author": "chavito",
   "license": "MIT",
   "dependencies": {
-    "fuse.js": "^7.3.0"
+    "fuse.js": "^7.3.0",
+    "picocolors": "^1.1.1"
   },
   "devDependencies": {
     "jest": "^30.3.0"

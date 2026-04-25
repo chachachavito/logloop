@@ -19,7 +19,8 @@ function ensureDir(dir) {
     try {
       fs.mkdirSync(dir, { recursive: true });
     } catch (err) {
-      console.error(`\x1b[31mError creating directory ${dir}: ${err.message}\x1b[0m`);
+      const pc = require('picocolors');
+      console.error(pc.red(`Error creating directory ${dir}: ${err.message}`));
       return false;
     }
   }
