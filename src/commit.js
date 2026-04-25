@@ -65,9 +65,12 @@ function generateCommitMessage(args, config, lastLog, skipPrompt) {
 
     try {
       console.log(pc.cyan('🤖 Running self-commit...'));
-      const contextArg = lastLog ? `--context "Log ID: ${lastLog.id}\nType: ${lastLog.type}\nNote: ${lastLog.note}"` : '';
-      const yesArg = skipPrompt ? '-y' : '';
-      execSync(`self-commit ${contextArg} ${yesArg}`, { stdio: 'inherit' });
+      // Isolate arguments: only pass context if supported, no leakage of logloop flags
+      const contextStr = lastLog ? `Log ID: ${lastLog.id}\nType: ${lastLog.type}\nNote: ${lastLog.note}` : '';
+      const contextArg = contextStr ? `--context "${contextStr.replace(/"/g, '\\"')}"` : '';
+
+      // Execute self-commit with explicit isolation
+      execSync(`self-commit ${contextArg}`, { stdio: 'inherit' });
       process.exit(0);
     } catch (e) {
       console.log(pc.red('AI commit generation failed.'));
