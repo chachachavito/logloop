@@ -62,7 +62,7 @@ logloop list
 
 Logloop automates the context capture:
 
-- **Semantic Classification**: Automatically tags entry as `decision`, `question`, `noise` or `thought`.
+- **Semantic Classification**: Automatically tags entry as `action`, `decision`, `question`, `media`, `noise` or `thought`.
 - **Mood Heuristics**: Detects emotional state via keywords and emoticons (zero-friction).
 - **Git Linking**: Attaches current `HEAD` hash and branch name.
 - **ISO Timestamps**: Precise temporal tracking.
