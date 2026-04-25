@@ -1,225 +1,122 @@
-# Logloop
+# Logloop (v0.4.1)
 
-> Continuous loop of personal logs in the terminal.
+> **Git tracks WHAT changed. Logloop tracks WHY.**
 
-Logloop is a minimal CLI that captures the reasoning behind your code — in real time, without leaving your terminal.
-
-It turns your project history into a living narrative of decisions, not just diffs.
+Logloop is a zero-friction, local-first CLI that captures the reasoning behind your code in real-time. It acts as the "black box" for your development process, turning isolated commits into a traceable, living narrative of architectural decisions.
 
 ---
 
-## Why Logloop?
+## 🚀 Why Logloop?
 
-Git is great at tracking what changed.
+You write a brilliant workaround today. Three months later, a teammate (or you) looks at the code and asks: *"Why on earth was this done?"*
 
-But it rarely answers:
-- Why did we choose this approach?
-- What trade-offs were considered?
-- What problem were we actually solving?
-
-Logloop fixes that by making it frictionless to document your thinking as you work.
+Git tells you the lines changed. Logloop gives you the context:
+- 🧠 **Semantic Classification**: Auto-tags logs as `action`, `decision`, `question`, `media`, `noise`, or `thought`.
+- 🔗 **Git Linking**: Anchors every thought to the exact `HEAD` hash.
+- 🔒 **Local-First Active Learning**: Learns your engineering dialect without ever sending data to the cloud.
+- ⚡ **Zero-Friction**: Stays open in your terminal. Think it. Type it. Done.
 
 ---
 
-## Installation
+## 📦 Getting Started
 
+### Installation
 ```bash
 npm install -g logloop
 ```
 
----
-
-Logloop is designed to stay open alongside your code.
-
-### Continuous Mode (The Core Experience)
-Run without arguments to enter the interactive loop:
+### The Core Experience (Continuous Loop)
+Logloop is designed to stay open alongside your code. Run it in your project root:
 ```bash
 logloop
 ```
-This keeps your recent history visible and stays ready for your next thought. It's the "black box" for your development process.
+*Just type your thoughts as you work. They will be timestamped, classified, and linked to the current Git state automatically.*
 
-### One-shot Mode
-For a quick note without entering the loop:
+### One-Shot & Standalone
+If you just need to drop a quick note:
 ```bash
-logloop "Switched to native fetch"
+logloop "Switched from axios to native fetch to reduce bundle size."
 ```
-
-### Standalone Mode (Git Optional)
-Logloop can run without any Git dependency. If you are not in a Git repository, it degrades gracefully and continues to work. You can also explicitly force it to ignore Git:
-```bash
-logloop --standalone
-```
-
-### Global History
-List all your local projects and their activity:
-```bash
-logloop list
-```
+*Note: Logloop degrades gracefully. If you run it outside a Git repository or use the `--standalone` flag, it skips Git linking and continues to work flawlessly.*
 
 ---
 
-## What happens?
+## 🧠 The Logloop Brain (AI-less Intelligence)
 
-Logloop automates the context capture:
+Privacy is a pillar. Logloop categorizes your logs without sending data to external APIs. It uses a **3-Layer Inference Pipeline**:
 
-- **Semantic Classification**: Automatically tags entry as `action`, `decision`, `question`, `media`, `noise` or `thought`.
-- **Mood Heuristics**: Detects emotional state via keywords and emoticons (zero-friction).
-- **Git Linking**: Attaches current `HEAD` hash and branch name.
-- **ISO Timestamps**: Precise temporal tracking.
-- **Paste Support**: Handles multi-line pastes from Word/Slack as single entries.
-- **Training Mode**: Optional interactive confirmation of detected tags and mood (`/t`).
-- **Media & Path Detection**: Auto-tagging of screenshots and file links.
-- **Append-only storage**: Persists everything to `logloop.md`.
+1. **Memory (Personal Truth)**: Prioritizes your historical corrections via `memory.json`.
+2. **Fuzzy Matching**: Uses `fuse.js` to handle typos and lexical variations locally.
+3. **Heuristics**: Deterministic rules covering technical verbs, negations, and sentiment.
 
----
-
-## Example
-
-```markdown
-## [2026-04-24T14:32:00.000Z]
-commit: 2cc9be8c15fc9045d72decbdabaea71caca8082d
-branch: main
-type: decision
-mood: focused
-
-Switched from axios to native fetch to reduce bundle size.
-```
+### Active Learning
+The system learns as you correct it.
+*   **`/t` (Training Mode)**: Forces interactive confirmation of category and mood after every log.
+*   **`/as <category>`**: Reclassifies your last entry (e.g., `/as decision`) and saves the pattern permanently.
+*   **Brain Sync**: Export (`/brain-out`) and import (`/brain-in`) your `memory.json` to share your trained patterns across machines.
 
 ---
 
----
+## 📊 Analytics & Insights
 
-## Logloop Brain (v0.4.0)
-
-Logloop is not just a logger; it's an evolving engine that learns your engineering dialect.
-
-### The Intelligence Pipeline (3 Layers of Truth)
-Every entry passes through a sophisticated inference pipeline before being saved:
-
-1.  **Memory (The Personal Truth)**: Prioritized above all. It consults your historical corrections in `memory.json`.
-2.  **Fuzzy (The Statistical Truth)**: Uses `fuse.js` to find lexical similarities, handling typos and variations.
-3.  **Heuristics (The Lexical Truth)**: Deterministic rules based on a curated technical dictionary (verbs, symbols, sentiment). Now with **Negation Handling** (e.g., "not happy" correctly classified as neutral).
-
-These layers combine into a **Weighted Confidence Score** to ensure high precision without the need for cloud-based AI.
-
-### Active Learning & Portability
-Logloop is not just a logger; it's an evolving assistant:
-*   **/t**: Toggles **Training Mode**. In this mode, Logloop asks for confirmation/correction after each entry using a sleek, numeric selection interface.
-*   **/as <category>**: Reclassifies the last entry and saves the preference to your memory.
-*   **/feel <mood>**: Corrects the emotional context and trains the mood engine.
-*   **/timeline**: Displays an ASCII activity chart.
-*   **/summary**: Generates a standup-ready daily report.
-*   **/brain-out <file> / /brain-in <file>**: Export/Import your learned patterns.
-*   **/c, /m, /s**: Toggle Auto-commit, Mood Tracking, or Storage mode (Repo/Local).
-*   **/e, /h, /q**: Open editor, toggle help, or quit the session.
-
-### Insights & Analytics
-*   **Visual History**: Run `logloop timeline` (or `/timeline`) for a weekly ASCII productivity chart.
-*   **Smart Summary**: Run `logloop summary` (or `/summary`) to generate a **Markdown Daily Report** with decisions, questions, and mood, ready to copy-paste into your standup.
-
-### Referencing with IDs
-Every log entry now has a unique 4-character ID (e.g., `#a1b2`). 
-*   **Traceability**: Use these IDs in your PRs or commit messages to point to specific decisions recorded in your logs.
-*   **Visibility**: IDs are displayed in the terminal history for quick reference.
-
-> **Learning Example**:
-> You: `subir v1.0`
-> Logloop: `[THOUGHT]` (Falls back to thought because it's unsure)
-> You: `/as action`
-> Logloop: `Last log reclassified as action and learned! ✨`
-> *Next time you type `subir`, it will automatically be an `action`.*
+Stop guessing what you did yesterday during your daily standup.
+*   **`logloop summary`** (or `/summary`): Generates a Markdown report of the last 24h, extracting key decisions, unresolved questions, and your mood balance.
+*   **`logloop timeline`** (or `/timeline`): Displays a visual ASCII activity chart directly in your terminal.
 
 ---
 
-## Privacy & Hackability
+## ⚙️ Configuration & Storage
 
-Logloop is **Local-First**. Your intelligence is your own.
-
-*   **`~/.logloop/memory.json`**: This is your "Personal Brain Assets". It stores every correction you've ever made.
-*   **Portability**: Sync your patterns across machines with Brain Sync.
-*   **Insights**: Visualize your productivity with `logloop timeline`.
-*   **Privacy**: No data leaves your machine. Classification happens 100% locally.
-*   **Hackable**: You can manually edit your `memory.json` to add complex patterns or export it to another machine.
-
----
-
-## Core Features
-
-### Semantic Classification
-Logloop analyzes your input to categorize the entry automatically:
-- **Action**: Tasks, commits, and implementations. Triggered by leading verbs (PT/EN).
-- **Decision**: Architectural choices and trade-offs.
-- **Question**: Open doubts and research items (triggered by `?`).
-- **Media**: Image paths ( `.png`, `.jpg`, etc.) or Markdown image syntax.
-- **Thought**: General observations and context.
-
-### Zero-Friction Mood Tracking
-- **Emoticons**: High-priority detection ( `:)`, `T_T`, `O_O` ).
-- **Sentiment Analysis**: Dynamic scoring based on text tone and intensity.
-
-### Atomic Operations
-Sync your thoughts with your code:
-- `logloop --commit`: Logs and creates a Git commit in one step.
-- `--no-commit`: Overrides `autoCommit: true` in config for one-off logs.
-
----
-
-## Configuration
-
-Logloop uses a cascading configuration system. It looks for a `.loglooprc` file in your project root, falling back to a global config in `~/.logloop/config.json`.
+Logloop relies on a cascading configuration (local `./.loglooprc` overrides global `~/.logloop/.loglooprc`).
 
 ```json
 {
-  "userName": "your-name",
   "storage": "repo",
   "autoCommit": false,
   "moodTracking": true,
-  "lang": "en"
+  "durable": false
 }
 ```
 
-### Storage Modes
-- **repo** (Default): Saves logs to `logloop.{user}.md` in the current directory. Perfect for team transparency.
-- **local**: Saves logs to `~/.logloop/logs/{project}.{user}.md`. Ideal for private journals in public repositories.
-
-> **Tip**: Use the `/s` slash command inside the interactive loop to hot-swap between storage modes. This allows you to maintain a dual-channel history: one for your team (Shared) and one for yourself (Private).
-
----
-
-## Philosophy
-
-Logloop is not documentation. It is memory.
-
-A lightweight layer on top of Git that captures **intent**, **reasoning**, and **context**.
+### Dual-Channel Storage
+- **`repo` (Default)**: Writes to `logloop.md` in the project folder. Great for team transparency.
+- **`local`**: Writes to `~/.logloop/logs/`. Ideal for private engineering journals on corporate/public projects.
+*(Tip: Type `/s` in the interactive loop to hot-swap between storage modes instantly).*
 
 ---
 
-## Output file
+## ⌨️ Command Reference
 
-Default: `logloop.md`
-
----
-
-## Roadmap
-
-- [x] Semantic Classification (v2 - Advanced Pipeline)
-- [x] Active Learning Loop (`/as`, `/feel`)
-- [x] Local Memory Persistence
-- [x] Fuzzy Matching & Normalization
-- [x] Log IDs & Traceability
-- [x] Timeline Visualization
-- [x] Smart Deterministic Summaries
-- [x] Standalone Mode (Git fully optional & hardened)
-- [x] Multi-line Paste Support (Buffering & Grouping)
-- [x] Training Mode (Interactive Confirmation & Sleek UI)
-- [x] Media/Image Path Detection
+All available slash commands inside the interactive loop:
+*   `/c` - Toggle Git Auto-commit
+*   `/m` - Toggle Mood Tracking heuristic
+*   `/s` - Toggle Storage mode (Repo / Local)
+*   `/t` - Toggle Training Mode (Interactive UI)
+*   `/e` - Open current log file in system editor (`nano`/`vim`/`code`)
+*   `/as` - Reclassify last entry and train the model
+*   `/feel` - Override last entry mood and train the model
+*   `/timeline` - Display ASCII timeline of activity
+*   `/summary` - Display daily analytical summary
+*   `/brain-out` - Export memory patterns
+*   `/brain-in` - Import and merge memory patterns
+*   `/h` - Toggle help menu visibility
+*   `/q` - Quit the session
 
 ---
 
-## Technical Specification
+## 🏗️ Roadmap
+
+- [x] Semantic Classification & Fuzzy Matching
+- [x] Local Active Learning (Memory Persistence)
+- [x] Git HEAD Hash Linking
+- [x] Analytics (Timeline & Summary)
+- [x] Standalone & Restricted Environment Hardening
+- [ ] VS Code Extension Integration (v1.0)
+- [ ] Bidirectional Link Generation & Search Engine (v2.0)
+
+---
+
+## 📜 Technical Specification
 Logloop follows a strict capability-mapping architecture. The project's features, commands, and core concepts are formally defined in the [capabilities.json](capabilities.json) manifest. This ensures 100% alignment between code, documentation, and internationalization.
 
----
-
-## License
 MIT © 2026 Chavito
