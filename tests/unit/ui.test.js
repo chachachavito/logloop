@@ -3,6 +3,7 @@ const readline = require('readline');
 const core = require('../../src/core');
 const configModule = require('../../src/config');
 const memory = require('../../src/memory');
+const { execSync } = require('child_process');
 
 jest.mock('readline');
 jest.mock('../../src/core');
@@ -17,6 +18,9 @@ jest.mock('../../src/git', () => ({
 }));
 jest.mock('../../src/i18n', () => ({
   t: (k) => k
+}));
+jest.mock('child_process', () => ({
+  execSync: jest.fn()
 }));
 
 describe('ui.js unit tests', () => {
@@ -111,5 +115,50 @@ describe('ui.js unit tests', () => {
     lineHandler('/feel happy');
     expect(core.updateLastLog).toHaveBeenCalledWith({ mood: 'happy' }, expect.anything());
     expect(memory.learn).toHaveBeenCalledWith('test', 'happy', 'happy', 'mood');
+  });
+
+  it('should handle /timeline command', () => {
+    core.getAnalytics.mockReturnValue({ timeline: [1,0], moods: {}, decisions: [], questions: [], categories: {} });
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    startLoop(config);
+    const lineHandler = mockRl.on.mock.calls.find(call => call[0] === 'line')[1];
+    
+    lineHandler('/timeline');
+    expect(core.getAnalytics).toHaveBeenCalled();
+    console.log.mockRestore();
+  });
+
+  it('should handle /summary command', () => {
+    core.getAnalytics.mockReturnValue({ timeline: [], moods: { focused: 1 }, decisions: ['decided X'], questions: ['why?'], categories: {} });
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    startLoop(config);
+    const lineHandler = mockRl.on.mock.calls.find(call => call[0] === 'line')[1];
+    
+    lineHandler('/summary');
+    expect(core.getAnalytics).toHaveBeenCalled();
+    console.log.mockRestore();
+  });
+
+  it('should handle /brain-in and /brain-out commands', () => {
+    memory.exportMemory.mockReturnValue(true);
+    memory.importMemory.mockReturnValue(true);
+    startLoop(config);
+    const lineHandler = mockRl.on.mock.calls.find(call => call[0] === 'line')[1];
+    
+    lineHandler('/brain-out /tmp/mem.json');
+    expect(memory.exportMemory).toHaveBeenCalledWith('/tmp/mem.json');
+
+    lineHandler('/brain-in /tmp/mem.json');
+    expect(memory.importMemory).toHaveBeenCalledWith('/tmp/mem.json');
+  });
+
+  it('should handle /e command to open editor', () => {
+    process.env.EDITOR = 'nano';
+    execSync.mockClear();
+    startLoop(config);
+    const lineHandler = mockRl.on.mock.calls.find(call => call[0] === 'line')[1];
+    
+    lineHandler('/e');
+    expect(execSync).toHaveBeenCalledWith(expect.stringContaining('nano'), expect.anything());
   });
 });

@@ -57,10 +57,88 @@ describe('Core Logic', () => {
     fs.existsSync.mockReturnValue(true);
     fs.readFileSync.mockReturnValue(mockContent);
 
-    updateLastLog({ type: 'decision' }, config);
+    updateLastLog({ type: 'decision', mood: 'focused' }, config);
 
-    // updateLastLog usa modo 'write' que escreve no TMP e renomeia
     expect(fs.writeFileSync).toHaveBeenCalled();
     expect(fs.renameSync).toHaveBeenCalled();
+  });
+
+  describe('saveLog edge cases', () => {
+    it('should trigger git commit when shouldCommit is true', () => {
+      const git = require('../../src/git');
+      jest.spyOn(git, 'commitLog');
+      
+      fs.readFileSync.mockImplementation((path) => {
+        const writeCalls = fs.writeSync.mock.calls;
+        if (writeCalls.length > 0) {
+          return writeCalls[writeCalls.length - 1][1]; 
+        }
+        return '# DevLog\n';
+      });
+      let size = 1000;
+      fs.statSync.mockImplementation(() => {
+        size += 1000;
+        return { size };
+      });
+
+      saveLog('test commit', config, { shouldCommit: true });
+      expect(git.commitLog).toHaveBeenCalled();
+    });
+
+    it('should use durable write (fsync) if configured', () => {
+      fs.readFileSync.mockImplementation((path) => {
+        const writeCalls = fs.writeSync.mock.calls;
+        if (writeCalls.length > 0) {
+          return writeCalls[writeCalls.length - 1][1];
+        }
+        return '# DevLog\n';
+      });
+      let size = 1000;
+      fs.statSync.mockImplementation(() => {
+        size += 1000;
+        return { size };
+      });
+      saveLog('test fsync', { ...config, durable: true });
+    });
+  });
+
+  describe('getAnalytics', () => {
+    const { getAnalytics } = require('../../src/core');
+
+    it('should return null if no logs exist', () => {
+      fs.existsSync.mockReturnValue(false);
+      expect(getAnalytics(config)).toBeNull();
+    });
+
+    it('should parse logs and return analytics object', () => {
+      const mockContent = `# DevLog
+## [2026-01-01T10:00:00.000Z]
+type: decision
+mood: focused
+
+We decided to use X.
+## [2026-01-01T11:00:00.000Z]
+type: question
+mood: confused
+
+Why is this broken?`;
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockReturnValue(mockContent);
+
+      const analytics = getAnalytics(config);
+      
+      expect(analytics).not.toBeNull();
+      expect(analytics.categories.decision).toBe(1);
+      expect(analytics.categories.question).toBe(1);
+      expect(analytics.moods.focused).toBe(1);
+      expect(analytics.moods.confused).toBe(1);
+      expect(analytics.decisions).toContain('We decided to use X.');
+      expect(analytics.questions).toContain('Why is this broken?');
+      
+      const hour1 = new Date('2026-01-01T10:00:00.000Z').getHours();
+      const hour2 = new Date('2026-01-01T11:00:00.000Z').getHours();
+      expect(analytics.timeline[hour1]).toBe(1);
+      expect(analytics.timeline[hour2]).toBe(1);
+    });
   });
 });

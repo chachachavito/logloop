@@ -1,5 +1,4 @@
 const readline = require('readline');
-const { startLoop } = require('../../src/ui');
 const core = require('../../src/core');
 const config = require('../../src/config');
 const memory = require('../../src/memory');
@@ -10,12 +9,16 @@ jest.mock('../../src/core');
 jest.mock('../../src/config');
 jest.mock('../../src/memory');
 jest.mock('../../src/git', () => ({
-  getGitMetadata: () => ({ branch: 'main' })
+  getGitMetadata: jest.fn().mockReturnValue({ branch: 'main' }),
+  isGitRepo: jest.fn().mockReturnValue(true),
+  getLogFile: jest.fn().mockReturnValue('logloop.md')
 }));
 jest.mock('fs');
 jest.mock('child_process', () => ({
   execSync: jest.fn()
 }));
+
+const { startLoop } = require('../../src/ui');
 
 describe('UI Integration: Command Loop', () => {
   let mockRl;
@@ -23,6 +26,7 @@ describe('UI Integration: Command Loop', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useFakeTimers();
     
     // Mock Config
     mockConfig = {
@@ -52,19 +56,22 @@ describe('UI Integration: Command Loop', () => {
     core.getLogFile.mockReturnValue('logloop.md');
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   test('should toggle auto-commit with /c', () => {
     startLoop(mockConfig);
     mockRl.emit('line', '/c');
+    jest.runAllTimers();
     
-    // The loop is internal, so we check if the next refresh would use the toggled value
-    // Since autoCommit is a local variable in startLoop, we verify behavior indirectly if possible
-    // or by checking if refresh was called (visual verification is hard in unit tests)
     expect(mockRl.prompt).toHaveBeenCalled();
   });
 
   test('should toggle storage with /s and save config', () => {
     startLoop(mockConfig);
     mockRl.emit('line', '/s');
+    jest.runAllTimers();
     
     expect(config.saveConfig).toHaveBeenCalledWith(expect.objectContaining({
       storage: 'local'
@@ -77,6 +84,7 @@ describe('UI Integration: Command Loop', () => {
     
     startLoop(mockConfig);
     mockRl.emit('line', '/as action');
+    jest.runAllTimers();
     
     expect(core.updateLastLog).toHaveBeenCalledWith({ type: 'action' }, mockConfig);
     expect(memory.learn).toHaveBeenCalledWith('initial note', 'action', 'action', 'message');
@@ -88,6 +96,7 @@ describe('UI Integration: Command Loop', () => {
     
     startLoop(mockConfig);
     mockRl.emit('line', '/feel happy');
+    jest.runAllTimers();
     
     expect(core.updateLastLog).toHaveBeenCalledWith({ mood: 'happy' }, mockConfig);
     expect(memory.learn).toHaveBeenCalledWith('happy note', 'happy', 'happy', 'mood');
@@ -96,6 +105,7 @@ describe('UI Integration: Command Loop', () => {
   test('should export brain with /brain-out', () => {
     startLoop(mockConfig);
     mockRl.emit('line', '/brain-out backup.json');
+    jest.runAllTimers();
     
     expect(memory.exportMemory).toHaveBeenCalledWith('backup.json');
   });
@@ -103,6 +113,7 @@ describe('UI Integration: Command Loop', () => {
   test('should import brain with /brain-in', () => {
     startLoop(mockConfig);
     mockRl.emit('line', '/brain-in sync.json');
+    jest.runAllTimers();
     
     expect(memory.importMemory).toHaveBeenCalledWith('sync.json');
   });
@@ -110,6 +121,7 @@ describe('UI Integration: Command Loop', () => {
   test('should save regular notes', () => {
     startLoop(mockConfig);
     mockRl.emit('line', 'New feature implemented');
+    jest.runAllTimers();
     
     expect(core.saveLog).toHaveBeenCalledWith(
       'New feature implemented', 

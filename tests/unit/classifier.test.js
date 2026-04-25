@@ -17,6 +17,12 @@ describe('Logloop Heuristics - Message Type', () => {
     expect(classifyMessage('porque isso está lento?').category).toBe('question');
   });
 
+  test('should classify media files and markdown images', () => {
+    expect(classifyMessage('screenshot.png').category).toBe('media');
+    expect(classifyMessage('![diagrama](./docs/arch.jpg)').category).toBe('media');
+    expect(classifyMessage('my-photo.WEBP').category).toBe('media');
+  });
+
   test('should detect noise', () => {
     expect(classifyMessage('ok').category).toBe('noise');
     expect(classifyMessage('feito').category).toBe('noise');
