@@ -108,11 +108,13 @@ All available slash commands inside the interactive loop:
 
 - [x] Semantic Classification & Fuzzy Matching
 - [x] Local Active Learning (Memory Persistence)
-- [x] Git HEAD Hash Linking
 - [x] Analytics (Timeline & Summary)
 - [x] Standalone & Restricted Environment Hardening
+- [x] Multi-line Paste & Media Path Detection
+- [x] Training Mode (Interactive UI)
+- [ ] Web Dashboard & Data Visualization (v1.0)
 - [ ] VS Code Extension Integration (v1.0)
-- [ ] Bidirectional Link Generation & Search Engine (v2.0)
+- [ ] Bidirectional Link Generation (UUID indexing) (v2.0)
 
 ---
 
