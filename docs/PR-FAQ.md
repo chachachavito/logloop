@@ -32,7 +32,7 @@ Instale agora com `npm install -g logloop` e recupere o contexto dos seus projet
 ## Perguntas Externas (Consumidor)
 
 **1. O que acontece se eu usar o Logloop em um diretório que não é um repositório Git?**
-A ferramenta funcionará normalmente, mas definirá os campos `commit` e `branch` as `null` no log, emitindo um aviso ao usuário.
+O sistema fará um fallback gracioso sem interrupções, exibindo `no git context` e preenchendo os campos do log como nulos. Para um isolamento total, você pode usar a flag `--standalone`, forçando o sistema a ignorar completamente o Git em ambientes restritos.
 
 **2. Posso configurar o comportamento de commit?**
 Sim. O commit automático é desativado por padrão, mas você pode habilitá-lo globalmente no arquivo `.loglooprc` ou usar a flag `--commit` em execuções individuais.
