@@ -216,6 +216,10 @@ Default: `logloop.md`
 
 ---
 
-## License
+## Technical Specification
+Logloop follows a strict capability-mapping architecture. The project's features, commands, and core concepts are formally defined in the [capabilities.json](capabilities.json) manifest. This ensures 100% alignment between code, documentation, and internationalization.
 
-MIT
+---
+
+## License
+MIT © 2026 Chavito
