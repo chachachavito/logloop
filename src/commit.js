@@ -16,9 +16,17 @@ function hasSelfCommit() {
 function hasStagedChanges() {
   try {
     execSync('git diff --cached --quiet', { stdio: 'ignore' });
-    return false; // Exit code 0 means no differences between HEAD and index
+    return false;
   } catch (e) {
-    return true; // Exit code 1 means there are staged changes
+    return true;
+  }
+}
+
+function getDiffSummary() {
+  try {
+    return execSync('git diff --cached --stat', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+  } catch (e) {
+    return null;
   }
 }
 
@@ -29,13 +37,103 @@ function generateFallbackMessage(log) {
   return `${type}: ${note} (#${log.id})`;
 }
 
-function continueCommit(commitMessage, isDryRun) {
+function generateCommitMessage(args, config, lastLog) {
+  const forceAi = args.includes('--ai');
+  const noAi = args.includes('--no-ai');
+
+  let userMessage = null;
+  const msgIdx = args.findIndex(a => a === '-m' || a === '--message');
+  if (msgIdx > -1 && args[msgIdx + 1]) {
+    userMessage = args[msgIdx + 1];
+  }
+
+  if (userMessage) {
+    let msg = userMessage;
+    if (lastLog && !msg.includes(lastLog.id)) {
+      msg += ` (#${lastLog.id})`;
+    }
+    return { message: msg, source: 'manual' };
+  }
+
+  if (!noAi && (forceAi || hasSelfCommit())) {
+    if (!hasSelfCommit()) {
+      console.log(pc.yellow('self-commit not installed.'));
+      console.log(pc.dim('Tip: npm install -g self-commit'));
+      if (forceAi) process.exit(1);
+      return { message: generateFallbackMessage(lastLog), source: 'fallback' };
+    }
+
+    try {
+      console.log(pc.cyan('🤖 Running self-commit...'));
+      const contextArg = lastLog ? `--context "Log ID: ${lastLog.id}\nType: ${lastLog.type}\nNote: ${lastLog.note}"` : '';
+      execSync(`self-commit ${contextArg}`, { stdio: 'inherit' });
+      process.exit(0);
+    } catch (e) {
+      console.log(pc.red('AI commit generation failed.'));
+      console.log(pc.yellow('Using fallback message.'));
+      return { message: generateFallbackMessage(lastLog), source: 'fallback' };
+    }
+  }
+
+  return { message: generateFallbackMessage(lastLog), source: 'fallback' };
+}
+
+function showPreview(commitMessage, source, lastLog) {
+  const diff = getDiffSummary();
+
+  console.log('');
+  if (diff) {
+    console.log(pc.dim('Changes:'));
+    diff.split('\n').forEach(line => console.log(pc.dim('  ' + line)));
+    console.log('');
+  }
+
+  if (lastLog) {
+    console.log(pc.dim(`Based on log: #${lastLog.id}`));
+  }
+
+  console.log(pc.cyan(`Generated commit message (${source}):`));
+  console.log(pc.green(`  ${commitMessage}`));
+  console.log('');
+}
+
+function promptAction(commitMessage, isDryRun, callback) {
   if (isDryRun) {
-    console.log(pc.magenta('\n--- Dry Run Preview ---'));
+    console.log(pc.magenta('--- Dry Run Preview ---'));
     console.log(pc.green('Command:'), `git commit -m "${commitMessage}"`);
     process.exit(0);
   }
 
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+
+  console.log(pc.dim('? What would you like to do?'));
+  console.log(pc.cyan('  1) Commit'));
+  console.log(pc.cyan('  2) Edit message'));
+  console.log(pc.cyan('  3) Cancel'));
+
+  rl.question(pc.dim('› '), (answer) => {
+    const choice = answer.trim();
+    if (choice === '1' || choice === '') {
+      rl.close();
+      callback(commitMessage);
+    } else if (choice === '2') {
+      rl.question(pc.dim('New message: '), (newMsg) => {
+        rl.close();
+        if (newMsg.trim()) {
+          callback(newMsg.trim());
+        } else {
+          callback(commitMessage);
+        }
+      });
+    } else {
+      rl.close();
+      console.log(pc.yellow('Commit cancelled.'));
+      process.exit(0);
+    }
+  });
+}
+
+function executeCommit(commitMessage) {
   try {
     execSync(`git commit -m "${commitMessage.replace(/"/g, '\\"')}"`, { stdio: 'inherit' });
     console.log(pc.green('✓ Commit successful.'));
@@ -46,55 +144,10 @@ function continueCommit(commitMessage, isDryRun) {
   }
 }
 
-function executeAiCommit(args, config, userMessage, lastLog, isDryRun) {
-  const forceAi = args.includes('--ai');
-  const noAi = args.includes('--no-ai');
-  let commitMessage = '';
-
-  if (userMessage) {
-    commitMessage = userMessage;
-    if (lastLog && !commitMessage.includes(lastLog.id)) {
-      commitMessage += ` (#${lastLog.id})`;
-    }
-  } else if (!noAi && (forceAi || hasSelfCommit())) {
-    if (!hasSelfCommit()) {
-      console.log(pc.yellow('self-commit not installed.'));
-      console.log(pc.yellow('Tip: npm install -g self-commit'));
-      if (forceAi) process.exit(1);
-      commitMessage = generateFallbackMessage(lastLog);
-    } else {
-      try {
-        if (isDryRun) {
-          console.log(pc.cyan('🤖 [Dry Run] Would execute self-commit with context...'));
-          commitMessage = generateFallbackMessage(lastLog);
-        } else {
-          console.log(pc.cyan('🤖 Running self-commit...'));
-          const contextArg = lastLog ? `--context "Log ID: ${lastLog.id}\nType: ${lastLog.type}\nNote: ${lastLog.note}"` : '';
-          execSync(`self-commit ${contextArg}`, { stdio: 'inherit' });
-          process.exit(0);
-        }
-      } catch (e) {
-        console.log(pc.red('AI commit generation failed.'));
-        console.log(pc.yellow('Using fallback message.'));
-        commitMessage = generateFallbackMessage(lastLog);
-      }
-    }
-  } else {
-    commitMessage = generateFallbackMessage(lastLog);
-  }
-
-  continueCommit(commitMessage, isDryRun);
-}
-
 function handleCommit(args, config) {
   const isDryRun = args.includes('--dry-run');
   const addAll = args.includes('--all');
-  
-  let userMessage = null;
-  const msgIdx = args.findIndex(a => a === '-m' || a === '--message');
-  if (msgIdx > -1 && args[msgIdx + 1]) {
-    userMessage = args[msgIdx + 1];
-  }
+  const skipPrompt = args.includes('--yes') || args.includes('-y');
 
   if (!isGitRepo()) {
     console.error(pc.red('Not a git repository.'));
@@ -110,9 +163,6 @@ function handleCommit(args, config) {
     execSync('git add .', { stdio: 'ignore' });
   }
 
-  const logs = getRecentLogs(config, 1);
-  const lastLog = logs.length > 0 ? logs[0] : null;
-
   if (!hasStagedChanges()) {
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
     console.log(pc.yellow('No staged changes found.'));
@@ -120,7 +170,7 @@ function handleCommit(args, config) {
       rl.close();
       if (answer.trim().toLowerCase() === 'y') {
         execSync('git add .', { stdio: 'ignore' });
-        executeAiCommit(args, config, userMessage, lastLog, isDryRun);
+        runCommitFlow(args, config, isDryRun, skipPrompt);
       } else {
         console.log(pc.cyan('Run: git add .'));
         console.log(pc.cyan('Or use: logloop commit --all'));
@@ -128,7 +178,27 @@ function handleCommit(args, config) {
       }
     });
   } else {
-    executeAiCommit(args, config, userMessage, lastLog, isDryRun);
+    runCommitFlow(args, config, isDryRun, skipPrompt);
+  }
+}
+
+function runCommitFlow(args, config, isDryRun, skipPrompt) {
+  const logs = getRecentLogs(config, 1);
+  const lastLog = logs.length > 0 ? logs[0] : null;
+
+  const { message, source } = generateCommitMessage(args, config, lastLog);
+
+  showPreview(message, source, lastLog);
+
+  if (skipPrompt) {
+    if (isDryRun) {
+      console.log(pc.magenta('--- Dry Run Preview ---'));
+      console.log(pc.green('Command:'), `git commit -m "${message}"`);
+      process.exit(0);
+    }
+    executeCommit(message);
+  } else {
+    promptAction(message, isDryRun, executeCommit);
   }
 }
 
