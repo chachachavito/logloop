@@ -1,0 +1,66 @@
+{
+  "name": "logloop",
+  "version": "0.4.1",
+  "description": "Continuous loop of personal logs in the terminal with AI-less semantic classification.",
+  "core_concepts": [
+    "semantic_classification",
+    "git_linking",
+    "local_first_storage",
+    "active_learning_memory",
+    "zero_friction_mood_tracking"
+  ],
+  "storage_modes": {
+    "repo": "Stores logloop.md locally in the project directory for team sharing.",
+    "local": "Stores logs in ~/.logloop/logs/ for personal, private tracking."
+  },
+  "log_categories": {
+    "action": "Tasks, implementations, generic work.",
+    "decision": "Architectural choices, changes in direction, chosen approaches.",
+    "question": "Doubts, research topics, unresolved issues.",
+    "media": "Images, links, or file paths.",
+    "noise": "Tests, greetings, empty notes.",
+    "thought": "Fallback category for unclassified context."
+  },
+  "mood_categories": [
+    "happy",
+    "focused",
+    "tired",
+    "frustrated",
+    "confused",
+    "excited",
+    "neutral"
+  ],
+  "cli_flags": [
+    { "flag": "--commit", "description": "Forces a git commit alongside the log." },
+    { "flag": "--no-commit", "description": "Disables auto-commit for this specific entry." },
+    { "flag": "--mood <mood>", "description": "Overrides heuristic mood detection." },
+    { "flag": "--standalone", "description": "Forces execution without Git dependency checks." }
+  ],
+  "slash_commands": [
+    { "command": "/c", "action": "Toggle auto-commit setting." },
+    { "command": "/m", "action": "Toggle mood tracking heuristic." },
+    { "command": "/s", "action": "Switch between 'repo' and 'local' storage." },
+    { "command": "/t", "action": "Toggle Training Mode (interactive confirmation)." },
+    { "command": "/e", "action": "Open current log file in system editor." },
+    { "command": "/as <category>", "action": "Reclassify last entry and train the model." },
+    { "command": "/feel <mood>", "action": "Override last entry mood and train the model." },
+    { "command": "/timeline", "action": "Display ASCII timeline of activity." },
+    { "command": "/summary", "action": "Display daily analytical summary." },
+    { "command": "/brain-out <file>", "action": "Export memory.json patterns." },
+    { "command": "/brain-in <file>", "action": "Import and merge memory.json patterns." },
+    { "command": "/h", "action": "Toggle help menu visibility." },
+    { "command": "/q", "action": "Quit the logloop continuous session." }
+  ],
+  "configuration": {
+    "global_file": "~/.logloop/.loglooprc",
+    "local_file": "./.loglooprc",
+    "keys": {
+      "userName": "string",
+      "storage": "enum['repo', 'local']",
+      "autoCommit": "boolean",
+      "moodTracking": "boolean",
+      "trainingMode": "boolean",
+      "lang": "enum['en', 'pt']"
+    }
+  }
+}
