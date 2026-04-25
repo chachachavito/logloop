@@ -8,7 +8,8 @@ const DEFAULTS = {
   moodTracking: true,
   storage: 'repo',
   lang: 'en',
-  userName: ''
+  userName: '',
+  trainingMode: false
 };
 
 let _configCache = null;

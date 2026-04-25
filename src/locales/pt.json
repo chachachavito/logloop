@@ -30,7 +30,10 @@
     "brainExported": "Ativos do cérebro exportados para: ",
     "brainSynced": "Sincronização do cérebro realizada com sucesso!",
     "brainError": "Falha na operação do cérebro. Verifique o caminho do arquivo.",
-    "noLogToTrain": "Nenhum log recente encontrado para treinar."
+    "noLogToTrain": "Nenhum log recente encontrado para treinar.",
+    "cmdTrain": "/t - Alternar Modo de Treinamento",
+    "promptTrainType": "[TREINO] Tipo (Enter p/ manter [%s]):\n 1.action 2.decision 3.question 4.media 5.noise 6.thought\n › ",
+    "promptTrainMood": "[TREINO] Humor (Enter p/ manter [%s]):\n 1.happy 2.focused 3.tired 4.frustrated 5.confused 6.excited 7.neutral\n › "
   },
   "cli": {
     "usage": "Uso: logloop [mensagem] [opções]",

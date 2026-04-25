@@ -211,9 +211,10 @@ function saveLog(note, config, options = {}) {
     const { category } = classifyMessage(note);
     const id = generateId();
     const mood = options.mood || 'null';
+    const type = options.type || category;
     const timestamp = getMonotonicTimestamp();
 
-    const entry = `\n## [${timestamp}]\nid: ${id}\ncommit: ${hash || 'null'}\nbranch: ${branch || 'null'}\ntype: ${category}\nmood: ${mood}\n\n${note}\n`;
+    const entry = `\n## [${timestamp}]\nid: ${id}\ncommit: ${hash || 'null'}\nbranch: ${branch || 'null'}\ntype: ${type}\nmood: ${mood}\n\n${note}\n`;
 
     const result = safeWrite(logFile, entry, 'append', config);
 

@@ -30,7 +30,10 @@
     "brainExported": "Brain assets exported to: ",
     "brainSynced": "Brain assets synced successfully!",
     "brainError": "Brain operation failed. Check file path.",
-    "noLogToTrain": "No recent log found to train."
+    "noLogToTrain": "No recent log found to train.",
+    "cmdTrain": "/t - Toggle Training Mode",
+    "promptTrainType": "[TRAIN] Type (Enter to keep [%s]):\n 1.action 2.decision 3.question 4.media 5.noise 6.thought\n › ",
+    "promptTrainMood": "[TRAIN] Mood (Enter to keep [%s]):\n 1.happy 2.focused 3.tired 4.frustrated 5.confused 6.excited 7.neutral\n › "
   },
   "cli": {
     "usage": "Usage: logloop [message] [options]",

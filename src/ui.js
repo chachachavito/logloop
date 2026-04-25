@@ -85,12 +85,13 @@ function startLoop(config, initialMood = null, initialCommit = null) {
     console.log(`\x1b[1m${t('ui.title')} ${t('ui.version')}\x1b[0m`);
     const git = require('./git').getGitMetadata() || {};
     const branchName = git.branch || 'no git context';
-    console.log(`\x1b[90m${t('ui.branch')} ${branchName} | ${t('ui.config')} ${config.storage} | ${t('ui.commit')} ${autoCommit ? 'ON' : 'OFF'} | ${t('ui.mood')} ${config.moodTracking ? 'ON' : 'OFF'}\x1b[0m\n`);
+    console.log(`\x1b[90m${t('ui.branch')} ${branchName} | ${t('ui.config')} ${config.storage} | ${t('ui.commit')} ${autoCommit ? 'ON' : 'OFF'} | ${t('ui.mood')} ${config.moodTracking ? 'ON' : 'OFF'} | TRAIN ${config.trainingMode ? 'ON' : 'OFF'}\x1b[0m\n`);
     
     if (lastLogs.length > 0) {
       lastLogs.forEach(log => {
         const moodIcon = log.mood && log.mood !== 'null' ? ` [${log.mood}]` : '';
-        console.log(`\x1b[90m[${log.time}] [${log.type}]${moodIcon}\x1b[0m ${log.note}`);
+        const displayNote = log.note.replace(/\n/g, ' ');
+        console.log(`\x1b[90m[${log.time}] [${log.type}]${moodIcon}\x1b[0m ${displayNote}`);
       });
     } else {
       console.log(`\x1b[90m${t('ui.noLogs')}\x1b[0m`);
@@ -101,6 +102,7 @@ function startLoop(config, initialMood = null, initialCommit = null) {
       console.log(`\x1b[90m${t('ui.helpTitle')}\x1b[0m`);
       console.log(`\x1b[90m${t('ui.cmdCommit').padEnd(30)} ${t('ui.cmdMood')}\x1b[0m`);
       console.log(`\x1b[90m${t('ui.cmdAs').padEnd(30)} ${t('ui.cmdFeel')}\x1b[0m`);
+      console.log(`\x1b[90m${t('ui.cmdTrain').padEnd(30)} ${t('ui.cmdStorage')}\x1b[0m`);
       console.log(`\x1b[90m${t('ui.cmdBrainOut').padEnd(30)} ${t('ui.cmdBrainIn')}\x1b[0m`);
       console.log(`\x1b[90m${t('ui.cmdTimeline').padEnd(30)} ${t('ui.cmdSummary')}\x1b[0m`);
       console.log(`\x1b[90m${t('ui.cmdEdit').padEnd(30)} ${t('ui.cmdHelpClose')}\x1b[0m`);
@@ -113,9 +115,11 @@ function startLoop(config, initialMood = null, initialCommit = null) {
 
   refresh();
 
-  rl.on('line', (line) => {
-    const input = line.trim();
-    if (!input) { refresh(); return; }
+  let lineBuffer = [];
+  let bufferTimeout = null;
+
+  const processInput = (input) => {
+    if (!input || !input.trim()) { refresh(); return; }
 
     if (input.startsWith('/')) {
       const parts = input.split(' ');
@@ -132,6 +136,10 @@ function startLoop(config, initialMood = null, initialCommit = null) {
           break;
         case '/s':
           config.storage = config.storage === 'repo' ? 'local' : 'repo';
+          saveConfig(config);
+          break;
+        case '/t':
+          config.trainingMode = !config.trainingMode;
           saveConfig(config);
           break;
         case '/e':
@@ -202,6 +210,37 @@ function startLoop(config, initialMood = null, initialCommit = null) {
     }
 
     try {
+      if (config.trainingMode) {
+        const { classifyMessage, classifyMood } = require('./classifier');
+        const detectedType = classifyMessage(input).category;
+        const detectedMood = classifyMood(input).category;
+        
+        const types = ['action', 'decision', 'question', 'media', 'noise', 'thought'];
+        const moods = ['happy', 'focused', 'tired', 'frustrated', 'confused', 'excited', 'neutral'];
+
+        const typeLine = `\x1b[1m\x1b[36mTYPE\x1b[0m \x1b[90m›\x1b[0m \x1b[1m${detectedType.padEnd(10)}\x1b[0m \x1b[90m${types.map((t, i) => `${i+1}.${t}`).join(' ')}\x1b[0m`;
+        rl.question(`${typeLine}\n\x1b[36m› \x1b[0m`, (typeIdx) => {
+          let finalType = detectedType;
+          const tidx = parseInt(typeIdx.trim()) - 1;
+          if (types[tidx]) finalType = types[tidx];
+
+          const moodLine = `\x1b[1m\x1b[35mMOOD\x1b[0m \x1b[90m›\x1b[0m \x1b[1m${detectedMood.padEnd(10)}\x1b[0m \x1b[90m${moods.map((m, i) => `${i+1}.${m}`).join(' ')}\x1b[0m`;
+          rl.question(`${moodLine}\n\x1b[35m› \x1b[0m`, (moodIdx) => {
+            let finalMood = detectedMood;
+            const midx = parseInt(moodIdx.trim()) - 1;
+            if (moods[midx]) finalMood = moods[midx];
+
+            if (finalType !== detectedType) learn(input, finalType, finalType, 'message');
+            if (finalMood !== detectedMood) learn(input, finalMood, finalMood, 'mood');
+
+            saveLog(input, config, { shouldCommit: autoCommit, mood: finalMood, type: finalType });
+            lastLogs = getRecentLogs(config, 3);
+            refresh();
+          });
+        });
+        return;
+      }
+
       saveLog(input, config, { shouldCommit: autoCommit, mood: currentMood });
       lastLogs = getRecentLogs(config, 3);
       refresh();
@@ -209,6 +248,25 @@ function startLoop(config, initialMood = null, initialCommit = null) {
       console.error(`\x1b[31m[logloop] Error: ${err.message}\x1b[0m`);
       setTimeout(refresh, 2000);
     }
+  };
+
+  const flushBuffer = () => {
+    if (lineBuffer.length === 0) return;
+    const combined = lineBuffer.join('\n');
+    lineBuffer = [];
+    processInput(combined);
+  };
+
+  rl.on('line', (line) => {
+    if (line.trim().startsWith('/')) {
+      flushBuffer();
+      processInput(line.trim());
+      return;
+    }
+
+    lineBuffer.push(line);
+    if (bufferTimeout) clearTimeout(bufferTimeout);
+    bufferTimeout = setTimeout(flushBuffer, 50);
   });
 
   rl.on('close', () => {
