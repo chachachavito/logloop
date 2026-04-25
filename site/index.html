@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Logloop | Documentation</title>
+  <title>Logloop — Terminal Thinking Logs for Developers</title>
+  <meta name="description" content="Capture your thinking while coding. Link decisions to commits. 100% local, terminal-first workflow.">
+  <meta name="keywords" content="developer productivity, git workflow, terminal tools, developer journal, commit history context">
   <style>
     :root {
       --primary: #24292f;
@@ -23,11 +26,12 @@
     .terminal-window {
       background: #0d1117;
       border-radius: 12px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
       overflow: hidden;
       margin-bottom: 32px;
       border: 1px solid #30363d;
     }
+
     .terminal-header {
       background: #161b22;
       padding: 12px 16px;
@@ -35,10 +39,25 @@
       gap: 8px;
       border-bottom: 1px solid #30363d;
     }
-    .dot { width: 12px; height: 12px; border-radius: 50%; }
-    .dot-r { background: #ff5f56; }
-    .dot-y { background: #ffbd2e; }
-    .dot-g { background: #27c93f; }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .dot-r {
+      background: #ff5f56;
+    }
+
+    .dot-y {
+      background: #ffbd2e;
+    }
+
+    .dot-g {
+      background: #27c93f;
+    }
+
     .terminal-body {
       padding: 24px;
       font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
@@ -46,8 +65,15 @@
       color: #e6edf3;
       line-height: 1.6;
     }
-    .t-cmd { color: #7ee787; }
-    .t-out { color: #8b949e; }
+
+    .t-cmd {
+      color: #7ee787;
+    }
+
+    .t-out {
+      color: #8b949e;
+    }
+
     .t-cursor {
       display: inline-block;
       width: 8px;
@@ -57,12 +83,34 @@
       animation: blink 1s infinite;
       vertical-align: middle;
     }
-    @keyframes blink { 50% { opacity: 0; } }
+
+    @keyframes blink {
+      50% {
+        opacity: 0;
+      }
+    }
 
     /* Tab Logic Utility */
-    .tab-content { display: none; }
-    .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
 
     * {
@@ -100,72 +148,37 @@
 
     .app-shell {
       min-height: 100vh;
-      display: grid;
-      grid-template-columns: 248px 1fr;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header-nav {
+      position: sticky;
+      top: 0;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 100;
+    }
+
+    .header-nav .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 0;
+    }
+
+    .header-nav .nav-group {
+      display: flex;
+      gap: 8px;
     }
 
     .sidebar {
-      padding: 24px 16px;
-      border-right: 1px solid var(--border);
-      background: var(--sidebar);
-    }
-
-    .brand {
-      margin-bottom: 24px;
-      padding: 0 8px;
-    }
-
-    .brand-mark {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 36px;
-      height: 36px;
-      margin-bottom: 10px;
-      border-radius: 10px;
-      color: #fff;
-      background: var(--primary);
-      font-weight: 700;
-    }
-
-    .brand h1 {
-      margin: 0;
-      font-size: 1.25rem;
-      font-weight: 700;
-    }
-
-    .brand p {
-      margin: 4px 0 0;
-      color: var(--muted);
-    }
-
-    .nav-group {
-      display: grid;
-      gap: 4px;
-    }
-
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      border: 1px solid transparent;
-      border-radius: 10px;
-      color: var(--muted);
-      text-transform: lowercase;
-    }
-
-    .nav-item:hover {
-      background: #ebebeb;
-      border-color: var(--border);
-      color: var(--text);
-    }
-
-    .nav-item.active {
-      background: #ffffff;
-      border-color: var(--border);
-      color: var(--text);
-      box-shadow: var(--shadow-soft);
+      display: none;
     }
 
     .nav-icon {
@@ -176,7 +189,10 @@
     }
 
     .content {
-      padding: 24px 32px 40px;
+      padding: 40px 32px 80px;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
     }
 
     .breadcrumbs {
@@ -290,6 +306,7 @@
       border-radius: 12px;
       background: #fff;
       overflow: hidden;
+      margin-bottom: 24px;
     }
 
     .panel-header {
@@ -462,14 +479,46 @@
       font-weight: 700;
     }
 
-    @media (max-width: 980px) {
-      .app-shell {
-        grid-template-columns: 1fr;
-      }
+    /* Comparison Table Styles */
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
 
-      .sidebar {
-        border-right: 0;
-        border-bottom: 1px solid var(--border);
+    .comparison-table th,
+    .comparison-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .comparison-table th {
+      background: var(--row-hover);
+      font-weight: 700;
+    }
+
+    .comparison-table tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .check-yes {
+      color: #27c93f;
+      font-weight: bold;
+    }
+
+    .check-no {
+      color: #ff5f56;
+      font-weight: bold;
+    }
+
+    @media (max-width: 980px) {
+      .header-nav {
+        padding: 12px 16px;
+      }
+      
+      .header-nav .nav-group {
+        display: none; /* Can add a hamburger menu later if needed */
       }
 
       .main-grid {
@@ -499,38 +548,60 @@
     }
   </style>
 </head>
+
 <body>
   <div class="app-shell">
-    <aside class="sidebar" aria-label="Settings navigation">
+    <header class="header-nav">
       <div class="brand">
-        <div class="brand-mark" aria-hidden="true">Loop</div>
+        <div class="brand-mark">LL</div>
         <h1>Logloop</h1>
-        <p>The "Black Box" for your development process</p>
       </div>
-    </aside>
+      <nav class="nav-group">
+        <div class="nav-item active" onclick="switchTab('overview', document.querySelector('.tab'))">Overview</div>
+        <div class="nav-item" onclick="switchTab('comparison', document.querySelectorAll('.tab')[1])">Why Logloop?</div>
+        <div class="nav-item" onclick="switchTab('faq', document.querySelectorAll('.tab')[2])">FAQ</div>
+        <a href="https://github.com" class="nav-item">GitHub</a>
+      </nav>
+    </header>
 
     <main class="content">
       <div class="breadcrumbs" aria-label="Breadcrumb">
-        <span>Docs</span> / <span>Continuous Mode</span>
+        <span>Docs</span> / <span>v1.0 Overview</span>
       </div>
 
       <div class="header-row">
         <div class="header-copy">
-          <h2>Continuous loop of personal logs <br><span style="color: var(--muted)">in the terminal.</span></h2>
+          <h2>
+            Stop losing context between commits.<br>
+            <span style="color: var(--muted)">
+              Capture your thinking — directly in the terminal.
+            </span>
+          </h2>
+
           <p>
-            Introducing the **Continuous Loop**. A persistent, multi-language CLI that stays open alongside your code, capturing every decision in real-time.
+            Git tracks WHAT changed. Logloop tracks WHY — instantly, in your terminal.
+            Write decisions as you code and link them to commits in seconds.
+          </p>
+
+          <p style="margin-top: 10px; color: var(--muted); font-size: 0.95rem;">
+            → Never forget why you changed something<br>
+            → Standup ready in seconds<br>
+            → Works instantly. No setup.
           </p>
         </div>
 
         <div class="button-row">
-          <button class="button secondary" type="button">View v0.1.0</button>
-          <button class="button primary" type="button">npm install -g logloop</button>
+          <button class="button secondary" type="button">Watch demo</button>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <button class="button primary" type="button">npm install -g logloop</button>
+            <span style="font-size: 0.75rem; color: var(--muted); text-align: center;">No signup • No config • Works instantly</span>
+          </div>
         </div>
       </div>
 
-      <div class="tabs" role="tablist" aria-label="Package sections">
+      <div class="tabs" role="tablist" aria-label="Documentation sections">
         <button class="tab active" type="button" role="tab" onclick="switchTab('overview', this)">Overview</button>
-        <button class="tab" type="button" role="tab" onclick="switchTab('continuous', this)">Continuous Loop</button>
+        <button class="tab" type="button" role="tab" onclick="switchTab('comparison', this)">Why Logloop?</button>
         <button class="tab" type="button" role="tab" onclick="switchTab('faq', this)">FAQ</button>
       </div>
 
@@ -542,11 +613,11 @@
             <div class="dot dot-g"></div>
           </div>
           <div class="terminal-body">
-            <div style="color: #909090">main* › /h</div>
-            <div style="color: #bd93f9; font-weight: bold;">[LOGLOOP INTERACTIVE]</div>
-            <div style="color: #909090">Branch: main* | Config: Commit:OFF | Mood:ON</div>
-            <div style="color: #909090">─────────────────────────────────────────────────</div>
-            <div style="color: #7ee787"> 08:42 😊 [T] Refatoração concluída com sucesso!</div>
+            <div style="color: #909090">Continuous loop of personal logs</div>
+            <div style="color: #909090">in the terminal.</div>
+            <br>
+            <div style="color: #bd93f9; font-weight: bold;">Git tracks WHAT changed.</div>
+            <div style="color: #7ee787; font-weight: bold;">Logloop tracks WHY.</div>
             <div style="color: #909090">main* › <span class="t-cursor"></span></div>
           </div>
         </div>
@@ -555,177 +626,187 @@
           <section class="panel">
             <div class="panel-header">
               <div>
-                <h3>Zen Mode & Real-time Context</h3>
-                <p>The tool that stays out of your way until you need it.</p>
+                <h3>Every commit now has a reason</h3>
+                <p>Capture your thinking in real-time and link it to your code history.</p>
               </div>
+              <div class="badge public">v1.0</div>
             </div>
 
             <div class="package-list">
               <article class="package-item">
-                <div class="pkg-icon" aria-hidden="true">🔁</div>
+                <div class="pkg-icon" aria-hidden="true">🔗</div>
                 <div class="pkg-meta">
-                  <strong>Continuous Loop</strong>
-                  <span>Keep the terminal open. Every note is instantly displayed over your recent history.</span>
+                  <strong>Commit Linking</strong>
+                  <span>Every log is linked to a commit — never lose context again.</span>
                 </div>
-                <div class="badge public">Core</div>
-              </article>
-
-              <article class="package-item">
-                <div class="pkg-icon" aria-hidden="true">🧘</div>
-                <div class="pkg-meta">
-                  <strong>Zen Mode</strong>
-                  <span>Header is hidden by default. Only your logs and a minimalist prompt are visible.</span>
-                </div>
-                <div class="badge public">New</div>
-              </article>
-
-              <article class="package-item">
-                <div class="pkg-icon" aria-hidden="true">⌨️</div>
-                <div class="pkg-meta">
-                  <strong>Slash Commands</strong>
-                  <span>Toggle settings like <code>/commit</code> or <code>/mood</code> without leaving the loop.</span>
-                </div>
-                <div class="badge public">UX</div>
+                <div class="badge private">--commit flag</div>
               </article>
 
               <article class="package-item">
                 <div class="pkg-icon" aria-hidden="true">🧠</div>
                 <div class="pkg-meta">
-                  <strong>Logloop Brain (3 Layers)</strong>
-                  <span>Hybrid inference using Memory (Personal), Fuzzy (Statistical) and Heuristics (Lexical) for 100% local accuracy.</span>
+                  <strong>Logloop Brain</strong>
+                  <span>Gets smarter as you write. Adapts to your thinking style automatically.</span>
                 </div>
-                <div class="badge public">v0.2.0</div>
-              </article>
-
-              <article class="package-item">
-                <div class="pkg-icon" aria-hidden="true">📝</div>
-                <div class="pkg-meta">
-                  <strong>Quick Edit</strong>
-                  <span>Use <code>/e</code> to instantly open the log file and fix typos or add details.</span>
-                </div>
-                <div class="badge public">v1.1</div>
-              </article>
-
-              <article class="package-item">
-                <div class="pkg-icon" aria-hidden="true">🤝</div>
-                <div class="pkg-meta">
-                  <strong>Conflict-free Teams</strong>
-                  <span>Automatic user detection and separate log files (<code>logloop.name.md</code>) to avoid Git merge conflicts.</span>
-                </div>
-                <div class="badge public">New</div>
+                <div class="badge public">Auto classification</div>
               </article>
 
               <article class="package-item">
                 <div class="pkg-icon" aria-hidden="true">🔒</div>
                 <div class="pkg-meta">
-                  <strong>Private Journal</strong>
-                  <span>Hot-swap storage with <code>/s</code> to keep sensitive thoughts in <code>~/.logloop/</code>.</span>
+                  <strong>Privacy First</strong>
+                  <span>Your data never leaves your machine. Fully local and private storage.</span>
                 </div>
-                <div class="badge public">Security</div>
-              </article>
-
-              <article class="package-item">
-                <div class="pkg-icon" aria-hidden="true">📊</div>
-                <div class="pkg-meta">
-                  <strong>Global Dashboard</strong>
-                  <span>Run <code>logloop list</code> to see an overview of your activity across all local projects.</span>
-                </div>
-                <div class="badge public">New</div>
-              </article>
-
-              <article class="package-item">
-                <div class="pkg-icon" aria-hidden="true">🌐</div>
-                <div class="pkg-meta">
-                  <strong>I18n Support</strong>
-                  <span>Full multi-language infrastructure. Ready for global teams with JSON-based locales.</span>
-                </div>
-                <div class="badge public">New</div>
-              <article class="package-item">
-                <div class="pkg-icon" aria-hidden="true">🆔</div>
-                <div class="pkg-meta">
-                  <strong>Log IDs (#hash)</strong>
-                  <span>Short, unique identifiers for every entry. Reference your decisions in commits and PRs.</span>
-                </div>
-                <div class="badge public">v0.3.0</div>
-              </article>
-
-              <article class="package-item">
-                <div class="pkg-icon" aria-hidden="true">🧬</div>
-                <div class="pkg-meta">
-                  <strong>Brain Portability</strong>
-                  <span>Export and merge your learned patterns across devices with <code>/brain-out</code> and <code>/brain-in</code>.</span>
-                </div>
-                <div class="badge public">v0.3.0</div>
-              </article>
-              <article class="package-item">
-                <div class="pkg-icon" aria-hidden="true">📈</div>
-                <div class="pkg-meta">
-                  <strong>Visual Timeline</strong>
-                  <span>Analyze your weekly productivity and mood distribution with <code>logloop timeline</code>.</span>
-                </div>
-                <div class="badge public">v0.3.0</div>
+                <div class="badge public">memory.json local</div>
               </article>
 
               <article class="package-item">
                 <div class="pkg-icon" aria-hidden="true">📝</div>
                 <div class="pkg-meta">
-                  <strong>Smart Summary</strong>
-                  <span>Deterministic daily reports with decisions and pending questions. Ready for Standups.</span>
+                  <strong>Daily Summary</strong>
+                  <span>Generate daily summaries instantly. No more guessing in standups.</span>
                 </div>
-                <div class="badge public">v0.4.0</div>
+                <div class="badge public">logloop summary</div>
               </article>
             </div>
           </section>
 
           <aside class="sidebar-panel">
             <section class="panel status-card">
-              <label style="font-weight: 700; margin-bottom: 8px; display: block;">Interactive Commands</label>
-              <div class="status-line"><span>/c → Toggle auto-commit</span></div>
-              <div class="status-line"><span>/m → Toggle mood tracking</span></div>
-              <div class="status-line"><span>/as → Reclassify and Train</span></div>
-              <div class="status-line"><span>/feel → Correct Mood and Train</span></div>
-              <div class="status-line"><span>/brain-out → Export Brain</span></div>
-              <div class="status-line"><span>/brain-in → Sync/Merge Brain</span></div>
-              <div class="status-line"><span>/timeline → Visual Analytics</span></div>
-              <div class="status-line"><span>/summary → Daily Insights</span></div>
-              <div class="status-line"><span>/e → Edit logloop.md</span></div>
-              <div class="status-line"><span>/h → Toggle Help/Header</span></div>
-              <div class="status-line"><span>/q → Quit loop</span></div>
+              <label style="font-weight: 700; margin-bottom: 8px; display: block;">How it works</label>
+              <div class="status-line"><span>1. npm install -g logloop</span></div>
+              <div class="status-line"><span>2. cd your-project</span></div>
+              <div class="status-line"><span>3. logloop</span></div>
             </section>
 
             <div class="alert" role="alert">
               <div>
                 <strong>Pro Tip</strong>
-                Use <code>logloop "message"</code> for a one-shot entry without entering the loop.
+                Use <code>logloop "message"</code> to log instantly without entering the loop.
               </div>
             </div>
+
+            <section class="panel status-card">
+              <label style="font-weight: 700; margin-bottom: 8px; display: block;">Social Proof</label>
+              <div class="status-line"><span>"Better than Git notes by 10x"</span></div>
+              <div class="status-line"><span>"I finally remember WHY I did things"</span></div>
+              <div class="status-line"><span>"Standup with zero stress now"</span></div>
+            </section>
           </aside>
         </div>
       </div>
 
-      <div id="continuous" class="tab-content">
+      <div id="comparison" class="tab-content">
         <section class="panel">
-          <div class="panel-header"><h3>Deep Integration</h3></div>
-          <div style="padding: 24px;">
-            <p>O Logloop v0.1.0 introduz o **Loop Contínuo de Contexto**. A ferramenta é desenhada para permanecer aberta em um terminal dedicado, servindo como uma "caixa preta" de decisões.</p>
+          <div class="panel-header">
+            <h3>Why not just use something else?</h3>
+            <p>Git is great for diffs. Terrible for thinking.</p>
+          </div>
+          <div style="padding: 20px;">
+            <table class="comparison-table">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Logloop</th>
+                  <th>Conventional Commits</th>
+                  <th>Notion</th>
+                  <th>Git Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Captures thinking in real-time</td>
+                  <td class="check-yes">yes</td>
+                  <td class="check-no">no</td>
+                  <td class="check-no">no</td>
+                  <td class="check-no">no</td>
+                </tr>
+                <tr>
+                  <td>Understands your patterns</td>
+                  <td class="check-yes">yes</td>
+                  <td class="check-no">no</td>
+                  <td class="check-no">no</td>
+                  <td class="check-no">no</td>
+                </tr>
+                <tr>
+                  <td>Links to commits</td>
+                  <td class="check-yes">yes</td>
+                  <td class="check-no">no</td>
+                  <td class="check-no">no</td>
+                  <td>manual</td>
+                </tr>
+                <tr>
+                  <td>Terminal-native workflow</td>
+                  <td class="check-yes">yes</td>
+                  <td class="check-yes">yes</td>
+                  <td class="check-no">no</td>
+                  <td class="check-yes">yes</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div style="margin-top: 32px;">
+              <strong>Use Logloop if:</strong>
+              <ul style="margin-top: 8px; color: var(--muted);">
+                <li>you live in the terminal</li>
+                <li>you think while coding</li>
+                <li>you’ve lost important decisions before</li>
+              </ul>
+            </div>
           </div>
         </section>
       </div>
 
       <div id="faq" class="tab-content">
         <section class="panel">
-          <div class="panel-header"><h3>Common Questions</h3></div>
-          <div style="padding: 24px;">
-            <p><strong>O help sumiu?</strong> Não, ele apenas entra em Zen Mode. Use <code>/h</code> para ver o cabeçalho e os comandos novamente.</p>
-            <p style="margin-top: 15px;"><strong>Como o Logloop aprende?</strong> Ao usar <code>/as &lt;categoria&gt;</code> ou <code>/feel &lt;mood&gt;</code>, você treina o seu cérebro local. O Logloop prioriza suas correções passadas sobre as regras padrão.</p>
-            <p style="margin-top: 15px;"><strong>Meus dados saem da máquina?</strong> Não. O motor 3-Layers (Memory, Fuzzy, Heuristics) é 100% local e privado.</p>
-            <p style="margin-top: 15px;"><strong>Como editar um log?</strong> Digite <code>/e</code> dentro do loop para abrir seu editor favorito.</p>
+          <div class="panel-header">
+            <h3>Frequently Asked Questions</h3>
+          </div>
+          <div style="padding: 24px; display: grid; gap: 20px;">
+            <div>
+              <strong>Does Logloop replace Git?</strong>
+              <p style="color: var(--muted);">No. Git tracks code changes. Logloop tracks the reasoning behind them.</p>
+            </div>
+            <div>
+              <strong>Does it work without Git?</strong>
+              <p style="color: var(--muted);">Yes, but it becomes much more powerful when combined with Git.</p>
+            </div>
+            <div>
+              <strong>How does the Brain learn?</strong>
+              <p style="color: var(--muted);">It adapts to your writing patterns locally over time.</p>
+            </div>
+            <div>
+              <strong>What does --commit do?</strong>
+              <p style="color: var(--muted);">It links your log entry directly to a Git commit.</p>
+            </div>
+            <div>
+              <strong>Does any data leave my machine?</strong>
+              <p style="color: var(--muted);">No. Everything is stored locally. No external services involved.</p>
+            </div>
+            <div>
+              <strong>Can I sync across machines?</strong>
+              <p style="color: var(--muted);">Yes, using your own tools like Git or cloud storage.</p>
+            </div>
           </div>
         </section>
       </div>
 
+      <footer style="margin-top: 48px; padding-top: 32px; border-top: 1px solid var(--border); text-align: center;">
+        <h3>Ready to stop losing your thinking?</h3>
+        <div style="margin-top: 16px;">
+          <button class="button primary" type="button">npm install -g logloop</button>
+          <p style="margin-top: 8px; font-size: 0.85rem; color: var(--muted);">Start in seconds. No setup required.</p>
+        </div>
+        <div style="margin-top: 24px; display: flex; justify-content: center; gap: 20px; font-size: 0.9rem; color: var(--muted);">
+          <a href="#">GitHub</a>
+          <a href="#">Docs</a>
+          <a href="#">Discord</a>
+          <a href="#">Changelog v1.0</a>
+        </div>
+      </footer>
     </main>
   </div>
+
   <script>
     function switchTab(tabId, el) {
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -735,4 +816,5 @@
     }
   </script>
 </body>
+
 </html>

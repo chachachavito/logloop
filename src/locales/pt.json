@@ -13,6 +13,10 @@
     "cmdMood": "/m - Alternar Mood Tracking",
     "cmdStorage": "/s - Alternar Armazenamento (Repo/Local)",
     "cmdEdit": "/e - Abrir logloop.md para editar",
+    "cmdAs": "/as <tipo> - Reclassificar & Treinar",
+    "cmdFeel": "/feel <humor> - Corrigir Humor & Treinar",
+    "cmdBrainOut": "/brain-out <arquivo> - Exportar Cérebro",
+    "cmdBrainIn": "/brain-in <arquivo> - Sincronizar Cérebro",
     "cmdTimeline": "/timeline - Análise Visual",
     "cmdSummary": "/summary  - Resumo Diário",
     "cmdQuit": "/q - Sair",
@@ -21,7 +25,12 @@
     "promptName": "Digite seu nome para o log: ",
     "unknownCommand": "Comando desconhecido.",
     "errorEditor": "Erro ao abrir editor.",
-    "goodbye": "Até logo!"
+    "goodbye": "Até logo!",
+    "brainTrained": "Cérebro treinado! Padrão aprendido: ",
+    "brainExported": "Ativos do cérebro exportados para: ",
+    "brainSynced": "Sincronização do cérebro realizada com sucesso!",
+    "brainError": "Falha na operação do cérebro. Verifique o caminho do arquivo.",
+    "noLogToTrain": "Nenhum log recente encontrado para treinar."
   },
   "cli": {
     "usage": "Uso: logloop [mensagem] [opções]",

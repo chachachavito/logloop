@@ -13,6 +13,10 @@
     "cmdMood": "/m - Toggle Mood Tracking",
     "cmdStorage": "/s - Toggle Storage (Repo/Local)",
     "cmdEdit": "/e - Open logloop.md for editing",
+    "cmdAs": "/as <type> - Reclassify & Train",
+    "cmdFeel": "/feel <mood> - Correct Mood & Train",
+    "cmdBrainOut": "/brain-out <file> - Export Brain",
+    "cmdBrainIn": "/brain-in <file> - Sync/Merge Brain",
     "cmdTimeline": "/timeline - Visual Analytics",
     "cmdSummary": "/summary  - Daily Insights",
     "cmdQuit": "/q - Quit loop",
@@ -21,7 +25,12 @@
     "promptName": "Enter your name for the log: ",
     "unknownCommand": "Unknown command.",
     "errorEditor": "Error opening editor.",
-    "goodbye": "Goodbye!"
+    "goodbye": "Goodbye!",
+    "brainTrained": "Brain trained! Pattern learned: ",
+    "brainExported": "Brain assets exported to: ",
+    "brainSynced": "Brain assets synced successfully!",
+    "brainError": "Brain operation failed. Check file path.",
+    "noLogToTrain": "No recent log found to train."
   },
   "cli": {
     "usage": "Usage: logloop [message] [options]",
