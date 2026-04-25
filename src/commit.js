@@ -37,7 +37,7 @@ function generateFallbackMessage(log) {
   return `${type}: ${note} (#${log.id})`;
 }
 
-function generateCommitMessage(args, config, lastLog) {
+function generateCommitMessage(args, config, lastLog, skipPrompt) {
   const forceAi = args.includes('--ai');
   const noAi = args.includes('--no-ai');
 
@@ -66,7 +66,8 @@ function generateCommitMessage(args, config, lastLog) {
     try {
       console.log(pc.cyan('🤖 Running self-commit...'));
       const contextArg = lastLog ? `--context "Log ID: ${lastLog.id}\nType: ${lastLog.type}\nNote: ${lastLog.note}"` : '';
-      execSync(`self-commit ${contextArg}`, { stdio: 'inherit' });
+      const yesArg = skipPrompt ? '-y' : '';
+      execSync(`self-commit ${contextArg} ${yesArg}`, { stdio: 'inherit' });
       process.exit(0);
     } catch (e) {
       console.log(pc.red('AI commit generation failed.'));
@@ -164,6 +165,10 @@ function handleCommit(args, config) {
   }
 
   if (!hasStagedChanges()) {
+    if (skipPrompt && addAll) {
+      runCommitFlow(args, config, isDryRun, skipPrompt);
+      return;
+    }
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
     console.log(pc.yellow('No staged changes found.'));
     rl.question('Stage all files? (y/n) ', (answer) => {
@@ -186,7 +191,7 @@ function runCommitFlow(args, config, isDryRun, skipPrompt) {
   const logs = getRecentLogs(config, 1);
   const lastLog = logs.length > 0 ? logs[0] : null;
 
-  const { message, source } = generateCommitMessage(args, config, lastLog);
+  const { message, source } = generateCommitMessage(args, config, lastLog, skipPrompt);
 
   showPreview(message, source, lastLog);
 
@@ -196,6 +201,7 @@ function runCommitFlow(args, config, isDryRun, skipPrompt) {
       console.log(pc.green('Command:'), `git commit -m "${message}"`);
       process.exit(0);
     }
+    console.log(pc.cyan('Auto-committing with generated message (--yes)'));
     executeCommit(message);
   } else {
     promptAction(message, isDryRun, executeCommit);
