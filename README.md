@@ -66,6 +66,8 @@ Logloop automates the context capture:
 - **Mood Heuristics**: Detects emotional state via keywords and emoticons (zero-friction).
 - **Git Linking**: Attaches current `HEAD` hash and branch name.
 - **ISO Timestamps**: Precise temporal tracking.
+- **Paste Support**: Handles multi-line pastes from Word/Slack as single entries.
+- **Training Mode**: Optional interactive confirmation of detected tags and mood (`/t`).
 - **Append-only storage**: Persists everything to `logloop.md`.
 
 ---
@@ -103,6 +105,7 @@ These layers combine into a **Weighted Confidence Score** to ensure high precisi
 Logloop is not just a logger; it's an evolving assistant:
 *   **/as <category>**: Reclassifies the last entry and saves the preference to your memory.
 *   **/feel <mood>**: Corrects the emotional context and trains the mood engine.
+*   **/t**: Toggles **Training Mode**. In this mode, Logloop asks for confirmation/correction after each entry using a sleek, numeric selection interface.
 *   **Brain Sync**: Use `/brain-out <file>` and `/brain-in <file>` to move your learned patterns between machines.
 
 ### Insights & Analytics
@@ -142,6 +145,7 @@ Logloop analyzes your input to categorize the entry automatically:
 - **Action**: Tasks, commits, and implementations. Triggered by leading verbs (PT/EN).
 - **Decision**: Architectural choices and trade-offs.
 - **Question**: Open doubts and research items (triggered by `?`).
+- **Media**: Image paths ( `.png`, `.jpg`, etc.) or Markdown image syntax.
 - **Thought**: General observations and context.
 
 ### Zero-Friction Mood Tracking
@@ -201,6 +205,9 @@ Default: `logloop.md`
 - [x] Timeline Visualization
 - [x] Smart Deterministic Summaries
 - [x] Standalone Mode (Git fully optional & hardened)
+- [x] Multi-line Paste Support (Buffering & Grouping)
+- [x] Training Mode (Interactive Confirmation & Sleek UI)
+- [x] Media/Image Path Detection
 
 ---
 
