@@ -9,7 +9,8 @@ const DEFAULTS = {
   storage: 'repo',
   lang: 'en',
   userName: '',
-  trainingMode: false
+  trainingMode: false,
+  zenMode: true
 };
 
 let _configCache = null;

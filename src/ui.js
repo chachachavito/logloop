@@ -72,7 +72,7 @@ function renderSummary(analytics) {
 function startLoop(config, initialMood = null, initialCommit = null) {
   let currentMood = initialMood;
   let autoCommit = initialCommit !== null ? initialCommit : config.autoCommit;
-  let helpVisible = true;
+  let helpVisible = !config.zenMode;
   let lastLogs = getRecentLogs(config, 3);
 
     const rl = readline.createInterface({
@@ -129,7 +129,12 @@ function startLoop(config, initialMood = null, initialCommit = null) {
 
       switch (cmd) {
         case '/q': rl.close(); return;
-        case '/h': helpVisible = !helpVisible; break;
+        case '/h':
+        case '/zen':
+          helpVisible = !helpVisible;
+          config.zenMode = !helpVisible;
+          saveConfig(config);
+          break;
         case '/c': autoCommit = !autoCommit; break;
         case '/m': 
           config.moodTracking = !config.moodTracking; 

@@ -20,7 +20,7 @@
     "cmdTimeline": "/timeline - Análise Visual",
     "cmdSummary": "/summary  - Resumo Diário",
     "cmdQuit": "/q - Sair",
-    "cmdHelpClose": "/h - Fechar ajuda / Zen Mode",
+    "cmdHelpClose": "/h ou /zen - Alternar Ajuda / Zen Mode",
     "promptHelp": "Digite sua nota ou /h para ajuda",
     "promptName": "Digite seu nome para o log: ",
     "unknownCommand": "Comando desconhecido.",
