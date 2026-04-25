@@ -10,13 +10,13 @@ function isGitRepo() {
 }
 
 function getGitMetadata() {
-  if (!isGitRepo()) return null;
+  if (!isGitRepo()) return { branch: null, hash: null };
   try {
-    const branch = execSync('git branch --show-current', { stdio: 'pipe' }).toString().trim();
-    const hash = execSync('git rev-parse HEAD', { stdio: 'pipe' }).toString().trim();
+    const branch = execSync('git branch --show-current', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+    const hash = execSync('git rev-parse HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
     return { branch: branch || 'detached', hash };
   } catch (e) {
-    return null;
+    return { branch: null, hash: null };
   }
 }
 

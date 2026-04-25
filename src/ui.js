@@ -2,6 +2,7 @@ const readline = require('readline');
 const { saveLog, getRecentLogs, updateLastLog, getAnalytics } = require('./core');
 const { saveConfig } = require('./config');
 const { t } = require('./i18n');
+const { learn, exportMemory, importMemory } = require('./memory');
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
@@ -79,10 +80,12 @@ function startLoop(config, initialMood = null, initialCommit = null) {
     prompt: `\x1b[35m› \x1b[0m`
   });
 
-  const refresh = () => {
+  const refresh = (msg = '') => {
     clear();
     console.log(`\x1b[1m${t('ui.title')} ${t('ui.version')}\x1b[0m`);
-    console.log(`\x1b[90m${t('ui.branch')} ${require('./git').getGitMetadata().branch || 'n/a'} | ${t('ui.config')} ${config.storage} | ${t('ui.commit')} ${autoCommit ? 'ON' : 'OFF'} | ${t('ui.mood')} ${config.moodTracking ? 'ON' : 'OFF'}\x1b[0m\n`);
+    const git = require('./git').getGitMetadata() || {};
+    const branchName = git.branch || 'n/a';
+    console.log(`\x1b[90m${t('ui.branch')} ${branchName} | ${t('ui.config')} ${config.storage} | ${t('ui.commit')} ${autoCommit ? 'ON' : 'OFF'} | ${t('ui.mood')} ${config.moodTracking ? 'ON' : 'OFF'}\x1b[0m\n`);
     
     if (lastLogs.length > 0) {
       lastLogs.forEach(log => {
@@ -96,11 +99,14 @@ function startLoop(config, initialMood = null, initialCommit = null) {
     console.log(`\n\x1b[90m${t('ui.footerDivider')}\x1b[0m`);
     if (helpVisible) {
       console.log(`\x1b[90m${t('ui.helpTitle')}\x1b[0m`);
-      console.log(`\x1b[90m${t('ui.cmdCommit')}   ${t('ui.cmdMood')}\x1b[0m`);
-      console.log(`\x1b[90m${t('ui.cmdStorage')}  ${t('ui.cmdEdit')}\x1b[0m`);
-      console.log(`\x1b[90m${t('ui.cmdTimeline')} ${t('ui.cmdSummary')}\x1b[0m`);
-      console.log(`\x1b[90m${t('ui.cmdQuit')}     ${t('ui.cmdHelpClose')}\x1b[0m`);
+      console.log(`\x1b[90m${t('ui.cmdCommit').padEnd(30)} ${t('ui.cmdMood')}\x1b[0m`);
+      console.log(`\x1b[90m${t('ui.cmdAs').padEnd(30)} ${t('ui.cmdFeel')}\x1b[0m`);
+      console.log(`\x1b[90m${t('ui.cmdBrainOut').padEnd(30)} ${t('ui.cmdBrainIn')}\x1b[0m`);
+      console.log(`\x1b[90m${t('ui.cmdTimeline').padEnd(30)} ${t('ui.cmdSummary')}\x1b[0m`);
+      console.log(`\x1b[90m${t('ui.cmdEdit').padEnd(30)} ${t('ui.cmdHelpClose')}\x1b[0m`);
+      console.log(`\x1b[90m${t('ui.cmdQuit')}\x1b[0m`);
     }
+    if (msg) console.log(`\n${msg}`);
     console.log(`\x1b[33m${t('ui.promptHelp')}\x1b[0m`);
     rl.prompt();
   };
@@ -112,7 +118,10 @@ function startLoop(config, initialMood = null, initialCommit = null) {
     if (!input) { refresh(); return; }
 
     if (input.startsWith('/')) {
-      const cmd = input.toLowerCase();
+      const parts = input.split(' ');
+      const cmd = parts[0].toLowerCase();
+      const arg = parts.slice(1).join(' ');
+
       switch (cmd) {
         case '/q': rl.close(); return;
         case '/h': helpVisible = !helpVisible; break;
@@ -131,7 +140,8 @@ function startLoop(config, initialMood = null, initialCommit = null) {
             const editor = process.env.EDITOR || 'nano';
             execSync(`${editor} ${logFile}`, { stdio: 'inherit' });
           } catch (e) {
-            console.log(t('ui.errorEditor'));
+            refresh(`\x1b[31m${t('ui.errorEditor')}\x1b[0m`);
+            return;
           }
           break;
         case '/timeline':
@@ -147,6 +157,40 @@ function startLoop(config, initialMood = null, initialCommit = null) {
           console.log(`\n\x1b[90m${t('ui.footerDivider')}\x1b[0m`);
           console.log(`\x1b[33m${t('ui.promptHelp')}\x1b[0m`);
           rl.prompt();
+          return;
+        case '/as':
+          if (!arg) { refresh(`\x1b[31mUsage: /as <type>\x1b[0m`); return; }
+          if (lastLogs.length === 0) { refresh(`\x1b[31m${t('ui.noLogToTrain')}\x1b[0m`); return; }
+          const lastLogAs = lastLogs[lastLogs.length - 1];
+          updateLastLog({ type: arg }, config);
+          learn(lastLogAs.note, arg, arg, 'message');
+          lastLogs = getRecentLogs(config, 3);
+          refresh(`\x1b[32m${t('ui.brainTrained')}\x1b[0m \x1b[1m${lastLogAs.note}\x1b[0m → \x1b[36m${arg}\x1b[0m`);
+          return;
+        case '/feel':
+          if (!arg) { refresh(`\x1b[31mUsage: /feel <mood>\x1b[0m`); return; }
+          if (lastLogs.length === 0) { refresh(`\x1b[31m${t('ui.noLogToTrain')}\x1b[0m`); return; }
+          const lastLogFeel = lastLogs[lastLogs.length - 1];
+          updateLastLog({ mood: arg }, config);
+          learn(lastLogFeel.note, arg, arg, 'mood');
+          lastLogs = getRecentLogs(config, 3);
+          refresh(`\x1b[32m${t('ui.brainTrained')}\x1b[0m \x1b[1m${lastLogFeel.note}\x1b[0m → \x1b[35m${arg}\x1b[0m`);
+          return;
+        case '/brain-out':
+          if (!arg) { refresh(`\x1b[31mUsage: /brain-out <file>\x1b[0m`); return; }
+          if (exportMemory(arg)) {
+            refresh(`\x1b[32m${t('ui.brainExported')}\x1b[0m ${arg}`);
+          } else {
+            refresh(`\x1b[31m${t('ui.brainError')}\x1b[0m`);
+          }
+          return;
+        case '/brain-in':
+          if (!arg) { refresh(`\x1b[31mUsage: /brain-in <file>\x1b[0m`); return; }
+          if (importMemory(arg)) {
+            refresh(`\x1b[32m${t('ui.brainSynced')}\x1b[0m`);
+          } else {
+            refresh(`\x1b[31m${t('ui.brainError')}\x1b[0m`);
+          }
           return;
         default:
           console.log(`\x1b[31m${t('ui.unknownCommand')}\x1b[0m`);
