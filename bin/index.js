@@ -100,17 +100,22 @@ if (args.includes('-v') || args.includes('--version')) {
 
 if (args.includes('-h') || args.includes('--help')) {
   console.log(`
-${t('cli.usage')}
+${pc.bold(pc.white('LOGLOOP'))} ${pc.gray(`v${pkg.version}`)}
+${pc.gray('──────')}
 
-${t('cli.options')}
-  ${t('cli.optCommit')}
-  ${t('cli.optNoCommit')}
-  ${t('cli.optMood')}
-  ${t('cli.optVersion')}
-  ${t('cli.optHelp')}
+${pc.bold(t('cli.usage'))}
+  ${pc.cyan('logloop')} ${pc.gray('[message] [options]')}
 
-${t('cli.configTitle')}
-  ${t('cli.configUsage')}
+${pc.bold(t('cli.options'))}
+  ${pc.yellow('--commit')}${' '.repeat(7)} ${t('cli.optCommit')}
+  ${pc.yellow('--no-commit')}${' '.repeat(4)} ${t('cli.optNoCommit')}
+  ${pc.yellow('--mood <mood>')}${' '.repeat(2)} ${t('cli.optMood')}
+  ${pc.yellow('--standalone')}${' '.repeat(2)} Skip git context
+  ${pc.yellow('-v, --version')}${' '.repeat(1)} ${t('cli.optVersion')}
+  ${pc.yellow('-h, --help')}${' '.repeat(4)} ${t('cli.optHelp')}
+
+${pc.bold(t('cli.configTitle'))}
+  ${pc.gray(t('cli.configUsage'))}
   `);
   process.exit(0);
 }

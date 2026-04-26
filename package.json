@@ -14,7 +14,9 @@
   ],
   "scripts": {
     "test": "jest --coverage",
-    "dev": "node bin/index.js"
+    "dev": "node bin/index.js",
+    "dashboard:backend": "npm run start:dev --prefix dashboard/backend",
+    "dashboard:frontend": "npm run dev --prefix dashboard/frontend"
   },
   "keywords": [
     "cli",

@@ -7,6 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 const pc = require('picocolors');
+const pkg = require('../package.json');
 
 function clear() {
   process.stdout.write('\x1b[2J\x1b[0;0H');
@@ -83,34 +84,69 @@ function startLoop(config, initialMood = null, initialCommit = null) {
 
   const refresh = (msg = '') => {
     clear();
-    console.log(pc.bold(`${t('ui.title')} ${t('ui.version')}`));
-    const git = require('./git').getGitMetadata() || {};
-    const branchName = git.branch || 'no git context';
-    console.log(pc.gray(`${t('ui.branch')} ${branchName} | ${t('ui.config')} ${config.storage} | ${t('ui.commit')} ${autoCommit ? 'ON' : 'OFF'} | ${t('ui.mood')} ${config.moodTracking ? 'ON' : 'OFF'} | TRAIN ${config.trainingMode ? 'ON' : 'OFF'}\n`));
+    // Premium Header
+    console.log(`${pc.bold(pc.white('LOGLOOP'))} ${pc.gray('──────')} ${pc.gray(`v${pkg.version}`)}`);
     
+    const git = require('./git').getGitMetadata() || {};
+    const projectName = path.basename(process.cwd());
+    const shortHash = git.hash ? ` (${git.hash.substring(0, 7)})` : '';
+    
+    // Status Bar - Compact & Elegant
+    const status = [
+      `${pc.gray('project:')} ${pc.magenta(pc.bold(projectName))}`,
+      `${pc.gray('branch:')} ${pc.cyan((git.branch || 'none') + shortHash)}`,
+      `${pc.gray('commit:')} ${autoCommit ? pc.green('ON') : pc.red('OFF')}`,
+      `${pc.gray('mood:')} ${config.moodTracking ? pc.green('ON') : pc.red('OFF')}`,
+      `${pc.gray('train:')} ${config.trainingMode ? pc.green('ON') : pc.red('OFF')}`
+    ].join(pc.gray(' • '));
+    
+    console.log(status + '\n');
+    
+    // Clean Logs
     if (lastLogs.length > 0) {
       lastLogs.forEach(log => {
+        const time = pc.gray(log.time);
         const moodIcon = log.mood && log.mood !== 'null' ? ` [${log.mood}]` : '';
+        const meta = pc.gray(`[${log.type}]${moodIcon}`);
         const displayNote = log.note.replace(/\n/g, ' ');
-        console.log(`${pc.gray(`[${log.time}] [${log.type}]${moodIcon}`)} ${displayNote}`);
+        console.log(`${time} ${meta} ${pc.white(displayNote)}`);
       });
     } else {
-      console.log(pc.gray(t('ui.noLogs')));
+      console.log(pc.gray('  ' + t('ui.noLogs')));
     }
     
-    console.log(`\n${pc.gray(t('ui.footerDivider'))}`);
+    console.log(`\n${pc.gray('─'.repeat(85))}`);
+
     if (helpVisible) {
-      console.log(pc.gray(t('ui.helpTitle')));
-      console.log(pc.gray(`${t('ui.cmdCommit').padEnd(30)} ${t('ui.cmdMood')}`));
-      console.log(pc.gray(`${t('ui.cmdAs').padEnd(30)} ${t('ui.cmdFeel')}`));
-      console.log(pc.gray(`${t('ui.cmdTrain').padEnd(30)} ${t('ui.cmdStorage')}`));
-      console.log(pc.gray(`${t('ui.cmdBrainOut').padEnd(30)} ${t('ui.cmdBrainIn')}`));
-      console.log(pc.gray(`${t('ui.cmdTimeline').padEnd(30)} ${t('ui.cmdSummary')}`));
-      console.log(pc.gray(`${t('ui.cmdEdit').padEnd(30)} ${t('ui.cmdHelpClose')}`));
-      console.log(pc.gray(t('ui.cmdQuit')));
+      console.log(pc.bold(pc.white('  COMMANDS HELP')));
+      
+      const col1 = [
+        `${pc.bold('/c')} Toggle Commit`,
+        `${pc.bold('/m')} Toggle Mood`,
+        `${pc.bold('/s')} Toggle Storage`,
+        `${pc.bold('/t')} Toggle Train`
+      ];
+      const col2 = [
+        `${pc.bold('/timeline')} Activity`,
+        `${pc.bold('/summary')}  Insights`,
+        `${pc.bold('/e')}        Edit File`,
+        `${pc.bold('/q')}        Quit`
+      ];
+      const col3 = [
+        `${pc.bold('/as')}    Train Type`,
+        `${pc.bold('/feel')}  Train Mood`,
+        `${pc.bold('/brain-out')} Export`,
+        `${pc.bold('/h')}     Close Help`
+      ];
+
+      for (let i = 0; i < 4; i++) {
+        console.log(`  ${col1[i].padEnd(35)} ${col2[i].padEnd(35)} ${col3[i]}`);
+      }
+      console.log(pc.gray('─'.repeat(85)));
     }
-    if (msg) console.log(`\n${msg}`);
-    console.log(pc.yellow(t('ui.promptHelp')));
+
+    if (msg) console.log(`${msg}`);
+    console.log(`${pc.magenta('›')} ${pc.gray(t('ui.promptHelp'))}`);
     rl.prompt();
   };
 

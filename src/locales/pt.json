@@ -1,7 +1,6 @@
 {
   "ui": {
     "title": "LOGLOOP INTERATIVO",
-    "version": "v0.4.0",
     "branch": "Branch:",
     "config": "Config:",
     "commit": "Commit:",
