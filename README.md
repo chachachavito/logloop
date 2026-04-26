@@ -1,4 +1,4 @@
-# Logloop (v0.4.2)
+# Logloop (v0.4.3)
 
 > **Git tracks WHAT changed. Logloop tracks WHY.**
 
