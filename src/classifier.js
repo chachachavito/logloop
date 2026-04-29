@@ -11,7 +11,7 @@ const MESSAGE_CATEGORIES = [
 ];
 
 const MOOD_CATEGORIES = [
-  { name: 'happy', patterns: [/\b(consegui|sucesso|funciona|top|boa|feliz|eba|uau|vitoria|resolvido|yay|fixed|solved|win|otimo|excelente|perfeito|maravilha|great|excellent|perfect)\b/i] },
+  { name: 'happy', patterns: [/\b(consegui|sucesso|funciona|top|boa|bom|legal|massa|demais|feliz|eba|uau|vitoria|resolvido|yay|fixed|solved|win|otimo|excelente|perfeito|maravilha|great|excellent|perfect)\b/i] },
   { name: 'focused', patterns: [/\b(concentrado|focado|estudando|mergulhado|deep|foco|flow|imerso|produtivo|focus|grind|codando|coding)\b/i] },
   { name: 'tired', patterns: [/\b(cansado|sono|exausto|parando|uufa|fadiga|moido|acabado|tired|sleepy|morto|exhausted|beat)\b/i, /done for today/i] },
   { name: 'frustrated', patterns: [/\b(droga|erro|dificil|nao funciona|merda|bug|problema|inferno|saco|empacado|pqp que merda|ta foda|triste|mal|ruim|pessimo|desanimo|desanimado|shit|error|broken|hard|lixo|travado|bloqueado|garbage|stuck|blocked)\b/i] },

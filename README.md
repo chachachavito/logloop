@@ -33,11 +33,16 @@ logloop
 *Just type your thoughts as you work. They will be timestamped, classified, and linked to the current Git state automatically.*
 
 ### One-Shot & Standalone
-If you just need to drop a quick note:
+Se você precisa apenas deixar uma nota rápida sem entrar no loop:
 ```bash
-logloop "Switched from axios to native fetch to reduce bundle size."
+logloop "Refatorando auth service para usar hooks."
 ```
+
+> [!TIP]
+> **Aspas e Caracteres Especiais**: Você pode usar o `logloop` sem aspas para textos simples. Contudo, se sua mensagem contiver caracteres especiais do shell (como `(`, `)`, `!`, `&`, `*`) ou emoticons (como `:)`), você **deve** usar aspas para evitar que o seu terminal (bash, zsh, fish) interprete mal o comando. Emojis reais (🚀, ✨) funcionam normalmente sem aspas.
+
 *Note: Logloop degrades gracefully. If you run it outside a Git repository or use the `--standalone` flag, it skips Git linking and continues to work flawlessly.*
+
 
 ---
 

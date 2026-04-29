@@ -69,17 +69,16 @@ function run(note, moodFlag, shouldCommit) {
   const detected = classifier.classifyMood(note);
   let finalMood = moodFlag;
 
-  if (!moodFlag && config.moodTracking && detected.category !== 'neutral') {
+  if (!moodFlag && config.moodTracking) {
     finalMood = detected.category;
   }
 
   try {
     const success = core.saveLog(note, config, { shouldCommit, mood: finalMood });
     if (success) {
-      console.log(pc.green(t('cli.success') || '✓ Saved.'));
-      if (finalMood && config.moodTracking && !moodFlag) {
-        console.log(pc.magenta(`${t('cli.moodDetected')} ${finalMood}`));
-      }
+      const { category } = classifier.classifyMessage(note);
+      const moodTag = (finalMood && config.moodTracking) ? pc.magenta(` [${finalMood}]`) : '';
+      console.log(`${pc.green('✓')} ${pc.gray(`[${category}]`)}${moodTag} ${pc.white(note)}`);
     }
   } catch (err) {
     if (err.message === 'LOCK_TIMEOUT') {
