@@ -146,19 +146,20 @@ function startLoop(config, initialMood = null, initialCommit = null) {
       ];
       const col2 = [
         `${pc.bold('/timeline')} Activity`,
+        `${pc.bold('/global')}   Global History`,
         `${pc.bold('/summary')}  Insights`,
-        `${pc.bold('/e')}        Edit File`,
         `${pc.bold('/q')}        Quit`
       ];
       const col3 = [
         `${pc.bold('/as')}    Train Type`,
         `${pc.bold('/feel')}  Train Mood`,
         `${pc.bold('/brain-out')} Export`,
+        `${pc.bold('/e')}     Edit File`,
         `${pc.bold('/h')}     Close Help`
       ];
 
-      for (let i = 0; i < 4; i++) {
-        console.log(`  ${col1[i].padEnd(35)} ${col2[i].padEnd(35)} ${col3[i]}`);
+      for (let i = 0; i < 5; i++) {
+        console.log(`  ${(col1[i] || '').padEnd(35)} ${(col2[i] || '').padEnd(35)} ${(col3[i] || '')}`);
       }
       console.log(pc.gray('─'.repeat(85)));
     }
@@ -216,14 +217,22 @@ function startLoop(config, initialMood = null, initialCommit = null) {
           clear();
           renderTimeline(getAnalytics(config));
           console.log(`\n${pc.gray(t('ui.footerDivider'))}`);
-          console.log(pc.yellow(t('ui.promptHelp')));
+          console.log(pc.yellow(`↵ ${t('ui.pressEnterToReturn') || 'Press Enter to return'}`));
+          rl.prompt();
+          return;
+        case '/global':
+          clear();
+          const { getGlobalLogs: fetchGlobal } = require('./core');
+          renderGlobalList(fetchGlobal());
+          console.log(`\n${pc.gray(t('ui.footerDivider'))}`);
+          console.log(pc.yellow(`↵ ${t('ui.pressEnterToReturn') || 'Press Enter to return'}`));
           rl.prompt();
           return;
         case '/summary':
           clear();
           renderSummary(getAnalytics(config));
           console.log(`\n${pc.gray(t('ui.footerDivider'))}`);
-          console.log(pc.yellow(t('ui.promptHelp')));
+          console.log(pc.yellow(`↵ ${t('ui.pressEnterToReturn') || 'Press Enter to return'}`));
           rl.prompt();
           return;
         case '/as':

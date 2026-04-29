@@ -1,15 +1,18 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { getLogs, Log } from '@/lib/api/logs';
+import { getLogs, getGlobalLogs, Log } from '@/lib/api/logs';
 import { format } from 'date-fns';
-import { Terminal, GitBranch, Hash, Clock, Search, Filter } from 'lucide-react';
+import { Terminal, GitBranch, Hash, Clock, Search, Filter, Globe } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
 
 export default function Dashboard() {
+  const [view, setView] = useState<'timeline' | 'global'>('timeline');
+
   const { data: logs, isLoading } = useQuery({
-    queryKey: ['logs'],
-    queryFn: () => getLogs(),
+    queryKey: ['logs', view],
+    queryFn: () => (view === 'global' ? getGlobalLogs() : getLogs()),
   });
 
   return (
@@ -25,11 +28,24 @@ export default function Dashboard() {
 
         <nav className="flex flex-col gap-2">
           <div className="text-[10px] uppercase tracking-widest text-zinc-600 font-bold mb-2">Menu</div>
-          <button className="flex items-center gap-3 px-3 py-2 rounded-lg bg-zinc-800/50 text-white text-sm transition-all">
-            <Terminal size={16} className="text-indigo-400" />
+          <button
+            onClick={() => setView('timeline')}
+            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${
+              view === 'timeline' ? 'bg-zinc-800/50 text-white' : 'text-zinc-500 hover:text-white hover:bg-zinc-800/20'
+            }`}
+          >
+            <Terminal size={16} className={view === 'timeline' ? 'text-indigo-400' : ''} />
             Timeline
           </button>
-          {/* Add more menu items here */}
+          <button
+            onClick={() => setView('global')}
+            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${
+              view === 'global' ? 'bg-zinc-800/50 text-white' : 'text-zinc-500 hover:text-white hover:bg-zinc-800/20'
+            }`}
+          >
+            <Globe size={16} className={view === 'global' ? 'text-cyan-400' : ''} />
+            Global History
+          </button>
         </nav>
 
         <div>

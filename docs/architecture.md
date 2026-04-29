@@ -22,6 +22,10 @@ flowchart TD
       picocolors["[EXT] picocolors"]
       readline["[EXT] readline"]
   end
+  subgraph Dashboard ["Dashboard"]
+      dash_backend["[MOD] Backend (NestJS)"]
+      dash_frontend["[MOD] Frontend"]
+  end
   src_classifier_js --> fuse_js
   src_commit_js --> child_process
   src_commit_js --> isGitRepo
@@ -44,5 +48,7 @@ flowchart TD
   src_ui_js --> path
   src_ui_js --> picocolors
   src_ui_js --> readline
+  dash_backend --> fs
+  dash_backend --> dash_frontend
 
 ```

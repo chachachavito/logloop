@@ -1,6 +1,6 @@
 {
   "name": "logloop",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Continuous loop of personal logs in the terminal with AI-less semantic classification.",
   "core_concepts": [
     "semantic_classification",

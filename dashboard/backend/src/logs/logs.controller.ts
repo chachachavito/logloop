@@ -15,4 +15,9 @@ export class LogsController {
   async findAll(@Query('projectId') projectId?: string) {
     return this.logsService.findAll(projectId);
   }
+
+  @Get('global')
+  async findGlobal() {
+    return this.logsService.findGlobal();
+  }
 }

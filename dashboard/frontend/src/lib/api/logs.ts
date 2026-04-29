@@ -35,3 +35,8 @@ export const getLogs = async (projectId?: string): Promise<Log[]> => {
   const { data } = await api.get('/logs', { params: { projectId } });
   return data;
 };
+
+export const getGlobalLogs = async (): Promise<Log[]> => {
+  const { data } = await api.get('/logs/global');
+  return data;
+};

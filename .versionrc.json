@@ -19,6 +19,22 @@
     {
       "filename": "site/index.html",
       "updater": "scripts/version-updater.js"
+    },
+    {
+      "filename": "docs/architecture.json",
+      "updater": "scripts/version-updater.js"
+    },
+    {
+      "filename": "docs/architecture.html",
+      "updater": "scripts/version-updater.js"
+    },
+    {
+      "filename": "docs/PR-FAQ.md",
+      "updater": "scripts/version-updater.js"
+    },
+    {
+      "filename": "docs/capabilities.json",
+      "updater": "scripts/version-updater.js"
     }
   ]
 }
