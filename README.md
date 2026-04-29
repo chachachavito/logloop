@@ -79,10 +79,7 @@ Access all your logs from all projects in a single view:
 *   **`logloop global search "<term>"`**: Search through your entire history.
 *   **`logloop global filter --type <type>`**: Filter by type (e.g., decision).
 
-### Platform Context (Source)
-Logloop automatically detects the log origin (`desktop` or `mobile`). 
-This field exists to allow correlation between spontaneous ideas (mobile) and technical execution (desktop), 
-and it is populated without user intervention to ensure your flow is never interrupted.
+
 
 ---
 
@@ -107,6 +104,9 @@ You have full control over where your data is saved:
 
 *(Pro Tip: Use `/s` in the interactive loop to toggle quickly).*
 
+### 📱 Platform Context (Source)
+Logloop automatically detects the log origin (`desktop` or `mobile`) to allow correlation between spontaneous ideas and technical execution. This is populated automatically to keep you in the flow.
+
 ---
 
 ## ⌨️ Command Reference
@@ -130,79 +130,70 @@ All available slash commands inside the interactive loop:
 
 ## 🏗️ Roadmap
 
-- [x] Semantic Classification & Fuzzy Matching
-- [x] Local Active Learning (Memory Persistence)
-- [x] Analytics (Timeline & Summary)
-- [x] Standalone & Restricted Environment Hardening
-- [x] Multi-line Paste & Media Path Detection
-- [x] Training Mode (Interactive UI)
-- [ ] Web Dashboard & Data Visualization (v1.0)
-- [ ] VS Code Extension Integration (v1.0)
-- [ ] Bidirectional Link Generation (UUID indexing) (v2.0)
+### ✅ Done
+- Semantic Classification & Fuzzy Matching
+- Local Active Learning (Memory Persistence)
+- Analytics (Timeline & Summary)
+- Standalone & Restricted Environment Hardening
+- Multi-line Paste & Media Path Detection
+- Training Mode (Interactive UI)
+
+### 🔜 Coming in v1.0
+- Web Dashboard & Data Visualization
+- VS Code Extension Integration
+
+### 🔭 Future (v2.0)
+- Bidirectional Link Generation (UUID indexing)
+
+
 
 ---
 
 ## 🛠️ Development & Release
-
-This project uses [Conventional Commits](https://www.conventionalcommits.org/) and [standard-version](https://github.com/conventional-changelog/standard-version) for automated changelog and versioning.
-
-### Release Commands
-- **`npm run release`**: Generates changelog and increments version (automatic patch/minor/major).
-- **`npm run release:minor`**: Forces a minor release (vX.Y.0).
-- **`npm run release:dry`**: Previews changes without executing the commit/tag.
-
-### Local Development
-- **`npm run site`**: Opens the project landing page (`site/index.html`).
-- **`npm run preview`**: Opens the site and starts the CLI in development mode simultaneously.
-
-### Commit Patterns
-- `feat(scope): ...` -> New feature (Minor)
-- `fix(scope): ...` -> Bug fix (Patch)
-- `docs: ...` -> Documentation
-- `chore: ...` -> Internal tasks
+→ **See [CONTRIBUTING.md](./CONTRIBUTING.md)**
 
 ## ❓ Frequently Asked Questions
 
-**Does Logloop replace Git?**
+### Does Logloop replace Git?
 No. Git tracks code changes. Logloop tracks the reasoning behind them.
 
-**Does it work without Git?**
+### Does it work without Git?
 Yes, it degrades gracefully. You can also use the `--standalone` flag for a fully Git-free workflow.
 
-**How does the Brain learn?**
+### How does the Brain learn?
 It adapts via explicit commands (`/as`, `/feel`) or via **Training Mode (`/t`)**, which prompts for confirmation after every entry.
 
-**What does --commit do?**
+### What does --commit do?
 It links your log entry directly to a Git commit hash, anchoring your thought to the exact state of the code at that moment.
 
-**Does any data leave my machine?**
+### Does any data leave my machine?
 No. Everything is stored locally. No external services, no cloud, no telemetry.
 
-**Can I sync across machines?**
+### Can I sync across machines?
 Yes, using your own tools like Git or cloud storage. Use `/brain-out` to export your learned patterns and `/brain-in` to import them on another machine.
 
-**Where are my logs stored?**
+### Where are my logs stored?
 By default, logs are written to `logloop.md` inside your project (repo mode). You can switch to local mode (`~/.logloop/logs/`) or mirror mode (both) using `/s` inside the loop or by editing `.loglooprc`.
 
-**What is the difference between repo, local, and mirror storage?**
+### What is the difference between repo, local, and mirror storage?
 **repo** writes to your project folder — great for team transparency and keeping decisions close to the code. **local** writes to a private folder on your machine — good for personal notes you don't want in the repo. **mirror** writes to both simultaneously.
 
-**What are the log categories?**
+### What are the log categories?
 Logloop auto-classifies each entry as one of: action, decision, question, media, noise, or thought. You can correct any misclassification with `/as <category>` and the Brain will remember your preference.
 
-**What is mood tracking?**
+### What is mood tracking?
 Logloop infers an emotional signal from your writing — frustrated, focused, uncertain, confident, and so on. It's optional and can be toggled with `/m`. Over time it gives you a picture of how you feel during different kinds of work.
 
-**How do I use Logloop in a team?**
+### How do I use Logloop in a team?
 Set storage to repo mode so logs land in `logloop.md` inside the project. Commit that file alongside your code. Teammates can read the reasoning behind changes directly in the repo, without any extra tooling.
 
-**Do I have to keep the loop open all day?**
+### Do I have to keep the loop open all day?
 No. You can use `logloop "message"` for one-shot entries without entering the loop at all. The loop is the recommended experience for deep work sessions, but it's not required.
 
-**What is Global Mode?**
+### What is Global Mode?
 Global Mode gives you a unified view across all your projects. Use `logloop global summary` for a consolidated daily report, `logloop global search "term"` to find past decisions, and `logloop global filter --type decision` to filter by category.
 
-**Is there a VS Code extension?**
+### Is there a VS Code extension?
 Not yet — it's on the roadmap for v1.0. For now, Logloop works best as a second terminal alongside your editor.
 
 MIT © 2026 Chavito
