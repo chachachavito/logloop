@@ -62,20 +62,29 @@ function generateId() {
   return `${timestamp}${random}`;
 }
 
-function getLogFile(config) {
+function detectSource() {
+  if (process.env.TERMUX_VERSION || process.env.ANDROID_ROOT) return 'mobile';
+  return 'desktop';
+}
+
+function getLogFiles(config) {
+  const os = require('os');
   const user = config.userName || 'shared';
   const userSlug = user.toLowerCase().replace(/\s+/g, '-');
+  const projectSlug = path.basename(process.cwd());
   
-  let logPath;
-  if (config.storage === 'local') {
-    const os = require('os');
-    const logsDir = path.join(os.homedir(), '.logloop', 'logs');
-    logPath = path.join(logsDir, `${path.basename(process.cwd())}.${userSlug}.md`);
-  } else {
-    logPath = path.join(process.cwd(), user === 'shared' ? 'logloop.md' : `logloop.${userSlug}.md`);
-  }
+  const repoPath = resolvePath(path.join(process.cwd(), user === 'shared' ? 'logloop.md' : `logloop.${userSlug}.md`));
+  const logsDir = path.join(os.homedir(), '.logloop', 'logs');
+  const localPath = resolvePath(path.join(logsDir, `${projectSlug}.${userSlug}.md`));
 
-  return resolvePath(logPath);
+  const strategy = config.storage || 'repo';
+  if (strategy === 'mirror') return [repoPath, localPath];
+  if (strategy === 'local') return [localPath];
+  return [repoPath];
+}
+
+function getLogFile(config) {
+  return getLogFiles(config)[0];
 }
 
 function withLock(logFile, action) {
@@ -201,61 +210,71 @@ function safeWrite(logFile, content, mode = 'append', config = {}) {
 }
 
 function saveLog(note, config, options = {}) {
-  const logFile = getLogFile(config);
+  const logFiles = getLogFiles(config);
+  const { getGitMetadata, isGitRepo, commitLog } = require('./git');
+  const { classifyMessage } = require('./classifier');
   
-  return withLock(logFile, () => {
-    const { getGitMetadata, isGitRepo, commitLog } = require('./git');
-    const { classifyMessage } = require('./classifier');
-    
-    const { hash, branch } = getGitMetadata() || { hash: 'null', branch: 'null' };
-    const { category } = classifyMessage(note);
-    const id = generateId();
-    const mood = options.mood || 'null';
-    const type = options.type || category;
-    const timestamp = getMonotonicTimestamp();
+  const { hash, branch } = getGitMetadata() || { hash: 'null', branch: 'null' };
+  const { category } = classifyMessage(note);
+  const id = generateId();
+  const mood = options.mood && options.mood !== 'null' ? options.mood.toLowerCase() : 'null';
+  const type = (options.type || category).toLowerCase();
+  const timestamp = getMonotonicTimestamp();
+  const source = detectSource();
 
-    const entry = `\n## [${timestamp}]\nid: ${id}\ncommit: ${hash || 'null'}\nbranch: ${branch || 'null'}\ntype: ${type}\nmood: ${mood}\n\n${note}\n`;
+  const entry = `\n## [${timestamp}]\nid: ${id}\ncommit: ${hash || 'null'}\nbranch: ${branch || 'null'}\ntype: ${type}\nmood: ${mood}\nsource: ${source}\n\n${note}\n`;
 
-    const result = safeWrite(logFile, entry, 'append', config);
-
-    if (result.success && options.shouldCommit && isGitRepo() && config.storage !== 'local') {
-      commitLog(logFile, note);
-    }
-    return result.success;
-  });
+  let overallSuccess = true;
+  for (const logFile of logFiles) {
+    const result = withLock(logFile, () => {
+      const res = safeWrite(logFile, entry, 'append', config);
+      if (res.success && options.shouldCommit && isGitRepo() && !logFile.includes('.logloop/logs/')) {
+        try { commitLog(logFile, note); } catch (e) {}
+      }
+      return res.success;
+    });
+    if (!result) overallSuccess = false;
+  }
+  
+  return overallSuccess;
 }
 
 function updateLastLog(updates, config) {
-  const logFile = getLogFile(config);
-  if (!fs.existsSync(logFile)) return false;
+  const logFiles = getLogFiles(config);
+  let overallSuccess = true;
 
-  return withLock(logFile, () => {
-    let content = fs.readFileSync(logFile, 'utf8');
-    const sections = content.split('\n## [');
-    if (sections.length < 2) return false;
+  for (const logFile of logFiles) {
+    if (!fs.existsSync(logFile)) continue;
+    const result = withLock(logFile, () => {
+      let content = fs.readFileSync(logFile, 'utf8');
+      const sections = content.split('\n## [');
+      if (sections.length < 2) return false;
 
-    let lastSection = sections[sections.length - 1];
-    const lines = lastSection.split('\n');
+      let lastSection = sections[sections.length - 1];
+      const lines = lastSection.split('\n');
 
-    if (updates.type) {
-      const idx = lines.findIndex(l => l.startsWith('type: '));
-      if (idx > -1) lines[idx] = `type: ${updates.type}`;
-    }
-
-    if (updates.mood) {
-      const idx = lines.findIndex(l => l.startsWith('mood: '));
-      const moodStr = `mood: ${updates.mood}`;
-      if (idx > -1) lines[idx] = moodStr;
-      else {
-        const emptyIdx = lines.findIndex((l, i) => i > 0 && l.trim() === '');
-        lines.splice(emptyIdx, 0, moodStr);
+      if (updates.type) {
+        const idx = lines.findIndex(l => l.startsWith('type: '));
+        if (idx > -1) lines[idx] = `type: ${updates.type.toLowerCase()}`;
       }
-    }
 
-    sections[sections.length - 1] = lines.join('\n');
-    const result = safeWrite(logFile, sections.join('\n## ['), 'write', config);
-    return result.success;
-  });
+      if (updates.mood) {
+        const idx = lines.findIndex(l => l.startsWith('mood: '));
+        const moodStr = `mood: ${updates.mood.toLowerCase()}`;
+        if (idx > -1) lines[idx] = moodStr;
+        else {
+          const emptyIdx = lines.findIndex((l, i) => i > 0 && l.trim() === '');
+          lines.splice(emptyIdx, 0, moodStr);
+        }
+      }
+
+      sections[sections.length - 1] = lines.join('\n');
+      const res = safeWrite(logFile, sections.join('\n## ['), 'write', config);
+      return res.success;
+    });
+    if (!result) overallSuccess = false;
+  }
+  return overallSuccess;
 }
 
 function getRecentLogs(config, limit = 5) {
@@ -284,8 +303,48 @@ function getRecentLogs(config, limit = 5) {
   } catch (e) { return []; }
 }
 
-function getAnalytics(config) {
-  const logs = getRecentLogs(config, 50);
+function getGlobalLogs() {
+  const os = require('os');
+  const logsDir = path.join(os.homedir(), '.logloop', 'logs');
+  if (!fs.existsSync(logsDir)) return [];
+
+  const files = fs.readdirSync(logsDir).filter(f => f.endsWith('.md'));
+  let allLogs = [];
+
+  files.forEach(file => {
+    const project = file.split('.')[0];
+    const content = fs.readFileSync(path.join(logsDir, file), 'utf8');
+    const entries = content.split('\n## [').slice(1);
+    
+    entries.forEach(entry => {
+      const lines = entry.split('\n');
+      const timestamp = lines[0].replace(']', '');
+      const id = (lines.find(l => l.startsWith('id: ')) || '').replace('id: ', '') || 'null';
+      const commit = (lines.find(l => l.startsWith('commit: ')) || '').replace('commit: ', '') || 'null';
+      const branch = (lines.find(l => l.startsWith('branch: ')) || '').replace('branch: ', '') || 'null';
+      const type = (lines.find(l => l.startsWith('type: ')) || '').replace('type: ', '').toLowerCase().trim() || 'unknown';
+      const mood = (lines.find(l => l.startsWith('mood: ')) || '').replace('mood: ', '').toLowerCase().trim() || null;
+      const source = (lines.find(l => l.startsWith('source: ')) || '').replace('source: ', '').trim() || 'unknown';
+      const note = lines.slice(lines.findIndex((l, i) => i > 0 && l.trim() === '') + 1).join('\n').trim();
+
+      if (note) {
+        allLogs.push({
+          timestamp,
+          rawTime: timestamp,
+          id, commit, branch, type, mood, source, project,
+          note,
+          message: note,
+          time: new Date(timestamp.split('.')[0] + 'Z').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
+      }
+    });
+  });
+
+  return allLogs.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+}
+
+function getAnalytics(config, customLogs = null) {
+  const logs = customLogs || getRecentLogs(config, 50);
   if (logs.length === 0) return null;
 
   const timeline = new Array(24).fill(0);
@@ -299,17 +358,18 @@ function getAnalytics(config) {
       const hour = new Date(log.rawTime.split('.')[0] + 'Z').getHours();
       timeline[hour]++;
       
-      categories[log.type] = (categories[log.type] || 0) + 1;
+      const type = log.type || 'unknown';
+      categories[type] = (categories[type] || 0) + 1;
       if (log.mood && log.mood !== 'null') {
         moods[log.mood] = (moods[log.mood] || 0) + 1;
       }
 
-      if (log.type === 'question') questions.push(log.note);
-      if (log.type === 'decision') decisions.push(log.note);
+      if (type === 'question') questions.push(log.note);
+      if (type === 'decision') decisions.push(log.note);
     } catch (e) {}
   });
 
   return { timeline, categories, moods, questions, decisions };
 }
 
-module.exports = { saveLog, updateLastLog, getRecentLogs, getLogFile, withLock, resetLocks, setDebug, getAnalytics };
+module.exports = { saveLog, updateLastLog, getRecentLogs, getLogFile, withLock, resetLocks, setDebug, getAnalytics, getGlobalLogs, detectSource };

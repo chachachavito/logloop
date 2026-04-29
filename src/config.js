@@ -6,7 +6,7 @@ const GLOBAL_DIR = path.join(os.homedir(), '.logloop');
 const DEFAULTS = {
   autoCommit: false,
   moodTracking: true,
-  storage: 'repo',
+  storage: 'repo', // repo | local | mirror
   lang: 'en',
   userName: '',
   trainingMode: false,
