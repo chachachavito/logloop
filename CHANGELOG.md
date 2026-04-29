@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.3.5](https://github.com/chachachavito/logloop/compare/v0.3.4...v0.3.5) (2026-04-29)
+
+
+### Features
+
+* **ui:** enhance user interaction and update links ([1205d64](https://github.com/chachachavito/logloop/commit/1205d64ef25bbe4b9694bf8e9a2334efc5fefdd3))
+
 ### [0.3.4](https://github.com/chachachavito/logloop/compare/v0.3.3...v0.3.4) (2026-04-29)
 
 
