@@ -16,7 +16,10 @@
     "test": "jest --coverage",
     "dev": "node bin/index.js",
     "dashboard:backend": "npm run start:dev --prefix dashboard/backend",
-    "dashboard:frontend": "npm run dev --prefix dashboard/frontend"
+    "dashboard:frontend": "npm run dev --prefix dashboard/frontend",
+    "release": "standard-version && git push origin main --follow-tags && npm publish",
+    "release:minor": "standard-version --release-as minor && git push origin main --follow-tags && npm publish",
+    "release:dry": "standard-version --dry-run"
   },
   "keywords": [
     "cli",
@@ -34,6 +37,7 @@
     "picocolors": "^1.1.1"
   },
   "devDependencies": {
-    "jest": "^30.3.0"
+    "jest": "^30.3.0",
+    "standard-version": "^9.5.0"
   }
 }
