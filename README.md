@@ -1,4 +1,4 @@
-# Logloop (v0.2.0)
+# Logloop (v0.3.0)
 
 > **Git tracks WHAT changed. Logloop tracks WHY.**
 
@@ -133,7 +133,23 @@ All available slash commands inside the interactive loop:
 
 ---
 
-## 📜 Technical Specification
-Logloop follows a strict capability-mapping architecture. The project's features, commands, and core concepts are formally defined in the [capabilities.json](capabilities.json) manifest. This ensures 100% alignment between code, documentation, and internationalization.
+## 🛠️ Desenvolvimento & Release
+
+Este projeto utiliza [Conventional Commits](https://www.conventionalcommits.org/) e [standard-version](https://github.com/conventional-changelog/standard-version) para automação de changelog e versionamento.
+
+### Comandos de Release
+- **`npm run release`**: Gera changelog e incrementa versão (patch/minor/major automático).
+- **`npm run release:minor`**: Força um release minor (vX.Y.0).
+- **`npm run release:dry`**: Pré-visualiza as mudanças sem executar o commit/tag.
+
+### Desenvolvimento Local
+- **`npm run site`**: Abre a landing page do projeto (`site/index.html`).
+- **`npm run preview`**: Abre o site e inicia o CLI em modo de desenvolvimento simultaneamente.
+
+### Padrão de Commits
+- `feat(scope): ...` -> Nova funcionalidade (Minor)
+- `fix(scope): ...` -> Correção de bug (Patch)
+- `docs: ...` -> Documentação
+- `chore: ...` -> Tarefas internas
 
 MIT © 2026 Chavito

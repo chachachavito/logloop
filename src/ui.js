@@ -301,7 +301,12 @@ function startLoop(config, initialMood = null, initialCommit = null) {
         return;
       }
 
-      saveLog(input, config, { shouldCommit: autoCommit, mood: currentMood });
+      let finalMood = currentMood;
+      if (config.moodTracking && !finalMood) {
+        const { classifyMood } = require('./classifier');
+        finalMood = classifyMood(input).category;
+      }
+      saveLog(input, config, { shouldCommit: autoCommit, mood: finalMood });
       lastLogs = getRecentLogs(config, 3);
       refresh();
     } catch (err) {
@@ -330,7 +335,8 @@ function startLoop(config, initialMood = null, initialCommit = null) {
   });
 
   rl.on('close', () => {
-    console.log(`\n${pc.green(t('ui.goodbye'))}`);
+    console.log(`\n${pc.bold(pc.magenta('Git tracks WHAT changed.'))}`);
+    console.log(`${pc.bold(pc.green('Logloop tracks WHY.'))}\n`);
     process.exit(0);
   });
 }
