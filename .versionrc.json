@@ -6,5 +6,19 @@
     { "type": "refactor", "section": "Refactoring" },
     { "type": "docs", "section": "Documentation" },
     { "type": "chore", "section": "Chores", "hidden": true }
+  ],
+  "bumpFiles": [
+    {
+      "filename": "package.json",
+      "type": "json"
+    },
+    {
+      "filename": "README.md",
+      "updater": "scripts/version-updater.js"
+    },
+    {
+      "filename": "site/index.html",
+      "updater": "scripts/version-updater.js"
+    }
   ]
 }
