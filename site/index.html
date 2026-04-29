@@ -5,8 +5,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Logloop — Your rubber duck that remembers everything</title>
-  <meta name="description" content="Capture your thinking while coding. Link decisions to commits. 100% local, terminal-first workflow.">
-  <meta name="keywords" content="developer productivity, git workflow, terminal tools, developer journal, commit history context">
+  <meta name="description"
+    content="Capture your thinking while coding. Link decisions to commits. 100% local, terminal-first workflow.">
+  <meta name="keywords"
+    content="developer productivity, git workflow, terminal tools, developer journal, commit history context">
   <style>
     :root {
       --primary: #24292f;
@@ -20,7 +22,8 @@
       --row-hover: #f8f9fa;
       --danger-soft: #fdecec;
       --shadow-soft: 0 6px 18px rgba(33, 37, 41, 0.08);
-      --info-bg: #f0f8ff; /* aliceblue */
+      --info-bg: #f0f8ff;
+      /* aliceblue */
     }
 
     /* Terminal Mockup Styles */
@@ -91,16 +94,6 @@
       }
     }
 
-    /* Tab Logic Utility */
-    .tab-content {
-      display: none;
-    }
-
-    .tab-content.active {
-      display: block;
-      animation: fadeIn 0.3s ease;
-    }
-
     @keyframes fadeIn {
       from {
         opacity: 0;
@@ -120,6 +113,7 @@
 
     html {
       font-size: 14px;
+      scroll-behavior: smooth;
     }
 
     body {
@@ -266,33 +260,46 @@
       border-color: #cfd4da;
     }
 
-    .tabs {
-      display: flex;
-      gap: 18px;
-      margin-bottom: 22px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--border);
-      overflow-x: auto;
-    }
-
-    .tab {
-      padding: 8px 0;
-      border: 0;
-      border-bottom: 2px solid transparent;
-      background: transparent;
-      color: var(--muted);
-      font-weight: 600;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-
-    .tab:hover {
-      color: #17304f;
-    }
-
-    .tab.active {
-      border-bottom-color: var(--tab-active);
+    .nav-item:hover {
       color: var(--tab-active);
+    }
+
+    .nav-item.active {
+      color: var(--tab-active);
+      font-weight: 600;
+    }
+
+    section {
+      padding: 40px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    section:last-of-type {
+      border-bottom: 0;
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 24px;
+    }
+
+    details {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      background: #fff;
+    }
+
+    details[open] {
+      background: var(--info-bg);
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      outline: none;
     }
 
     .main-grid {
@@ -517,9 +524,10 @@
       .header-nav {
         padding: 12px 16px;
       }
-      
+
       .header-nav .nav-group {
-        display: none; /* Can add a hamburger menu later if needed */
+        display: none;
+        /* Can add a hamburger menu later if needed */
       }
 
       .main-grid {
@@ -558,9 +566,9 @@
         <h1>Logloop</h1>
       </div>
       <nav class="nav-group">
-        <div class="nav-item active" onclick="switchTab('overview', document.querySelector('.tab'))">Overview</div>
-        <div class="nav-item" onclick="switchTab('comparison', document.querySelectorAll('.tab')[1])">Why Logloop?</div>
-        <div class="nav-item" onclick="switchTab('faq', document.querySelectorAll('.tab')[2])">FAQ</div>
+        <a href="#features" class="nav-item">Overview</a>
+        <a href="#why" class="nav-item">Why Logloop?</a>
+        <a href="#faq" class="nav-item">FAQ</a>
         <a href="https://github.com/chachachavito/logloop" class="nav-item">GitHub</a>
       </nav>
     </header>
@@ -580,7 +588,8 @@
           </h2>
 
           <p>
-            Logloop works best as a second terminal — open it alongside your editor and let your thoughts flow as you code.
+            Logloop works best as a second terminal — open it alongside your editor and let your thoughts flow as you
+            code.
           </p>
 
 
@@ -593,21 +602,17 @@
         </div>
 
         <div class="button-row">
-          <a href="https://github.com/chachachavito/logloop/blob/main/CHANGELOG.md" class="button secondary">See the CHANGELOG →</a>
+          <a href="https://github.com/chachachavito/logloop/blob/main/CHANGELOG.md" class="button secondary">See the
+            CHANGELOG →</a>
           <div style="display: flex; flex-direction: column; gap: 4px;">
             <button class="button primary" type="button" onclick="copyNpmCommand(this)">npm install -g logloop</button>
-            <span style="font-size: 0.75rem; color: var(--muted); text-align: center;">No signup • No config • Works instantly</span>
+            <span style="font-size: 0.75rem; color: var(--muted); text-align: center;">No signup • No config • Works
+              instantly</span>
           </div>
         </div>
       </div>
 
-      <div class="tabs" role="tablist" aria-label="Documentation sections">
-        <button class="tab active" type="button" role="tab" onclick="switchTab('overview', this)">Overview</button>
-        <button class="tab" type="button" role="tab" onclick="switchTab('comparison', this)">Why Logloop?</button>
-        <button class="tab" type="button" role="tab" onclick="switchTab('faq', this)">FAQ</button>
-      </div>
-
-      <div id="overview" class="tab-content active">
+      <section id="features">
         <div class="terminal-window">
           <div class="terminal-header">
             <div class="dot dot-r"></div>
@@ -648,7 +653,8 @@
                 <div class="pkg-icon" aria-hidden="true">🧠</div>
                 <div class="pkg-meta">
                   <strong>Logloop Brain</strong>
-                  <span>Gets smarter as you write. Use <strong>Training Mode (/t)</strong> for interactive feedback.</span>
+                  <span>Gets smarter as you write. Use <strong>Training Mode (/t)</strong> for interactive
+                    feedback.</span>
                 </div>
                 <div class="badge public">Active Learning</div>
               </article>
@@ -695,8 +701,9 @@
             <section class="panel status-card">
               <label style="font-weight: 700; margin-bottom: 8px; display: block;">The Ritual</label>
               <div class="status-line"><span>1. npm install -g logloop</span></div>
-              <div class="status-line"><span>2. cd your-project</span></div>
-              <div class="status-line"><span>3. logloop (as a 2nd terminal)</span></div>
+              <div class="status-line"><span>2. Open your project in your editor</span></div>
+              <div class="status-line"><span>3. Open a second terminal<br><code
+                    style="font-size: 0.85rem; color: var(--tab-active);">cd your-project && logloop</code></span></div>
             </section>
 
             <div class="alert" role="alert">
@@ -707,19 +714,20 @@
             </div>
 
             <section class="panel status-card" style="border-color: var(--focus); background: var(--info-bg);">
-              <label style="font-weight: 700; margin-bottom: 8px; display: block; color: var(--tab-active);">Coming Soon 🚀</label>
+              <label style="font-weight: 700; margin-bottom: 8px; display: block; color: var(--tab-active);">Coming Soon
+                🚀</label>
               <div style="font-size: 0.9rem; color: var(--tab-active);">
                 <strong>VS Code Extension</strong>: The rubber duck, integrated directly into your editor.
               </div>
             </section>
           </aside>
         </div>
-      </div>
+      </section>
 
-      <div id="comparison" class="tab-content">
-        <section class="panel">
+      <section id="why">
+        <div class="panel">
           <div class="panel-header">
-            <h3>Why not just use something else?</h3>
+            <h2 class="section-title">Why not just use something else?</h2>
             <p>Git is great for diffs. Terrible for thinking.</p>
           </div>
           <div style="padding: 20px;">
@@ -768,42 +776,99 @@
               </ul>
             </div>
           </div>
-        </section>
-      </div>
+        </div>
+      </section>
 
-      <div id="faq" class="tab-content">
-        <section class="panel">
+      <section id="faq">
+        <div class="panel">
           <div class="panel-header">
-            <h3>Frequently Asked Questions</h3>
+            <h2 class="section-title">Frequently Asked Questions</h2>
           </div>
-          <div style="padding: 24px; display: grid; gap: 20px;">
-            <div>
-              <strong>Does Logloop replace Git?</strong>
-              <p style="color: var(--muted);">No. Git tracks code changes. Logloop tracks the reasoning behind them.</p>
-            </div>
-            <div>
-              <strong>Does it work without Git?</strong>
-              <p style="color: var(--muted);">Yes, it degrades gracefully. You can also use the <code>--standalone</code> flag for a fully Git-free workflow.</p>
-            </div>
-            <div>
-              <strong>How does the Brain learn?</strong>
-              <p style="color: var(--muted);">It adapts via explicit commands (<code>/as</code>, <code>/feel</code>) or via <strong>Training Mode (<code>/t</code>)</strong>, which prompts for confirmation after every entry.</p>
-            </div>
-            <div>
-              <strong>What does --commit do?</strong>
-              <p style="color: var(--muted);">It links your log entry directly to a Git commit.</p>
-            </div>
-            <div>
-              <strong>Does any data leave my machine?</strong>
-              <p style="color: var(--muted);">No. Everything is stored locally. No external services involved.</p>
-            </div>
-            <div>
-              <strong>Can I sync across machines?</strong>
-              <p style="color: var(--muted);">Yes, using your own tools like Git or cloud storage.</p>
-            </div>
+          <div style="padding: 24px; display: grid; gap: 8px;">
+            <details>
+              <summary><strong>Does Logloop replace Git?</strong></summary>
+              <p style="color: var(--muted); margin-top: 8px;">No. Git tracks code changes. Logloop tracks the reasoning
+                behind them.</p>
+            </details>
+            <details>
+              <summary><strong>Does it work without Git?</strong></summary>
+              <p style="color: var(--muted); margin-top: 8px;">Yes, it degrades gracefully. You can also use the
+                <code>--standalone</code> flag for a fully Git-free workflow.</p>
+            </details>
+            <details>
+              <summary><strong>How does the Brain learn?</strong></summary>
+              <p style="color: var(--muted); margin-top: 8px;">It adapts via explicit commands (<code>/as</code>,
+                <code>/feel</code>) or via <strong>Training Mode (<code>/t</code>)</strong>, which prompts for
+                confirmation after every entry.</p>
+            </details>
+            <details>
+              <summary><strong>What does --commit do?</strong></summary>
+              <p style="color: var(--muted); margin-top: 8px;">It links your log entry directly to a Git commit hash,
+                anchoring your thought to the exact state of the code at that moment.</p>
+            </details>
+            <details>
+              <summary><strong>Does any data leave my machine?</strong></summary>
+              <p style="color: var(--muted); margin-top: 8px;">No. Everything is stored locally. No external services,
+                no cloud, no telemetry.</p>
+            </details>
+            <details>
+              <summary><strong>Can I sync across machines?</strong></summary>
+              <p style="color: var(--muted); margin-top: 8px;">Yes, using your own tools like Git or cloud storage. Use
+                <code>/brain-out</code> to export your learned patterns and <code>/brain-in</code> to import them on
+                another machine.</p>
+            </details>
+            <details>
+              <summary><strong>Where are my logs stored?</strong></summary>
+              <p style="color: var(--muted); margin-top: 8px;">By default, logs are written to <code>logloop.md</code>
+                inside your project (repo mode). You can switch to local mode (<code>~/.logloop/logs/</code>) or mirror
+                mode (both) using <code>/s</code> inside the loop or by editing <code>.loglooprc</code>.</p>
+            </details>
+            <details>
+              <summary><strong>What is the difference between repo, local, and mirror storage?</strong></summary>
+              <p style="color: var(--muted); margin-top: 8px;"><strong>repo</strong> writes to your project folder —
+                great for team transparency and keeping decisions close to the code. <strong>local</strong> writes to a
+                private folder on your machine — good for personal notes you don't want in the repo.
+                <strong>mirror</strong> writes to both simultaneously.</p>
+            </details>
+            <details>
+              <summary><strong>What are the log categories?</strong></summary>
+              <p style="color: var(--muted); margin-top: 8px;">Logloop auto-classifies each entry as one of: action,
+                decision, question, media, noise, or thought. You can correct any misclassification with
+                <code>/as &lt;category&gt;</code> and the Brain will remember your preference.</p>
+            </details>
+            <details>
+              <summary><strong>What is mood tracking?</strong></summary>
+              <p style="color: var(--muted); margin-top: 8px;">Logloop infers an emotional signal from your writing —
+                frustrated, focused, uncertain, confident, and so on. It's optional and can be toggled with
+                <code>/m</code>. Over time it gives you a picture of how you feel during different kinds of work.</p>
+            </details>
+            <details>
+              <summary><strong>How do I use Logloop in a team?</strong></summary>
+              <p style="color: var(--muted); margin-top: 8px;">Set storage to repo mode so logs land in
+                <code>logloop.md</code> inside the project. Commit that file alongside your code. Teammates can read the
+                reasoning behind changes directly in the repo, without any extra tooling.</p>
+            </details>
+            <details>
+              <summary><strong>Do I have to keep the loop open all day?</strong></summary>
+              <p style="color: var(--muted); margin-top: 8px;">No. You can use <code>logloop "message"</code> for
+                one-shot entries without entering the loop at all. The loop is the recommended experience for deep work
+                sessions, but it's not required.</p>
+            </details>
+            <details>
+              <summary><strong>What is Global Mode?</strong></summary>
+              <p style="color: var(--muted); margin-top: 8px;">Global Mode gives you a unified view across all your
+                projects. Use <code>logloop global summary</code> for a consolidated daily report,
+                <code>logloop global search "term"</code> to find past decisions, and
+                <code>logloop global filter --type decision</code> to filter by category.</p>
+            </details>
+            <details>
+              <summary><strong>Is there a VS Code extension?</strong></summary>
+              <p style="color: var(--muted); margin-top: 8px;">Not yet — it's on the roadmap for v1.0. For now, Logloop
+                works best as a second terminal alongside your editor.</p>
+            </details>
           </div>
-        </section>
-      </div>
+        </div>
+      </section>
 
       <footer style="margin-top: 48px; padding-top: 32px; border-top: 1px solid var(--border); text-align: center;">
         <h3>Ready to stop losing your thinking?</h3>
@@ -811,28 +876,23 @@
           <button class="button primary" type="button" onclick="copyNpmCommand(this)">npm install -g logloop</button>
           <p style="margin-top: 8px; font-size: 0.85rem; color: var(--muted);">Start in seconds. No setup required.</p>
         </div>
-        <div style="margin-top: 24px; display: flex; justify-content: center; gap: 20px; font-size: 0.9rem; color: var(--muted);">
+        <div
+          style="margin-top: 24px; display: flex; justify-content: center; gap: 20px; font-size: 0.9rem; color: var(--muted);">
           <a href="https://github.com/chachachavito/logloop" target="_blank" rel="noopener noreferrer">GitHub</a>
           <a href="https://github.com/chachachavito/logloop#readme" target="_blank" rel="noopener noreferrer">Docs</a>
-          <a href="https://github.com/chachachavito/logloop/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Changelog v0.3.5</a>
+          <a href="https://github.com/chachachavito/logloop/blob/main/CHANGELOG.md" target="_blank"
+            rel="noopener noreferrer">Changelog v0.3.5</a>
         </div>
       </footer>
     </main>
   </div>
 
   <script>
-    function switchTab(tabId, el) {
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.getElementById(tabId).classList.add('active');
-      el.classList.add('active');
-    }
-
     function copyNpmCommand(btn) {
       const text = 'npm install -g logloop';
       navigator.clipboard.writeText(text).then(() => {
         const originalText = btn.innerText;
-        btn.innerText = 'Copied! ✅';
+        btn.innerText = 'Copied!';
         btn.style.borderColor = '#27c93f';
         setTimeout(() => {
           btn.innerText = originalText;

@@ -20,16 +20,15 @@ Git tells you the lines changed. Logloop gives you the context:
 
 ## 📦 Getting Started
 
-### Installation
-```bash
-npm install -g logloop
-```
+### The Ritual (Getting Started)
+Logloop works best as a second terminal — open it alongside your editor and let it become your development journal.
 
-### The Ritual (The Second Terminal)
-Logloop works best as a second terminal — open it alongside your editor and let it become your development journal. Run it in your project root:
-```bash
-logloop
-```
+1. **Install globally**: `npm install -g logloop`
+2. **Open your project** in your editor.
+3. **Open a second terminal** and start the loop:
+   ```bash
+   cd your-project && logloop
+   ```
 *Just type your thoughts as you work. They will be timestamped, classified, and linked to the current Git state automatically.*
 
 ### One-Shot & Standalone
@@ -161,5 +160,49 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org/) a
 - `fix(scope): ...` -> Bug fix (Patch)
 - `docs: ...` -> Documentation
 - `chore: ...` -> Internal tasks
+
+## ❓ Frequently Asked Questions
+
+**Does Logloop replace Git?**
+No. Git tracks code changes. Logloop tracks the reasoning behind them.
+
+**Does it work without Git?**
+Yes, it degrades gracefully. You can also use the `--standalone` flag for a fully Git-free workflow.
+
+**How does the Brain learn?**
+It adapts via explicit commands (`/as`, `/feel`) or via **Training Mode (`/t`)**, which prompts for confirmation after every entry.
+
+**What does --commit do?**
+It links your log entry directly to a Git commit hash, anchoring your thought to the exact state of the code at that moment.
+
+**Does any data leave my machine?**
+No. Everything is stored locally. No external services, no cloud, no telemetry.
+
+**Can I sync across machines?**
+Yes, using your own tools like Git or cloud storage. Use `/brain-out` to export your learned patterns and `/brain-in` to import them on another machine.
+
+**Where are my logs stored?**
+By default, logs are written to `logloop.md` inside your project (repo mode). You can switch to local mode (`~/.logloop/logs/`) or mirror mode (both) using `/s` inside the loop or by editing `.loglooprc`.
+
+**What is the difference between repo, local, and mirror storage?**
+**repo** writes to your project folder — great for team transparency and keeping decisions close to the code. **local** writes to a private folder on your machine — good for personal notes you don't want in the repo. **mirror** writes to both simultaneously.
+
+**What are the log categories?**
+Logloop auto-classifies each entry as one of: action, decision, question, media, noise, or thought. You can correct any misclassification with `/as <category>` and the Brain will remember your preference.
+
+**What is mood tracking?**
+Logloop infers an emotional signal from your writing — frustrated, focused, uncertain, confident, and so on. It's optional and can be toggled with `/m`. Over time it gives you a picture of how you feel during different kinds of work.
+
+**How do I use Logloop in a team?**
+Set storage to repo mode so logs land in `logloop.md` inside the project. Commit that file alongside your code. Teammates can read the reasoning behind changes directly in the repo, without any extra tooling.
+
+**Do I have to keep the loop open all day?**
+No. You can use `logloop "message"` for one-shot entries without entering the loop at all. The loop is the recommended experience for deep work sessions, but it's not required.
+
+**What is Global Mode?**
+Global Mode gives you a unified view across all your projects. Use `logloop global summary` for a consolidated daily report, `logloop global search "term"` to find past decisions, and `logloop global filter --type decision` to filter by category.
+
+**Is there a VS Code extension?**
+Not yet — it's on the roadmap for v1.0. For now, Logloop works best as a second terminal alongside your editor.
 
 MIT © 2026 Chavito
