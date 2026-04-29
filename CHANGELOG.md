@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.3.4](https://github.com/chachachavito/logloop/compare/v0.3.3...v0.3.4) (2026-04-29)
+
+
+### Documentation
+
+* **architecture:** update architecture documentation and enhance README clarity ([7ad29e0](https://github.com/chachachavito/logloop/commit/7ad29e02cb4c41cda2582d6ae740e159a45ecea0))
+* **readme:** update documentation for clarity and consistency ([9da2af3](https://github.com/chachachavito/logloop/commit/9da2af38832561841a961adc5ddd4b46929be6f2))
+
 ### [0.3.3](https://github.com/chachachavito/logloop/compare/v0.3.2...v0.3.3) (2026-04-29)
 
 
