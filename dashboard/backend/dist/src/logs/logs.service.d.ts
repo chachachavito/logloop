@@ -1,5 +1,18 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { IngestLogDto } from './dto/ingest-log.dto';
+export interface GlobalLogEntry {
+    id: string;
+    message: string;
+    createdAt: Date;
+    project: {
+        name: string;
+    };
+    branch: string | null;
+    commitHash: string | null;
+    source: string;
+    mood: string | null;
+    tags: any[];
+}
 export declare class LogsService {
     private prisma;
     constructor(prisma: PrismaService);
@@ -9,21 +22,21 @@ export declare class LogsService {
             name: string;
         }[];
     } & {
+        id: string;
         message: string;
         branch: string | null;
-        id: string;
-        createdAt: Date;
         commitHash: string | null;
+        createdAt: Date;
         projectId: string;
         sessionId: string | null;
     }>;
     findAll(projectId?: string): Promise<({
         project: {
             id: string;
+            createdAt: Date;
             name: string;
             repoPath: string | null;
             userId: string;
-            createdAt: Date;
         };
         session: {
             id: string;
@@ -36,12 +49,13 @@ export declare class LogsService {
             name: string;
         }[];
     } & {
+        id: string;
         message: string;
         branch: string | null;
-        id: string;
-        createdAt: Date;
         commitHash: string | null;
+        createdAt: Date;
         projectId: string;
         sessionId: string | null;
     })[]>;
+    findGlobal(): Promise<GlobalLogEntry[]>;
 }

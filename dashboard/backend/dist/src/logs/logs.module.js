@@ -16,7 +16,7 @@ exports.LogsModule = LogsModule;
 exports.LogsModule = LogsModule = __decorate([
     (0, common_1.Module)({
         controllers: [logs_controller_1.LogsController],
-        providers: [logs_service_1.LogsService]
+        providers: [logs_service_1.LogsService],
     })
 ], LogsModule);
 //# sourceMappingURL=logs.module.js.map

@@ -1,5 +1,5 @@
 import { Controller, Post, Body, Get, Query } from '@nestjs/common';
-import { LogsService } from './logs.service';
+import { LogsService, GlobalLogEntry } from './logs.service';
 import { IngestLogDto } from './dto/ingest-log.dto';
 
 @Controller('logs')
@@ -17,7 +17,7 @@ export class LogsController {
   }
 
   @Get('global')
-  async findGlobal() {
+  async findGlobal(): Promise<GlobalLogEntry[]> {
     return this.logsService.findGlobal();
   }
 }

@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getLogs, getGlobalLogs, Log } from '@/lib/api/logs';
 import { format } from 'date-fns';
-import { Terminal, GitBranch, Hash, Clock, Search, Filter, Globe } from 'lucide-react';
+import { Terminal, GitBranch, Hash, Clock, Search, Filter, Globe, Folder } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 
@@ -127,7 +127,10 @@ function LogCard({ log, index }: { log: Log; index: number }) {
                 {format(new Date(log.createdAt), 'HH:mm:ss')}
               </span>
               <span className="h-1 w-1 rounded-full bg-zinc-700" />
-              <span className="text-indigo-400 font-bold uppercase tracking-widest">{log.project.name}</span>
+              <div className="flex items-center gap-1 bg-zinc-800/50 px-2 py-0.5 rounded text-indigo-400 font-bold uppercase tracking-widest border border-zinc-700/50">
+                <Folder size={10} className="opacity-70" />
+                {log.project.name}
+              </div>
             </div>
             
             <p className="text-zinc-100 text-sm leading-relaxed whitespace-pre-wrap">

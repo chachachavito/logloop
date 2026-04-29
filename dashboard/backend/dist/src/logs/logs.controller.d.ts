@@ -1,4 +1,4 @@
-import { LogsService } from './logs.service';
+import { LogsService, GlobalLogEntry } from './logs.service';
 import { IngestLogDto } from './dto/ingest-log.dto';
 export declare class LogsController {
     private readonly logsService;
@@ -9,21 +9,21 @@ export declare class LogsController {
             name: string;
         }[];
     } & {
+        id: string;
         message: string;
         branch: string | null;
-        id: string;
-        createdAt: Date;
         commitHash: string | null;
+        createdAt: Date;
         projectId: string;
         sessionId: string | null;
     }>;
     findAll(projectId?: string): Promise<({
         project: {
             id: string;
+            createdAt: Date;
             name: string;
             repoPath: string | null;
             userId: string;
-            createdAt: Date;
         };
         session: {
             id: string;
@@ -36,12 +36,13 @@ export declare class LogsController {
             name: string;
         }[];
     } & {
+        id: string;
         message: string;
         branch: string | null;
-        id: string;
-        createdAt: Date;
         commitHash: string | null;
+        createdAt: Date;
         projectId: string;
         sessionId: string | null;
     })[]>;
+    findGlobal(): Promise<GlobalLogEntry[]>;
 }

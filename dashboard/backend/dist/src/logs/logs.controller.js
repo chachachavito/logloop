@@ -27,6 +27,9 @@ let LogsController = class LogsController {
     async findAll(projectId) {
         return this.logsService.findAll(projectId);
     }
+    async findGlobal() {
+        return this.logsService.findGlobal();
+    }
 };
 exports.LogsController = LogsController;
 __decorate([
@@ -43,6 +46,12 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], LogsController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Get)('global'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], LogsController.prototype, "findGlobal", null);
 exports.LogsController = LogsController = __decorate([
     (0, common_1.Controller)('logs'),
     __metadata("design:paramtypes", [logs_service_1.LogsService])

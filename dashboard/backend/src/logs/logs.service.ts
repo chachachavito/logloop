@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
-interface GlobalLogEntry {
+export interface GlobalLogEntry {
   id: string;
   message: string;
   createdAt: Date;
