@@ -2,7 +2,7 @@
 
 > **Git tracks WHAT changed. Logloop tracks WHY.**
 
-Logloop is a zero-friction, local-first CLI that captures the reasoning behind your code in real-time. It acts as the "black box" for your development process, turning isolated commits into a traceable, living narrative of architectural decisions.
+Logloop is a local-first CLI that acts as your rubber duck that remembers everything. It lives beside your editor to capture the reasoning behind your code in real-time, turning isolated commits into a traceable, living narrative.
 
 ---
 
@@ -14,7 +14,7 @@ Git tells you the lines changed. Logloop gives you the context:
 - 🧠 **Semantic Classification**: Auto-tags logs as `action`, `decision`, `question`, `media`, `noise`, or `thought`.
 - 🔗 **Git Linking**: Anchors every thought to the exact `HEAD` hash.
 - 🔒 **Local-First Active Learning**: Learns your engineering dialect without ever sending data to the cloud.
-- ⚡ **Zero-Friction**: Stays open in your terminal. Think it. Type it. Done.
+- 📟 **Your Second Terminal**: Open it alongside your editor and let your thoughts flow as you code.
 
 ---
 
@@ -25,8 +25,8 @@ Git tells you the lines changed. Logloop gives you the context:
 npm install -g logloop
 ```
 
-### The Core Experience (Continuous Loop)
-Logloop is designed to stay open alongside your code. Run it in your project root:
+### The Ritual (The Second Terminal)
+Logloop works best as a second terminal — open it alongside your editor and let it become your development journal. Run it in your project root:
 ```bash
 logloop
 ```
@@ -83,7 +83,7 @@ Access all your logs from all projects in a single view:
 ### Platform Context (Source)
 Logloop automatically detects the log origin (`desktop` or `mobile`). 
 This field exists to allow correlation between spontaneous ideas (mobile) and technical execution (desktop), 
-and it is populated without user intervention to maintain zero friction.
+and it is populated without user intervention to ensure your flow is never interrupted.
 
 ---
 
