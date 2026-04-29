@@ -20,6 +20,7 @@
       --row-hover: #f8f9fa;
       --danger-soft: #fdecec;
       --shadow-soft: 0 6px 18px rgba(33, 37, 41, 0.08);
+      --info-bg: #f0f8ff; /* aliceblue */
     }
 
     /* Terminal Mockup Styles */
@@ -560,7 +561,7 @@
         <div class="nav-item active" onclick="switchTab('overview', document.querySelector('.tab'))">Overview</div>
         <div class="nav-item" onclick="switchTab('comparison', document.querySelectorAll('.tab')[1])">Why Logloop?</div>
         <div class="nav-item" onclick="switchTab('faq', document.querySelectorAll('.tab')[2])">FAQ</div>
-        <a href="https://github.com" class="nav-item">GitHub</a>
+        <a href="https://github.com/chachachavito/logloop" class="nav-item">GitHub</a>
       </nav>
     </header>
 
@@ -594,7 +595,7 @@
         <div class="button-row">
           <a href="https://github.com/chachachavito/logloop/blob/main/CHANGELOG.md" class="button secondary">See the CHANGELOG →</a>
           <div style="display: flex; flex-direction: column; gap: 4px;">
-            <button class="button primary" type="button">npm install -g logloop</button>
+            <button class="button primary" type="button" onclick="copyNpmCommand(this)">npm install -g logloop</button>
             <span style="font-size: 0.75rem; color: var(--muted); text-align: center;">No signup • No config • Works instantly</span>
           </div>
         </div>
@@ -705,7 +706,7 @@
               </div>
             </div>
 
-            <section class="panel status-card" style="border-color: var(--focus); background: aliceblue;">
+            <section class="panel status-card" style="border-color: var(--focus); background: var(--info-bg);">
               <label style="font-weight: 700; margin-bottom: 8px; display: block; color: var(--tab-active);">Coming Soon 🚀</label>
               <div style="font-size: 0.9rem; color: var(--tab-active);">
                 <strong>VS Code Extension</strong>: The rubber duck, integrated directly into your editor.
@@ -747,13 +748,7 @@
                   <td class="check-no">no</td>
                   <td class="check-no">no</td>
                 </tr>
-                <tr>
-                  <td>Links to commits</td>
-                  <td class="check-yes">yes</td>
-                  <td class="check-no">no</td>
-                  <td class="check-no">no</td>
-                  <td>manual</td>
-                </tr>
+
                 <tr>
                   <td>Terminal-native workflow</td>
                   <td class="check-yes">yes</td>
@@ -813,7 +808,7 @@
       <footer style="margin-top: 48px; padding-top: 32px; border-top: 1px solid var(--border); text-align: center;">
         <h3>Ready to stop losing your thinking?</h3>
         <div style="margin-top: 16px;">
-          <button class="button primary" type="button">npm install -g logloop</button>
+          <button class="button primary" type="button" onclick="copyNpmCommand(this)">npm install -g logloop</button>
           <p style="margin-top: 8px; font-size: 0.85rem; color: var(--muted);">Start in seconds. No setup required.</p>
         </div>
         <div style="margin-top: 24px; display: flex; justify-content: center; gap: 20px; font-size: 0.9rem; color: var(--muted);">
@@ -831,6 +826,19 @@
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
       el.classList.add('active');
+    }
+
+    function copyNpmCommand(btn) {
+      const text = 'npm install -g logloop';
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = btn.innerText;
+        btn.innerText = 'Copied! ✅';
+        btn.style.borderColor = '#27c93f';
+        setTimeout(() => {
+          btn.innerText = originalText;
+          btn.style.borderColor = '';
+        }, 2000);
+      });
     }
   </script>
 </body>
