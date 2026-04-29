@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.3.7](https://github.com/chachachavito/logloop/compare/v0.3.6...v0.3.7) (2026-04-29)
+
+
+### Documentation
+
+* **contributing:** add contributing guidelines and development commands ([4bfa1f6](https://github.com/chachachavito/logloop/commit/4bfa1f6fb0cafaac722aaaafc4db54903e942012))
+
 ### [0.3.6](https://github.com/chachachavito/logloop/compare/v0.3.5...v0.3.6) (2026-04-29)
 
 
