@@ -14,9 +14,9 @@ const MOOD_CATEGORIES = [
   { name: 'happy', patterns: [/\b(consegui|sucesso|funciona|top|boa|feliz|eba|uau|vitoria|resolvido|yay|fixed|solved|win|otimo|excelente|perfeito|maravilha|great|excellent|perfect)\b/i] },
   { name: 'focused', patterns: [/\b(concentrado|focado|estudando|mergulhado|deep|foco|flow|imerso|produtivo|focus|grind|codando|coding)\b/i] },
   { name: 'tired', patterns: [/\b(cansado|sono|exausto|parando|uufa|fadiga|moido|acabado|tired|sleepy|morto|exhausted|beat)\b/i, /done for today/i] },
-  { name: 'frustrated', patterns: [/\b(droga|erro|dificil|nao funciona|merda|bug|problema|inferno|saco|empacado|pqp|triste|mal|ruim|pessimo|desanimo|desanimado|foda|shit|error|broken|hard|lixo|travado|bloqueado|garbage|stuck|blocked)\b/i] },
+  { name: 'frustrated', patterns: [/\b(droga|erro|dificil|nao funciona|merda|bug|problema|inferno|saco|empacado|pqp que merda|ta foda|triste|mal|ruim|pessimo|desanimo|desanimado|shit|error|broken|hard|lixo|travado|bloqueado|garbage|stuck|blocked)\b/i] },
   { name: 'confused', patterns: [/\b(estranho|nao entendi|confuso|por que|uai|buguei|duvida|perdi|confused|weird|why|how|wtf|perdido)\b/i, /\?/] },
-  { name: 'excited', patterns: [/\b(caramba|incrivel|bora|viva|animado|show|espetacular|animal|hype|massa|amazing|awesome|lets go|insano|uau|wow|eita|topzera)\b/i, /!!/ ] },
+  { name: 'excited', patterns: [/\b(caramba|incrivel|bora|viva|animado|show|espetacular|animal|hype|massa|amazing|awesome|lets go|insano|uau|wow|eita|topzera|que foda|muito foda|foda!|pqp que foda)\b/i, /!!/ ] },
   { name: 'neutral', patterns: [] }
 ];
 
@@ -31,7 +31,7 @@ const EMOTICONS = {
 
 const SENTIMENT_DICT = {
   positive: ['top', 'show', 'boa', 'legal', 'massa', 'incrivel', 'amando', 'conseguindo', 'funciona', 'love', 'great', 'awesome', 'working', 'perfeito', 'otimo', 'viva', 'eba'],
-  negative: ['droga', 'merda', 'ruim', 'mal', 'pessimo', 'dificil', 'bug', 'erro', 'saco', 'odio', 'hate', 'bad', 'hard', 'broken', 'lixo', 'inferno', 'pqp', 'foda']
+  negative: ['droga', 'merda', 'ruim', 'mal', 'pessimo', 'dificil', 'bug', 'erro', 'saco', 'odio', 'hate', 'bad', 'hard', 'broken', 'lixo', 'inferno']
 };
 
 function normalize(text) {

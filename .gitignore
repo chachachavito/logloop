@@ -11,3 +11,9 @@ scratch/
 SELF-LOG*.md
 coverage/
 test_results.log
+
+
+
+architecture.html 
+architecture.json 
+architecture.md

@@ -49,6 +49,11 @@ Privacy is a pillar. Logloop categorizes your logs without sending data to exter
 2. **Fuzzy Matching**: Uses `fuse.js` to handle typos and lexical variations locally.
 3. **Heuristics**: Deterministic rules covering technical verbs, negations, and sentiment.
 
+### 🛠️ Customizing Heuristics
+As regras determinísticas para classificação de humor e categoria residem em `src/classifier.js`. 
+Se você notar que termos específicos do seu dialeto de engenharia estão sendo classificados incorretamente, as expressões regulares podem ser ajustadas diretamente em `MOOD_CATEGORIES` ou `MESSAGE_CATEGORIES`.
+
+
 ### Active Learning
 The system learns as you correct it.
 *   **`/t` (Training Mode)**: Forces interactive confirmation of category and mood after every log.
