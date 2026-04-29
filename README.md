@@ -1,4 +1,4 @@
-# Logloop (v0.4.3)
+# Logloop (v0.2.0)
 
 > **Git tracks WHAT changed. Logloop tracks WHY.**
 
@@ -63,6 +63,18 @@ Stop guessing what you did yesterday during your daily standup.
 *   **`logloop summary`** (or `/summary`): Generates a Markdown report of the last 24h, extracting key decisions, unresolved questions, and your mood balance.
 *   **`logloop timeline`** (or `/timeline`): Displays a visual ASCII activity chart directly in your terminal.
 
+### 🌐 Global Mode (Unified Memory)
+Acesse todos os seus logs de todos os projetos em uma visão única:
+*   **`logloop global list`**: Lista cronológica de todos os projetos.
+*   **`logloop global summary`**: Insights consolidados de toda a sua jornada.
+*   **`logloop global search "<termo>"`**: Busca em todo o seu histórico.
+*   **`logloop global filter --type <type>`**: Filtra por tipo (ex: decision).
+
+### Contexto de Plataforma (Source)
+O Logloop detecta automaticamente a origem do log (`desktop` ou `mobile`). 
+Esse campo existe para permitir a correlação entre ideias (mobile) e execução técnica (desktop),
+e é preenchido sem intervenção do usuário para manter o atrito zero.
+
 ---
 
 ## ⚙️ Configuration & Storage
@@ -78,10 +90,13 @@ Logloop relies on a cascading configuration (local `./.loglooprc` overrides glob
 }
 ```
 
-### Dual-Channel Storage
-- **`repo` (Default)**: Writes to `logloop.md` in the project folder. Great for team transparency.
-- **`local`**: Writes to `~/.logloop/logs/`. Ideal for private engineering journals on corporate/public projects.
-*(Tip: Type `/s` in the interactive loop to hot-swap between storage modes instantly).*
+### Storage Strategies
+Você tem controle total sobre onde seus dados são salvos:
+- **`repo` (Default)**: Escreve em `logloop.md` no projeto. Foco em transparência com o time.
+- **`local`**: Escreve em `~/.logloop/logs/`. Seu jornal de engenharia privado.
+- **`mirror`**: Escreve em ambos. O melhor dos dois mundos.
+
+*(Dica: Use `/s` no loop interativo para alternar rapidamente).*
 
 ---
 

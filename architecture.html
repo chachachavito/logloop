@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>logloop - Architecture Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: rgba(30, 41, 59, 0.7);
+            --bg-accent: rgba(56, 189, 248, 0.1);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.4);
+            --border: rgba(255, 255, 255, 0.1);
+            --glass: blur(12px) saturate(180%);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            background: var(--bg-card);
+            backdrop-filter: var(--glass);
+            -webkit-backdrop-filter: var(--glass);
+            padding: 0.75rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent), #818cf8);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        aside {
+            width: 280px;
+            background: var(--bg-card);
+            backdrop-filter: var(--glass);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .search-box {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .search-box input {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 0.85rem;
+            width: 100%;
+            outline: none;
+        }
+
+        .file-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem;
+        }
+
+        .file-item {
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-item:hover {
+            background: var(--bg-accent);
+            color: var(--accent);
+        }
+
+        .file-item.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        #diagram-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
+        }
+
+        .mermaid-wrapper {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: auto;
+            padding: 2rem;
+        }
+
+        .mermaid {
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .mermaid.rendered {
+            opacity: 1;
+        }
+
+        .toolbar {
+            position: absolute;
+            bottom: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 0.5rem;
+            background: var(--bg-card);
+            backdrop-filter: var(--glass);
+            padding: 0.4rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        .btn {
+            background: transparent;
+            border: none;
+            padding: 0.5rem 0.8rem;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .btn.active {
+            color: var(--accent);
+            background: var(--bg-accent);
+        }
+
+        .context-badge {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: var(--accent);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            box-shadow: 0 4px 12px var(--accent-glow);
+            display: none;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-area" onclick="resetView()" style="cursor:pointer">
+            <div class="logo-icon">A</div>
+            <div>
+                <div style="font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em;">Architect</div>
+                <h1>logloop</h1>
+            </div>
+        </div>
+        <div class="controls" style="display: flex; gap: 1rem;">
+            <div style="display: flex; background: rgba(0,0,0,0.2); padding: 2px; border-radius: 8px; border: 1px solid var(--border);">
+                <button class="btn active" id="btn-high-level" onclick="changeView('high-level')">High-Level</button>
+                <button class="btn" id="btn-detailed" onclick="changeView('detailed')">Detailed</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <aside>
+            <div class="sidebar-header">
+                <div class="search-box">
+                    <span style="font-size: 0.8rem; opacity: 0.5;">🔍</span>
+                    <input type="text" id="file-search" placeholder="Search files..." oninput="filterFiles()">
+                </div>
+            </div>
+            <div class="file-list" id="file-list"></div>
+        </aside>
+
+        <main id="diagram-container">
+            <div id="context-badge" class="context-badge"></div>
+            <div class="mermaid-wrapper">
+                <div class="mermaid" id="mermaid-graph"></div>
+            </div>
+            <div class="toolbar">
+                <button class="btn" onclick="setDirection('TD')">Vertical</button>
+                <button class="btn active" id="btn-LR" onclick="setDirection('LR')">Horizontal</button>
+                <div style="width: 1px; background: var(--border); margin: 0 4px;"></div>
+                <button class="btn" onclick="zoom(1.2)">Zoom +</button>
+                <button class="btn" onclick="zoom(0.8)">Zoom -</button>
+                <button class="btn" onclick="resetZoom()">Reset</button>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        const graph = {"nodes":[{"id":"child_process","metadata":{"type":"external","source":"inferred","label":"child_process","layer":"External","domain":"shared"},"type":"external","label":"child_process","externalCalls":[]},{"id":"fs","metadata":{"type":"external","source":"inferred","label":"fs","layer":"External","domain":"shared"},"type":"external","label":"fs","externalCalls":[]},{"id":"fuse.js","metadata":{"type":"external","source":"inferred","label":"fuse.js","layer":"External","domain":"shared"},"type":"external","label":"fuse.js","externalCalls":[]},{"id":"isGitRepo","metadata":{"type":"external","source":"inferred","label":"isGitRepo","layer":"External","domain":"shared"},"type":"external","label":"isGitRepo","externalCalls":[]},{"id":"os","metadata":{"type":"external","source":"inferred","label":"os","layer":"External","domain":"shared"},"type":"external","label":"os","externalCalls":[]},{"id":"path","metadata":{"type":"external","source":"inferred","label":"path","layer":"External","domain":"shared"},"type":"external","label":"path","externalCalls":[]},{"id":"picocolors","metadata":{"type":"external","source":"inferred","label":"picocolors","layer":"External","domain":"shared"},"type":"external","label":"picocolors","externalCalls":[]},{"id":"readline","metadata":{"type":"external","source":"inferred","label":"readline","layer":"External","domain":"shared"},"type":"external","label":"readline","externalCalls":[]},{"id":"src/classifier.js","metadata":{"type":"module","source":"inferred","inheritance":[],"decorators":[],"metrics":{"sloc":166,"complexity":36},"label":"Classifier","layer":"Core","domain":"shared"},"type":"module","externalCalls":[]},{"id":"src/commit.js","metadata":{"type":"module","source":"inferred","inheritance":[],"decorators":[],"metrics":{"sloc":184,"complexity":35},"label":"Commit","layer":"Core","domain":"shared"},"type":"module","externalCalls":[{"type":"database","target":"isGitRepo","location":{"line":156,"column":8}}]},{"id":"src/config.js","metadata":{"type":"module","source":"inferred","inheritance":[],"decorators":[],"metrics":{"sloc":76,"complexity":11},"label":"Config","layer":"Core","domain":"shared"},"type":"module","externalCalls":[]},{"id":"src/core.js","metadata":{"type":"module","source":"inferred","inheritance":[],"decorators":[],"metrics":{"sloc":264,"complexity":63},"label":"Core","layer":"Core","domain":"shared"},"type":"module","externalCalls":[{"type":"database","target":"isGitRepo","location":{"line":221,"column":51}}]},{"id":"src/git.js","metadata":{"type":"module","source":"inferred","inheritance":[],"decorators":[],"metrics":{"sloc":51,"complexity":4},"label":"Git","layer":"Core","domain":"shared"},"type":"module","externalCalls":[{"type":"database","target":"isGitRepo","location":{"line":13,"column":8}},{"type":"database","target":"isGitRepo","location":{"line":34,"column":8}}]},{"id":"src/i18n.js","metadata":{"type":"module","source":"inferred","inheritance":[],"decorators":[],"metrics":{"sloc":17,"complexity":5},"label":"I18n","layer":"Core","domain":"shared"},"type":"module","externalCalls":[]},{"id":"src/memory.js","metadata":{"type":"module","source":"inferred","inheritance":[],"decorators":[],"metrics":{"sloc":101,"complexity":12},"label":"Memory","layer":"Core","domain":"shared"},"type":"module","externalCalls":[]},{"id":"src/ui.js","metadata":{"type":"module","source":"inferred","inheritance":[],"decorators":[],"metrics":{"sloc":284,"complexity":56},"label":"Ui","layer":"Core","domain":"shared"},"type":"module","externalCalls":[]}],"edges":[{"id":"src/classifier.js->fuse.js:import","from":"src/classifier.js","to":"fuse.js","type":"import"},{"id":"src/commit.js->child_process:import","from":"src/commit.js","to":"child_process","type":"import"},{"id":"src/commit.js->isGitRepo:external-call","from":"src/commit.js","to":"isGitRepo","type":"external-call"},{"id":"src/commit.js->picocolors:import","from":"src/commit.js","to":"picocolors","type":"import"},{"id":"src/commit.js->readline:import","from":"src/commit.js","to":"readline","type":"import"},{"id":"src/config.js->fs:import","from":"src/config.js","to":"fs","type":"import"},{"id":"src/config.js->os:import","from":"src/config.js","to":"os","type":"import"},{"id":"src/config.js->path:import","from":"src/config.js","to":"path","type":"import"},{"id":"src/config.js->picocolors:import","from":"src/config.js","to":"picocolors","type":"import"},{"id":"src/core.js->fs:import","from":"src/core.js","to":"fs","type":"import"},{"id":"src/core.js->isGitRepo:external-call","from":"src/core.js","to":"isGitRepo","type":"external-call"},{"id":"src/core.js->os:import","from":"src/core.js","to":"os","type":"import"},{"id":"src/core.js->path:import","from":"src/core.js","to":"path","type":"import"},{"id":"src/git.js->child_process:import","from":"src/git.js","to":"child_process","type":"import"},{"id":"src/git.js->isGitRepo:external-call","from":"src/git.js","to":"isGitRepo","type":"external-call"},{"id":"src/memory.js->fs:import","from":"src/memory.js","to":"fs","type":"import"},{"id":"src/memory.js->path:import","from":"src/memory.js","to":"path","type":"import"},{"id":"src/ui.js->child_process:import","from":"src/ui.js","to":"child_process","type":"import"},{"id":"src/ui.js->fs:import","from":"src/ui.js","to":"fs","type":"import"},{"id":"src/ui.js->path:import","from":"src/ui.js","to":"path","type":"import"},{"id":"src/ui.js->picocolors:import","from":"src/ui.js","to":"picocolors","type":"import"},{"id":"src/ui.js->readline:import","from":"src/ui.js","to":"readline","type":"import"}],"version":"0.4.16"};
+        let currentView = 'high-level'; 
+        let currentDirection = 'LR';
+        let currentLayer = null;
+        let currentDomain = null;
+        let scale = 1;
+
+        mermaid.initialize({ 
+            startOnLoad: false,
+            theme: 'base',
+            securityLevel: 'loose',
+            flowchart: { 
+                useMaxWidth: true, 
+                htmlLabels: true, 
+                curve: 'basis',
+                rankspacing: 60,
+                nodespacing: 40,
+                padding: 20
+            },
+            themeVariables: {
+                primaryColor: '#1e293b',
+                primaryTextColor: '#f8fafc',
+                primaryBorderColor: '#38bdf8',
+                lineColor: '#64748b',
+                secondaryColor: '#0f172a',
+                tertiaryColor: '#1e293b',
+                mainBkg: '#1e293b',
+                nodeBorder: '#334155',
+                clusterBkg: 'rgba(56, 189, 248, 0.03)',
+                clusterBorder: '#334155',
+                titleColor: '#94a3b8'
+            }
+        });
+
+        window.onNodeClick = (id) => {
+            if (currentView === 'high-level' && id.startsWith('n_dom_')) {
+                const parts = id.split('_');
+                drillDown(parts[2], parts.slice(3).join('_'));
+            } else {
+                highlightNode(id);
+            }
+        };
+
+        function highlightNode(id) {
+            const svg = document.querySelector('.mermaid svg');
+            if (!svg) return;
+            const nodes = svg.querySelectorAll('.node');
+            const edges = svg.querySelectorAll('.edgePath');
+            nodes.forEach(n => n.style.opacity = '0.2');
+            edges.forEach(e => e.style.opacity = '0.1');
+            const target = svg.querySelector('#' + id);
+            if (target) {
+                target.style.opacity = '1';
+                edges.forEach(e => {
+                    if (e.classList.contains('ls-' + id) || e.classList.contains('le-' + id)) e.style.opacity = '1';
+                });
+            } else {
+                nodes.forEach(n => n.style.opacity = '1');
+                edges.forEach(e => e.style.opacity = '1');
+            }
+        }
+
+        function drillDown(layer, domain) {
+            currentLayer = layer;
+            currentDomain = domain;
+            currentView = 'drill-down';
+            render();
+        }
+
+        window.resetView = () => {
+            currentView = 'high-level';
+            currentLayer = null;
+            currentDomain = null;
+            render();
+        };
+
+        window.changeView = (view) => {
+            currentView = view;
+            currentLayer = null;
+            currentDomain = null;
+            render();
+        };
+
+        window.setDirection = (dir) => {
+            currentDirection = dir;
+            render();
+        };
+
+        window.filterFiles = () => {
+            const query = document.getElementById('file-search').value.toLowerCase();
+            renderFileList(query);
+        };
+
+        function renderFileList(query = '') {
+            const list = document.getElementById('file-list');
+            list.innerHTML = '';
+            graph.nodes
+                .filter(n => n.id.toLowerCase().includes(query))
+                .forEach(n => {
+                    const div = document.createElement('div');
+                    div.className = 'file-item';
+                    div.innerText = n.id.split('/').pop();
+                    div.title = n.id;
+                    div.onclick = () => {
+                        if (currentView !== 'detailed') changeView('detailed');
+                        setTimeout(() => {
+                            const nid = safeId(n.id);
+                            highlightNode(nid);
+                            const el = document.getElementById(nid);
+                            if(el) el.scrollIntoView({behavior: 'smooth', block: 'center'});
+                        }, 250);
+                    };
+                    list.appendChild(div);
+                });
+        }
+
+        async function render() {
+            const container = document.getElementById('mermaid-graph');
+            container.classList.remove('rendered');
+            document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+            if (document.getElementById('btn-' + currentView)) document.getElementById('btn-' + currentView).classList.add('active');
+            const badge = document.getElementById('context-badge');
+            if (currentView === 'drill-down') {
+                badge.style.display = 'block';
+                badge.innerText = currentLayer + ' / ' + currentDomain;
+            } else {
+                badge.style.display = 'none';
+            }
+            const syntax = generateMermaidSyntax();
+            container.removeAttribute('data-processed');
+            container.innerHTML = syntax;
+            try {
+                await mermaid.run({ nodes: [container] });
+                container.classList.add('rendered');
+            } catch (err) {
+                console.error('Mermaid error', err);
+            }
+            renderFileList();
+            applyZoom();
+        }
+
+        function generateMermaidSyntax() {
+            let syntax = 'flowchart ' + currentDirection + '\n';
+            if (currentView === 'high-level') {
+                const domainMap = new Map();
+                graph.nodes.forEach(n => {
+                    const layer = n.metadata.layer || 'Core';
+                    const domain = n.metadata.domain || 'shared';
+                    const key = layer + '::' + domain;
+                    if (!domainMap.has(key)) domainMap.set(key, { layer, domain, count: 0 });
+                    domainMap.get(key).count++;
+                });
+                const layers = [...new Set(graph.nodes.map(n => n.metadata.layer || 'Core'))];
+                layers.forEach(layer => {
+                    syntax += '  subgraph ' + safeId(layer) + ' [" ' + layer.toUpperCase() + ' "]\n';
+                    [...domainMap.values()].filter(d => d.layer === layer).forEach(d => {
+                        const id = getDomainId(d.layer, d.domain);
+                        syntax += '    ' + id + '["' + d.domain + ' <small>(' + d.count + ')</small>"]\n';
+                        syntax += '    click ' + id + ' call onNodeClick("' + id + '")\n';
+                    });
+                    syntax += '  end\n';
+                });
+                const domainEdges = new Set();
+                graph.edges.forEach(e => {
+                    const fromNode = graph.nodes.find(n => n.id === e.from);
+                    const toNode = graph.nodes.find(n => n.id === e.to);
+                    if (fromNode && toNode) {
+                        const from = getDomainId(fromNode.metadata.layer || 'Core', fromNode.metadata.domain || 'shared');
+                        const to = getDomainId(toNode.metadata.layer || 'Core', toNode.metadata.domain || 'shared');
+                        if (from !== to) domainEdges.add(from + ' --> ' + to);
+                    }
+                });
+                domainEdges.forEach(e => syntax += '  ' + e + '\n');
+            } else {
+                const nodes = currentView === 'drill-down' 
+                    ? graph.nodes.filter(n => (n.metadata.layer || 'Core') === currentLayer && (n.metadata.domain || 'shared') === currentDomain)
+                    : graph.nodes;
+                const nodeIds = new Set(nodes.map(n => n.id));
+                const layers = [...new Set(nodes.map(n => n.metadata.layer || 'Core'))];
+                layers.forEach(l => {
+                    syntax += '  subgraph ' + safeId(l) + ' [" ' + l.toUpperCase() + ' "]\n';
+                    const domains = [...new Set(nodes.filter(n => (n.metadata.layer || 'Core') === l).map(n => n.metadata.domain || 'shared'))];
+                    domains.forEach(d => {
+                        const hasDomain = d !== 'shared' && d !== '';
+                        if (hasDomain) syntax += '    subgraph ' + safeId(l + '_' + d) + ' [" ' + d + ' "]\n';
+                        nodes.filter(n => (n.metadata.layer || 'Core') === l && (n.metadata.domain || 'shared') === d).forEach(n => {
+                            const label = n.id.split('/').pop();
+                            const nid = safeId(n.id);
+                            syntax += '      ' + nid + '["' + label + '"]\n';
+                            syntax += '      click ' + nid + ' call onNodeClick("' + nid + '")\n';
+                        });
+                        if (hasDomain) syntax += '    end\n';
+                    });
+                    syntax += '  end\n';
+                });
+                graph.edges.forEach(e => {
+                    if (nodeIds.has(e.from) && nodeIds.has(e.to)) syntax += '  ' + safeId(e.from) + ' --> ' + safeId(e.to) + '\n';
+                });
+            }
+            return syntax;
+        }
+
+        function getDomainId(layer, domain) { return safeId('dom_' + layer + '_' + domain); }
+        function safeId(id) { return 'n_' + id.replace(/[^a-zA-Z0-9]/g, '_'); }
+        window.zoom = (factor) => { scale *= factor; applyZoom(); };
+        window.resetZoom = () => { scale = 1; applyZoom(); };
+        function applyZoom() {
+            const svg = document.querySelector('.mermaid svg');
+            if (svg) svg.style.transform = 'scale(' + scale + ')';
+        }
+        render();
+        window.addEventListener('resize', () => { if(currentView) render(); });
+    </script>
+</body>
+</html>

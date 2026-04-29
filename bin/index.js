@@ -137,6 +137,35 @@ if (args[0] === 'config') {
 } else if (args[0] === 'commit') {
   require('../src/commit').handleCommit(args.slice(1), config);
   process.exit(0);
+} else if (args[0] === 'global') {
+  const globalCmd = args[1];
+  const core = getCore();
+  const ui = require('../src/ui');
+  const globalLogs = core.getGlobalLogs();
+
+  if (!globalCmd || globalCmd === 'list') {
+    ui.renderGlobalList(globalLogs);
+  } else if (globalCmd === 'timeline') {
+    ui.renderTimeline(core.getAnalytics(config, globalLogs));
+  } else if (globalCmd === 'summary') {
+    ui.renderSummary(core.getAnalytics(config, globalLogs));
+  } else if (globalCmd === 'search') {
+    const query = args.slice(2).join(' ');
+    const results = globalLogs.filter(l => l.note.toLowerCase().includes(query.toLowerCase()));
+    ui.renderGlobalList(results, `Search results for "${query}"`);
+  } else if (globalCmd === 'filter') {
+    let results = globalLogs;
+    const typeIdx = args.indexOf('--type');
+    if (typeIdx > -1 && args[typeIdx+1]) {
+      results = results.filter(l => l.type === args[typeIdx+1].toLowerCase());
+    }
+    const moodIdx = args.indexOf('--mood');
+    if (moodIdx > -1 && args[moodIdx+1]) {
+      results = results.filter(l => l.mood === args[moodIdx+1].toLowerCase());
+    }
+    ui.renderGlobalList(results, `Filtered results`);
+  }
+  process.exit(0);
 }
 
 let moodFlag = null;

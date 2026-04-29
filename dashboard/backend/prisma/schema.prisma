@@ -46,6 +46,8 @@ model Session {
 model Log {
   id         String   @id @default(uuid())
   message    String
+  // source é detectado automaticamente para evitar fricção no input
+  source     String   @default("desktop")
   branch     String?
   commitHash String?  @map("commit_hash")
   project    Project  @relation(fields: [projectId], references: [id])

@@ -38,6 +38,24 @@ function handleList(config) {
   });
 }
 
+function renderGlobalList(logs, title = null) {
+  if (logs.length === 0) {
+    console.log(pc.gray(t('ui.noLogs') || 'No logs found.'));
+    return;
+  }
+  console.log(`\n${pc.bold(title || t('cli.globalListHeader') || 'GLOBAL LOGS')}`);
+  console.log(pc.gray('─'.repeat(85)));
+  logs.forEach(log => {
+    const project = pc.magenta(log.project.toUpperCase().padEnd(12));
+    const time = pc.gray(log.timestamp.split('T')[0]);
+    const type = pc.cyan(`[${log.type}]`.padEnd(10));
+    const mood = log.mood && log.mood !== 'null' ? pc.yellow(`[${log.mood}] `) : '';
+    const note = log.note.replace(/\n/g, ' ');
+    const displayNote = note.length > 50 ? note.substring(0, 47) + '...' : note;
+    console.log(`${project} ${time} ${type} ${mood}${pc.white(displayNote)}`);
+  });
+}
+
 function renderTimeline(analytics) {
   if (!analytics) return console.log(t('analytics.noActivity'));
   console.log(`\n${pc.bold(t('analytics.timelineTitle'))}`);

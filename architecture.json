@@ -1,0 +1,426 @@
+{
+  "version": "0.4.16",
+  "generatedAt": "2026-04-26T17:25:51.619Z",
+  "graph": {
+    "nodes": [
+      {
+        "id": "child_process",
+        "metadata": {
+          "type": "external",
+          "source": "inferred",
+          "label": "child_process",
+          "layer": "External",
+          "domain": "shared"
+        },
+        "type": "external",
+        "label": "child_process",
+        "externalCalls": []
+      },
+      {
+        "id": "fs",
+        "metadata": {
+          "type": "external",
+          "source": "inferred",
+          "label": "fs",
+          "layer": "External",
+          "domain": "shared"
+        },
+        "type": "external",
+        "label": "fs",
+        "externalCalls": []
+      },
+      {
+        "id": "fuse.js",
+        "metadata": {
+          "type": "external",
+          "source": "inferred",
+          "label": "fuse.js",
+          "layer": "External",
+          "domain": "shared"
+        },
+        "type": "external",
+        "label": "fuse.js",
+        "externalCalls": []
+      },
+      {
+        "id": "isGitRepo",
+        "metadata": {
+          "type": "external",
+          "source": "inferred",
+          "label": "isGitRepo",
+          "layer": "External",
+          "domain": "shared"
+        },
+        "type": "external",
+        "label": "isGitRepo",
+        "externalCalls": []
+      },
+      {
+        "id": "os",
+        "metadata": {
+          "type": "external",
+          "source": "inferred",
+          "label": "os",
+          "layer": "External",
+          "domain": "shared"
+        },
+        "type": "external",
+        "label": "os",
+        "externalCalls": []
+      },
+      {
+        "id": "path",
+        "metadata": {
+          "type": "external",
+          "source": "inferred",
+          "label": "path",
+          "layer": "External",
+          "domain": "shared"
+        },
+        "type": "external",
+        "label": "path",
+        "externalCalls": []
+      },
+      {
+        "id": "picocolors",
+        "metadata": {
+          "type": "external",
+          "source": "inferred",
+          "label": "picocolors",
+          "layer": "External",
+          "domain": "shared"
+        },
+        "type": "external",
+        "label": "picocolors",
+        "externalCalls": []
+      },
+      {
+        "id": "readline",
+        "metadata": {
+          "type": "external",
+          "source": "inferred",
+          "label": "readline",
+          "layer": "External",
+          "domain": "shared"
+        },
+        "type": "external",
+        "label": "readline",
+        "externalCalls": []
+      },
+      {
+        "id": "src/classifier.js",
+        "metadata": {
+          "type": "module",
+          "source": "inferred",
+          "inheritance": [],
+          "decorators": [],
+          "metrics": {
+            "sloc": 166,
+            "complexity": 36
+          },
+          "label": "Classifier",
+          "layer": "Core",
+          "domain": "shared"
+        },
+        "type": "module",
+        "externalCalls": []
+      },
+      {
+        "id": "src/commit.js",
+        "metadata": {
+          "type": "module",
+          "source": "inferred",
+          "inheritance": [],
+          "decorators": [],
+          "metrics": {
+            "sloc": 184,
+            "complexity": 35
+          },
+          "label": "Commit",
+          "layer": "Core",
+          "domain": "shared"
+        },
+        "type": "module",
+        "externalCalls": [
+          {
+            "type": "database",
+            "target": "isGitRepo",
+            "location": {
+              "line": 156,
+              "column": 8
+            }
+          }
+        ]
+      },
+      {
+        "id": "src/config.js",
+        "metadata": {
+          "type": "module",
+          "source": "inferred",
+          "inheritance": [],
+          "decorators": [],
+          "metrics": {
+            "sloc": 76,
+            "complexity": 11
+          },
+          "label": "Config",
+          "layer": "Core",
+          "domain": "shared"
+        },
+        "type": "module",
+        "externalCalls": []
+      },
+      {
+        "id": "src/core.js",
+        "metadata": {
+          "type": "module",
+          "source": "inferred",
+          "inheritance": [],
+          "decorators": [],
+          "metrics": {
+            "sloc": 264,
+            "complexity": 63
+          },
+          "label": "Core",
+          "layer": "Core",
+          "domain": "shared"
+        },
+        "type": "module",
+        "externalCalls": [
+          {
+            "type": "database",
+            "target": "isGitRepo",
+            "location": {
+              "line": 221,
+              "column": 51
+            }
+          }
+        ]
+      },
+      {
+        "id": "src/git.js",
+        "metadata": {
+          "type": "module",
+          "source": "inferred",
+          "inheritance": [],
+          "decorators": [],
+          "metrics": {
+            "sloc": 51,
+            "complexity": 4
+          },
+          "label": "Git",
+          "layer": "Core",
+          "domain": "shared"
+        },
+        "type": "module",
+        "externalCalls": [
+          {
+            "type": "database",
+            "target": "isGitRepo",
+            "location": {
+              "line": 13,
+              "column": 8
+            }
+          },
+          {
+            "type": "database",
+            "target": "isGitRepo",
+            "location": {
+              "line": 34,
+              "column": 8
+            }
+          }
+        ]
+      },
+      {
+        "id": "src/i18n.js",
+        "metadata": {
+          "type": "module",
+          "source": "inferred",
+          "inheritance": [],
+          "decorators": [],
+          "metrics": {
+            "sloc": 17,
+            "complexity": 5
+          },
+          "label": "I18n",
+          "layer": "Core",
+          "domain": "shared"
+        },
+        "type": "module",
+        "externalCalls": []
+      },
+      {
+        "id": "src/memory.js",
+        "metadata": {
+          "type": "module",
+          "source": "inferred",
+          "inheritance": [],
+          "decorators": [],
+          "metrics": {
+            "sloc": 101,
+            "complexity": 12
+          },
+          "label": "Memory",
+          "layer": "Core",
+          "domain": "shared"
+        },
+        "type": "module",
+        "externalCalls": []
+      },
+      {
+        "id": "src/ui.js",
+        "metadata": {
+          "type": "module",
+          "source": "inferred",
+          "inheritance": [],
+          "decorators": [],
+          "metrics": {
+            "sloc": 284,
+            "complexity": 56
+          },
+          "label": "Ui",
+          "layer": "Core",
+          "domain": "shared"
+        },
+        "type": "module",
+        "externalCalls": []
+      }
+    ],
+    "edges": [
+      {
+        "id": "src/classifier.js->fuse.js:import",
+        "from": "src/classifier.js",
+        "to": "fuse.js",
+        "type": "import"
+      },
+      {
+        "id": "src/commit.js->child_process:import",
+        "from": "src/commit.js",
+        "to": "child_process",
+        "type": "import"
+      },
+      {
+        "id": "src/commit.js->isGitRepo:external-call",
+        "from": "src/commit.js",
+        "to": "isGitRepo",
+        "type": "external-call"
+      },
+      {
+        "id": "src/commit.js->picocolors:import",
+        "from": "src/commit.js",
+        "to": "picocolors",
+        "type": "import"
+      },
+      {
+        "id": "src/commit.js->readline:import",
+        "from": "src/commit.js",
+        "to": "readline",
+        "type": "import"
+      },
+      {
+        "id": "src/config.js->fs:import",
+        "from": "src/config.js",
+        "to": "fs",
+        "type": "import"
+      },
+      {
+        "id": "src/config.js->os:import",
+        "from": "src/config.js",
+        "to": "os",
+        "type": "import"
+      },
+      {
+        "id": "src/config.js->path:import",
+        "from": "src/config.js",
+        "to": "path",
+        "type": "import"
+      },
+      {
+        "id": "src/config.js->picocolors:import",
+        "from": "src/config.js",
+        "to": "picocolors",
+        "type": "import"
+      },
+      {
+        "id": "src/core.js->fs:import",
+        "from": "src/core.js",
+        "to": "fs",
+        "type": "import"
+      },
+      {
+        "id": "src/core.js->isGitRepo:external-call",
+        "from": "src/core.js",
+        "to": "isGitRepo",
+        "type": "external-call"
+      },
+      {
+        "id": "src/core.js->os:import",
+        "from": "src/core.js",
+        "to": "os",
+        "type": "import"
+      },
+      {
+        "id": "src/core.js->path:import",
+        "from": "src/core.js",
+        "to": "path",
+        "type": "import"
+      },
+      {
+        "id": "src/git.js->child_process:import",
+        "from": "src/git.js",
+        "to": "child_process",
+        "type": "import"
+      },
+      {
+        "id": "src/git.js->isGitRepo:external-call",
+        "from": "src/git.js",
+        "to": "isGitRepo",
+        "type": "external-call"
+      },
+      {
+        "id": "src/memory.js->fs:import",
+        "from": "src/memory.js",
+        "to": "fs",
+        "type": "import"
+      },
+      {
+        "id": "src/memory.js->path:import",
+        "from": "src/memory.js",
+        "to": "path",
+        "type": "import"
+      },
+      {
+        "id": "src/ui.js->child_process:import",
+        "from": "src/ui.js",
+        "to": "child_process",
+        "type": "import"
+      },
+      {
+        "id": "src/ui.js->fs:import",
+        "from": "src/ui.js",
+        "to": "fs",
+        "type": "import"
+      },
+      {
+        "id": "src/ui.js->path:import",
+        "from": "src/ui.js",
+        "to": "path",
+        "type": "import"
+      },
+      {
+        "id": "src/ui.js->picocolors:import",
+        "from": "src/ui.js",
+        "to": "picocolors",
+        "type": "import"
+      },
+      {
+        "id": "src/ui.js->readline:import",
+        "from": "src/ui.js",
+        "to": "readline",
+        "type": "import"
+      }
+    ],
+    "version": "0.4.16"
+  }
+}
