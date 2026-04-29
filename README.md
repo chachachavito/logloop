@@ -33,13 +33,13 @@ logloop
 *Just type your thoughts as you work. They will be timestamped, classified, and linked to the current Git state automatically.*
 
 ### One-Shot & Standalone
-Se você precisa apenas deixar uma nota rápida sem entrar no loop:
+If you just need to drop a quick note without entering the loop:
 ```bash
-logloop "Refatorando auth service para usar hooks."
+logloop "Refactoring auth service to use hooks."
 ```
 
 > [!TIP]
-> **Aspas e Caracteres Especiais**: Você pode usar o `logloop` sem aspas para textos simples. Contudo, se sua mensagem contiver caracteres especiais do shell (como `(`, `)`, `!`, `&`, `*`) ou emoticons (como `:)`), você **deve** usar aspas para evitar que o seu terminal (bash, zsh, fish) interprete mal o comando. Emojis reais (🚀, ✨) funcionam normalmente sem aspas.
+> **Quotes & Special Characters**: You can run `logloop` without quotes for simple text. However, if your message contains special shell characters (like `(`, `)`, `!`, `&`, `*`) or emoticons (like `:)`), you **must** use quotes to prevent your terminal (bash, zsh, fish) from misinterpreting the command. Actual Unicode emojis (🚀, ✨) work fine without quotes.
 
 *Note: Logloop degrades gracefully. If you run it outside a Git repository or use the `--standalone` flag, it skips Git linking and continues to work flawlessly.*
 
@@ -55,8 +55,8 @@ Privacy is a pillar. Logloop categorizes your logs without sending data to exter
 3. **Heuristics**: Deterministic rules covering technical verbs, negations, and sentiment.
 
 ### 🛠️ Customizing Heuristics
-As regras determinísticas para classificação de humor e categoria residem em `src/classifier.js`. 
-Se você notar que termos específicos do seu dialeto de engenharia estão sendo classificados incorretamente, as expressões regulares podem ser ajustadas diretamente em `MOOD_CATEGORIES` ou `MESSAGE_CATEGORIES`.
+The deterministic rules for mood and category classification reside in `src/classifier.js`. 
+If you notice that specific terms from your engineering dialect are being misclassified, the regular expressions can be adjusted directly in `MOOD_CATEGORIES` or `MESSAGE_CATEGORIES`.
 
 
 ### Active Learning
@@ -74,16 +74,16 @@ Stop guessing what you did yesterday during your daily standup.
 *   **`logloop timeline`** (or `/timeline`): Displays a visual ASCII activity chart directly in your terminal.
 
 ### 🌐 Global Mode (Unified Memory)
-Acesse todos os seus logs de todos os projetos em uma visão única:
-*   **`logloop global list`**: Lista cronológica de todos os projetos.
-*   **`logloop global summary`**: Insights consolidados de toda a sua jornada.
-*   **`logloop global search "<termo>"`**: Busca em todo o seu histórico.
-*   **`logloop global filter --type <type>`**: Filtra por tipo (ex: decision).
+Access all your logs from all projects in a single view:
+*   **`logloop global list`**: Chronological list of all projects.
+*   **`logloop global summary`**: Consolidated insights from your entire journey.
+*   **`logloop global search "<term>"`**: Search through your entire history.
+*   **`logloop global filter --type <type>`**: Filter by type (e.g., decision).
 
-### Contexto de Plataforma (Source)
-O Logloop detecta automaticamente a origem do log (`desktop` ou `mobile`). 
-Esse campo existe para permitir a correlação entre ideias (mobile) e execução técnica (desktop),
-e é preenchido sem intervenção do usuário para manter o atrito zero.
+### Platform Context (Source)
+Logloop automatically detects the log origin (`desktop` or `mobile`). 
+This field exists to allow correlation between spontaneous ideas (mobile) and technical execution (desktop), 
+and it is populated without user intervention to maintain zero friction.
 
 ---
 
@@ -101,12 +101,12 @@ Logloop relies on a cascading configuration (local `./.loglooprc` overrides glob
 ```
 
 ### Storage Strategies
-Você tem controle total sobre onde seus dados são salvos:
-- **`repo` (Default)**: Escreve em `logloop.md` no projeto. Foco em transparência com o time.
-- **`local`**: Escreve em `~/.logloop/logs/`. Seu jornal de engenharia privado.
-- **`mirror`**: Escreve em ambos. O melhor dos dois mundos.
+You have full control over where your data is saved:
+- **`repo` (Default)**: Writes to `logloop.md` within the project. Focused on team transparency.
+- **`local`**: Writes to `~/.logloop/logs/`. Your private engineering journal.
+- **`mirror`**: Writes to both. The best of both worlds.
 
-*(Dica: Use `/s` no loop interativo para alternar rapidamente).*
+*(Pro Tip: Use `/s` in the interactive loop to toggle quickly).*
 
 ---
 
@@ -143,23 +143,23 @@ All available slash commands inside the interactive loop:
 
 ---
 
-## 🛠️ Desenvolvimento & Release
+## 🛠️ Development & Release
 
-Este projeto utiliza [Conventional Commits](https://www.conventionalcommits.org/) e [standard-version](https://github.com/conventional-changelog/standard-version) para automação de changelog e versionamento.
+This project uses [Conventional Commits](https://www.conventionalcommits.org/) and [standard-version](https://github.com/conventional-changelog/standard-version) for automated changelog and versioning.
 
-### Comandos de Release
-- **`npm run release`**: Gera changelog e incrementa versão (patch/minor/major automático).
-- **`npm run release:minor`**: Força um release minor (vX.Y.0).
-- **`npm run release:dry`**: Pré-visualiza as mudanças sem executar o commit/tag.
+### Release Commands
+- **`npm run release`**: Generates changelog and increments version (automatic patch/minor/major).
+- **`npm run release:minor`**: Forces a minor release (vX.Y.0).
+- **`npm run release:dry`**: Previews changes without executing the commit/tag.
 
-### Desenvolvimento Local
-- **`npm run site`**: Abre a landing page do projeto (`site/index.html`).
-- **`npm run preview`**: Abre o site e inicia o CLI em modo de desenvolvimento simultaneamente.
+### Local Development
+- **`npm run site`**: Opens the project landing page (`site/index.html`).
+- **`npm run preview`**: Opens the site and starts the CLI in development mode simultaneously.
 
-### Padrão de Commits
-- `feat(scope): ...` -> Nova funcionalidade (Minor)
-- `fix(scope): ...` -> Correção de bug (Patch)
-- `docs: ...` -> Documentação
-- `chore: ...` -> Tarefas internas
+### Commit Patterns
+- `feat(scope): ...` -> New feature (Minor)
+- `fix(scope): ...` -> Bug fix (Patch)
+- `docs: ...` -> Documentation
+- `chore: ...` -> Internal tasks
 
 MIT © 2026 Chavito
