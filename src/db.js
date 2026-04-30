@@ -1,7 +1,8 @@
 import { JSONFilePreset } from 'lowdb/node';
 import path from 'path';
-import { GLOBAL_DIR } from './config.js';
+import os from 'os';
 
+const GLOBAL_DIR = path.join(os.homedir(), '.logloop');
 const dbPath = path.join(GLOBAL_DIR, 'db.json');
 
 const defaultData = {
