@@ -45,11 +45,11 @@ logloop "Refactoring auth service to use hooks."
 
 ---
 
-## 🧠 The Logloop Brain (AI-less Intelligence)
+### 🧠 The Logloop Brain (AI-less Intelligence)
 
 Privacy is a pillar. Logloop categorizes your logs without sending data to external APIs. It uses a **3-Layer Inference Pipeline**:
 
-1. **Memory (Personal Truth)**: Prioritizes your historical corrections via `memory.json`.
+1. **Memory (Personal Truth)**: Prioritizes your historical corrections via `db.json` (lowdb).
 2. **Fuzzy Matching**: Uses `fuse.js` to handle typos and lexical variations locally.
 3. **Heuristics**: Deterministic rules covering technical verbs, negations, and sentiment.
 
@@ -101,6 +101,13 @@ You have full control over where your data is saved:
 - **`repo` (Default)**: Writes to `logloop.md` within the project. Focused on team transparency.
 - **`local`**: Writes to `~/.logloop/logs/`. Your private engineering journal.
 - **`mirror`**: Writes to both. The best of both worlds.
+- **`db.json`**: All logs and metadata are indexed in a local JSON database (`lowdb`) for analytics and dashboard support.
+
+#### 🛡️ Dual-Write Strategy
+To ensure maximum safety and transparency, Logloop implements a **dual-write** strategy:
+- Every log is indexed in the structured `db.json` for fast querying.
+- Simultaneously, a human-readable entry is appended to your `.md` log files.
+This means your data is never trapped in a single format; you can always read your history with any text editor even without Logloop installed.
 
 *(Pro Tip: Use `/s` in the interactive loop to toggle quickly).*
 

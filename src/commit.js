@@ -1,8 +1,8 @@
-const { execSync } = require('child_process');
-const pc = require('picocolors');
-const readline = require('readline');
-const { getRecentLogs } = require('./core');
-const { isGitRepo, isDirty } = require('./git');
+import { execSync } from 'child_process';
+import pc from 'picocolors';
+import readline from 'readline';
+import { getRecentLogs } from './core.js';
+import { isGitRepo, isDirty } from './git.js';
 
 function hasSelfCommit() {
   try {
@@ -148,7 +148,28 @@ function executeCommit(commitMessage) {
   }
 }
 
-function handleCommit(args, config) {
+async function runCommitFlow(args, config, isDryRun, skipPrompt) {
+  const logs = await getRecentLogs(config, 1);
+  const lastLog = logs.length > 0 ? logs[0] : null;
+
+  const { message, source } = generateCommitMessage(args, config, lastLog, skipPrompt);
+
+  showPreview(message, source, lastLog);
+
+  if (skipPrompt) {
+    if (isDryRun) {
+      console.log(pc.magenta('--- Dry Run Preview ---'));
+      console.log(pc.green('Command:'), `git commit -m "${message}"`);
+      process.exit(0);
+    }
+    console.log(pc.cyan('Auto-committing with generated message (--yes)'));
+    executeCommit(message);
+  } else {
+    promptAction(message, isDryRun, executeCommit);
+  }
+}
+
+export async function handleCommit(args, config) {
   const isDryRun = args.includes('--dry-run');
   const addAll = args.includes('--all');
   const skipPrompt = args.includes('--yes') || args.includes('-y');
@@ -169,16 +190,16 @@ function handleCommit(args, config) {
 
   if (!hasStagedChanges()) {
     if (skipPrompt && addAll) {
-      runCommitFlow(args, config, isDryRun, skipPrompt);
+      await runCommitFlow(args, config, isDryRun, skipPrompt);
       return;
     }
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
     console.log(pc.yellow('No staged changes found.'));
-    rl.question('Stage all files? (y/n) ', (answer) => {
+    rl.question('Stage all files? (y/n) ', async (answer) => {
       rl.close();
       if (answer.trim().toLowerCase() === 'y') {
         execSync('git add .', { stdio: 'ignore' });
-        runCommitFlow(args, config, isDryRun, skipPrompt);
+        await runCommitFlow(args, config, isDryRun, skipPrompt);
       } else {
         console.log(pc.cyan('Run: git add .'));
         console.log(pc.cyan('Or use: logloop commit --all'));
@@ -186,29 +207,6 @@ function handleCommit(args, config) {
       }
     });
   } else {
-    runCommitFlow(args, config, isDryRun, skipPrompt);
+    await runCommitFlow(args, config, isDryRun, skipPrompt);
   }
 }
-
-function runCommitFlow(args, config, isDryRun, skipPrompt) {
-  const logs = getRecentLogs(config, 1);
-  const lastLog = logs.length > 0 ? logs[0] : null;
-
-  const { message, source } = generateCommitMessage(args, config, lastLog, skipPrompt);
-
-  showPreview(message, source, lastLog);
-
-  if (skipPrompt) {
-    if (isDryRun) {
-      console.log(pc.magenta('--- Dry Run Preview ---'));
-      console.log(pc.green('Command:'), `git commit -m "${message}"`);
-      process.exit(0);
-    }
-    console.log(pc.cyan('Auto-committing with generated message (--yes)'));
-    executeCommit(message);
-  } else {
-    promptAction(message, isDryRun, executeCommit);
-  }
-}
-
-module.exports = { handleCommit };

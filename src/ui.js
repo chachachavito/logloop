@@ -1,44 +1,50 @@
-const readline = require('readline');
-const { saveLog, getRecentLogs, updateLastLog, getAnalytics } = require('./core');
-const { saveConfig } = require('./config');
-const { t } = require('./i18n');
-const { learn, exportMemory, importMemory } = require('./memory');
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
-const pc = require('picocolors');
+import readline from 'readline';
+import { saveLog, getRecentLogs, updateLastLog, getAnalytics, getLogFile, getGlobalLogs as fetchGlobalLogs } from './core.js';
+import { saveConfig, GLOBAL_DIR } from './config.js';
+import { t } from './i18n.js';
+import { learn, exportMemory, importMemory } from './memory.js';
+import fs from 'fs';
+import path from 'path';
+import { execSync } from 'child_process';
+import pc from 'picocolors';
+import { createRequire } from 'module';
+import { getGitMetadata } from './git.js';
+import { classifyMessage, classifyMood } from './classifier.js';
+
+const require = createRequire(import.meta.url);
 const pkg = require('../package.json');
 
 function clear() {
   process.stdout.write('\x1b[2J\x1b[0;0H');
 }
 
-function handleList(config) {
-  const { GLOBAL_DIR } = require('./config');
-  const logsDir = path.join(GLOBAL_DIR, 'logs');
-  if (!fs.existsSync(logsDir)) {
+export async function handleList(config) {
+  const { list: dbList } = await import('./db.js');
+  const logs = await dbList('logs');
+  
+  if (logs.length === 0) {
     console.log(t('cli.noLocalLogs'));
     return;
   }
-  const files = fs.readdirSync(logsDir).filter(f => f.endsWith('.md'));
-  if (files.length === 0) {
-    console.log(t('cli.noLocalLogs'));
-    return;
-  }
+
+  const projects = {};
+  logs.forEach(log => {
+    const p = log.project || 'unknown';
+    if (!projects[p]) projects[p] = { count: 0, lastUpdate: log.timestamp };
+    projects[p].count++;
+    if (log.timestamp > projects[p].lastUpdate) projects[p].lastUpdate = log.timestamp;
+  });
+
   console.log(`\n${pc.bold(t('cli.listHeader'))}`);
-  files.forEach(file => {
-    const filePath = path.join(logsDir, file);
-    const stats = fs.statSync(filePath);
-    const content = fs.readFileSync(filePath, 'utf8');
-    const entries = content.split('\n## [').length - 1;
-    const project = file.split('.')[0].toUpperCase().padEnd(20);
-    const count = entries.toString().padEnd(10);
-    const lastUpdate = stats.mtime.toLocaleDateString();
+  Object.entries(projects).forEach(([name, data]) => {
+    const project = name.toUpperCase().padEnd(20);
+    const count = data.count.toString().padEnd(10);
+    const lastUpdate = new Date(data.lastUpdate).toLocaleDateString();
     console.log(`${project} ${count} ${lastUpdate}`);
   });
 }
 
-function renderGlobalList(logs, title = null) {
+export function renderGlobalList(logs, title = null) {
   if (logs.length === 0) {
     console.log(pc.gray(t('ui.noLogs') || 'No logs found.'));
     return;
@@ -46,8 +52,8 @@ function renderGlobalList(logs, title = null) {
   console.log(`\n${pc.bold(title || t('cli.globalListHeader') || 'GLOBAL LOGS')}`);
   console.log(pc.gray('─'.repeat(85)));
   logs.forEach(log => {
-    const project = pc.magenta(log.project.toUpperCase().padEnd(12));
-    const time = pc.gray(log.timestamp.split('T')[0]);
+    const project = pc.magenta((log.project || 'unknown').toUpperCase().padEnd(12));
+    const time = pc.gray(log.rawTime ? log.rawTime.split('T')[0] : 'unknown');
     const type = pc.cyan(`[${log.type}]`.padEnd(10));
     const mood = log.mood && log.mood !== 'null' ? pc.yellow(`[${log.mood}] `) : '';
     const note = log.note.replace(/\n/g, ' ');
@@ -56,7 +62,7 @@ function renderGlobalList(logs, title = null) {
   });
 }
 
-function renderTimeline(analytics) {
+export function renderTimeline(analytics) {
   if (!analytics) return console.log(t('analytics.noActivity'));
   console.log(`\n${pc.bold(t('analytics.timelineTitle'))}`);
   const max = Math.max(...analytics.timeline, 1);
@@ -68,7 +74,7 @@ function renderTimeline(analytics) {
   });
 }
 
-function renderSummary(analytics) {
+export function renderSummary(analytics) {
   if (!analytics) return console.log(t('analytics.noActivity'));
   console.log(`\n${pc.bold(t('analytics.summaryTitle'))}`);
   
@@ -88,11 +94,11 @@ function renderSummary(analytics) {
   });
 }
 
-function startLoop(config, initialMood = null, initialCommit = null) {
+export async function startLoop(config, initialMood = null, initialCommit = null) {
   let currentMood = initialMood;
   let autoCommit = initialCommit !== null ? initialCommit : config.autoCommit;
   let helpVisible = !config.zenMode;
-  let lastLogs = getRecentLogs(config, 3);
+  let lastLogs = await getRecentLogs(config, 3);
 
     const rl = readline.createInterface({
     input: process.stdin,
@@ -105,7 +111,7 @@ function startLoop(config, initialMood = null, initialCommit = null) {
     // Premium Header
     console.log(`${pc.bold(pc.white('LOGLOOP'))} ${pc.gray('──────')} ${pc.gray(`v${pkg.version}`)}`);
     
-    const git = require('./git').getGitMetadata() || {};
+    const git = getGitMetadata() || {};
     const projectName = path.basename(process.cwd());
     const shortHash = git.hash ? ` (${git.hash.substring(0, 7)})` : '';
     
@@ -174,7 +180,7 @@ function startLoop(config, initialMood = null, initialCommit = null) {
   let lineBuffer = [];
   let bufferTimeout = null;
 
-  const processInput = (input) => {
+  const processInput = async (input) => {
     if (!input || !input.trim()) { refresh(); return; }
 
     if (input.startsWith('/')) {
@@ -204,7 +210,7 @@ function startLoop(config, initialMood = null, initialCommit = null) {
           saveConfig(config);
           break;
         case '/e':
-          const logFile = require('./core').getLogFile(config);
+          const logFile = getLogFile(config);
           try {
             const editor = process.env.EDITOR || 'nano';
             execSync(`${editor} ${logFile}`, { stdio: 'inherit' });
@@ -215,22 +221,21 @@ function startLoop(config, initialMood = null, initialCommit = null) {
           break;
         case '/timeline':
           clear();
-          renderTimeline(getAnalytics(config));
+          renderTimeline(await getAnalytics(config));
           console.log(`\n${pc.gray(t('ui.footerDivider'))}`);
           console.log(pc.yellow(`↵ ${t('ui.pressEnterToReturn') || 'Press Enter to return'}`));
           rl.prompt();
           return;
         case '/global':
           clear();
-          const { getGlobalLogs: fetchGlobal } = require('./core');
-          renderGlobalList(fetchGlobal());
+          renderGlobalList(await fetchGlobalLogs());
           console.log(`\n${pc.gray(t('ui.footerDivider'))}`);
           console.log(pc.yellow(`↵ ${t('ui.pressEnterToReturn') || 'Press Enter to return'}`));
           rl.prompt();
           return;
         case '/summary':
           clear();
-          renderSummary(getAnalytics(config));
+          renderSummary(await getAnalytics(config));
           console.log(`\n${pc.gray(t('ui.footerDivider'))}`);
           console.log(pc.yellow(`↵ ${t('ui.pressEnterToReturn') || 'Press Enter to return'}`));
           rl.prompt();
@@ -240,8 +245,8 @@ function startLoop(config, initialMood = null, initialCommit = null) {
           if (lastLogs.length === 0) { refresh(pc.red(t('ui.noLogToTrain'))); return; }
           const lastLogAs = lastLogs[lastLogs.length - 1];
           updateLastLog({ type: arg }, config);
-          learn(lastLogAs.note, arg, arg, 'message');
-          lastLogs = getRecentLogs(config, 3);
+          await learn(lastLogAs.note, arg, arg, 'message');
+          lastLogs = await getRecentLogs(config, 3);
           refresh(`${pc.green(t('ui.brainTrained'))} ${pc.bold(lastLogAs.note)} → ${pc.cyan(arg)}`);
           return;
         case '/feel':
@@ -249,13 +254,13 @@ function startLoop(config, initialMood = null, initialCommit = null) {
           if (lastLogs.length === 0) { refresh(pc.red(t('ui.noLogToTrain'))); return; }
           const lastLogFeel = lastLogs[lastLogs.length - 1];
           updateLastLog({ mood: arg }, config);
-          learn(lastLogFeel.note, arg, arg, 'mood');
-          lastLogs = getRecentLogs(config, 3);
+          await learn(lastLogFeel.note, arg, arg, 'mood');
+          lastLogs = await getRecentLogs(config, 3);
           refresh(`${pc.green(t('ui.brainTrained'))} ${pc.bold(lastLogFeel.note)} → ${pc.magenta(arg)}`);
           return;
         case '/brain-out':
           if (!arg) { refresh(pc.red('Usage: /brain-out <file>')); return; }
-          if (exportMemory(arg)) {
+          if (await exportMemory(arg)) {
             refresh(`${pc.green(t('ui.brainExported'))} ${arg}`);
           } else {
             refresh(pc.red(t('ui.brainError')));
@@ -263,7 +268,7 @@ function startLoop(config, initialMood = null, initialCommit = null) {
           return;
         case '/brain-in':
           if (!arg) { refresh(pc.red('Usage: /brain-in <file>')); return; }
-          if (importMemory(arg)) {
+          if (await importMemory(arg)) {
             refresh(pc.green(t('ui.brainSynced')));
           } else {
             refresh(pc.red(t('ui.brainError')));
@@ -280,30 +285,29 @@ function startLoop(config, initialMood = null, initialCommit = null) {
 
     try {
       if (config.trainingMode) {
-        const { classifyMessage, classifyMood } = require('./classifier');
-        const detectedType = classifyMessage(input).category;
-        const detectedMood = classifyMood(input).category;
+        const detectedType = (await classifyMessage(input)).category;
+        const detectedMood = (await classifyMood(input)).category;
         
         const types = ['action', 'decision', 'question', 'media', 'noise', 'thought'];
         const moods = ['happy', 'focused', 'tired', 'frustrated', 'confused', 'excited', 'neutral'];
 
         const typeLine = `${pc.bold(pc.cyan('TYPE'))} ${pc.gray('›')} ${pc.bold(detectedType.padEnd(10))} ${pc.gray(types.map((t, i) => `${i+1}.${t}`).join(' '))}`;
-        rl.question(`${typeLine}\n${pc.cyan('› ')}`, (typeIdx) => {
+        rl.question(`${typeLine}\n${pc.cyan('› ')}`, async (typeIdx) => {
           let finalType = detectedType;
           const tidx = parseInt(typeIdx.trim()) - 1;
           if (types[tidx]) finalType = types[tidx];
 
           const moodLine = `${pc.bold(pc.magenta('MOOD'))} ${pc.gray('›')} ${pc.bold(detectedMood.padEnd(10))} ${pc.gray(moods.map((m, i) => `${i+1}.${m}`).join(' '))}`;
-          rl.question(`${moodLine}\n${pc.magenta('› ')}`, (moodIdx) => {
+          rl.question(`${moodLine}\n${pc.magenta('› ')}`, async (moodIdx) => {
             let finalMood = detectedMood;
             const midx = parseInt(moodIdx.trim()) - 1;
             if (moods[midx]) finalMood = moods[midx];
 
-            if (finalType !== detectedType) learn(input, finalType, finalType, 'message');
-            if (finalMood !== detectedMood) learn(input, finalMood, finalMood, 'mood');
+            if (finalType !== detectedType) await learn(input, finalType, finalType, 'message');
+            if (finalMood !== detectedMood) await learn(input, finalMood, finalMood, 'mood');
 
-            saveLog(input, config, { shouldCommit: autoCommit, mood: finalMood, type: finalType });
-            lastLogs = getRecentLogs(config, 3);
+            await saveLog(input, config, { shouldCommit: autoCommit, mood: finalMood, type: finalType });
+            lastLogs = await getRecentLogs(config, 3);
             refresh();
           });
         });
@@ -312,11 +316,10 @@ function startLoop(config, initialMood = null, initialCommit = null) {
 
       let finalMood = currentMood;
       if (config.moodTracking && !finalMood) {
-        const { classifyMood } = require('./classifier');
-        finalMood = classifyMood(input).category;
+        finalMood = (await classifyMood(input)).category;
       }
-      saveLog(input, config, { shouldCommit: autoCommit, mood: finalMood });
-      lastLogs = getRecentLogs(config, 3);
+      await saveLog(input, config, { shouldCommit: autoCommit, mood: finalMood });
+      lastLogs = await getRecentLogs(config, 3);
       refresh();
     } catch (err) {
       console.error(pc.red(`[logloop] Error: ${err.message}`));
@@ -349,5 +352,3 @@ function startLoop(config, initialMood = null, initialCommit = null) {
     process.exit(0);
   });
 }
-
-module.exports = { startLoop, handleList, renderTimeline, renderSummary };

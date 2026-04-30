@@ -1,8 +1,4 @@
-const fs = require('fs');
-const path = require('path');
-const { GLOBAL_DIR } = require('./config');
-
-const MEMORY_PATH = path.join(GLOBAL_DIR, 'memory.json');
+import { getDb } from './db.js';
 
 const DEFAULT_MEMORY = {
   message: {
@@ -24,31 +20,33 @@ const DEFAULT_MEMORY = {
   }
 };
 
-function loadMemory() {
-  if (!fs.existsSync(MEMORY_PATH)) {
-    return DEFAULT_MEMORY;
-  }
-  try {
-    const data = JSON.parse(fs.readFileSync(MEMORY_PATH, 'utf8'));
-    // Merge defaults with loaded data for each bucket
-    return {
-      message: { ...DEFAULT_MEMORY.message, ...(data.message || {}) },
-      mood: { ...DEFAULT_MEMORY.mood, ...(data.mood || {}) }
-    };
-  } catch (e) {
-    return DEFAULT_MEMORY;
-  }
+export function loadMemory() {
+  // Nota: loadMemory agora é síncrono para compatibilidade, mas lowdb é assíncrono.
+  // Como o lowdb carrega os dados no Preset, podemos tentar acessar de forma síncrona se já carregado,
+  // ou refatorar para async. Para a migração gradual, manteremos o carregamento via db.data.
+  // TODO: Refatorar chamadas para async se necessário.
+  // Por enquanto, usaremos uma versão que assume que o DB será lido via await onde necessário.
+  return DEFAULT_MEMORY; 
 }
 
-function saveMemory(memory) {
-  if (!fs.existsSync(GLOBAL_DIR)) {
-    fs.mkdirSync(GLOBAL_DIR, { recursive: true });
+// Versão Async para o novo fluxo
+export async function getMemory() {
+  const db = await getDb();
+  if (!db.data.memory || Object.keys(db.data.memory).length === 0) {
+    db.data.memory = JSON.parse(JSON.stringify(DEFAULT_MEMORY));
+    await db.write();
   }
-  fs.writeFileSync(MEMORY_PATH, JSON.stringify(memory, null, 2), 'utf8');
+  return db.data.memory;
 }
 
-function learn(input, category, resolved, bucket = 'message') {
-  const memory = loadMemory();
+export async function saveMemory(memory) {
+  const db = await getDb();
+  db.data.memory = memory;
+  await db.write();
+}
+
+export async function learn(input, category, resolved, bucket = 'message') {
+  const memory = await getMemory();
   const normalized = input.toLowerCase().trim();
   
   if (!memory[bucket]) memory[bucket] = { aliases_learned: {}, mappings: [] };
@@ -69,24 +67,25 @@ function learn(input, category, resolved, bucket = 'message') {
     });
   }
   
-  saveMemory(memory);
+  await saveMemory(memory);
 }
 
-function exportMemory(destPath) {
-  const memory = loadMemory();
-  const data = JSON.stringify(memory, null, 2);
-  fs.writeFileSync(destPath, data, 'utf8');
+export async function exportMemory(destPath) {
+  const memory = await getMemory();
+  const fs = await import('fs');
+  fs.writeFileSync(destPath, JSON.stringify(memory, null, 2), 'utf8');
   return true;
 }
 
-function importMemory(sourcePath) {
+export async function importMemory(sourcePath) {
+  const fs = await import('fs');
   if (!fs.existsSync(sourcePath)) return false;
   
-  const current = loadMemory();
+  const current = await getMemory();
   const imported = JSON.parse(fs.readFileSync(sourcePath, 'utf8'));
 
-  // Merge Mappings (Message & Mood)
   ['message', 'mood'].forEach(bucket => {
+    if (!imported[bucket]) return;
     imported[bucket].mappings.forEach(impMap => {
       const existing = current[bucket].mappings.find(m => m.input === impMap.input);
       if (existing) {
@@ -96,22 +95,12 @@ function importMemory(sourcePath) {
       }
     });
 
-    // Merge Learned Aliases
     current[bucket].aliases_learned = { 
       ...current[bucket].aliases_learned, 
       ...imported[bucket].aliases_learned 
     };
   });
 
-  const memoryFile = path.join(GLOBAL_DIR, 'memory.json');
-  fs.writeFileSync(memoryFile, JSON.stringify(current, null, 2), 'utf8');
+  await saveMemory(current);
   return true;
 }
-
-module.exports = {
-  loadMemory,
-  saveMemory,
-  learn,
-  exportMemory,
-  importMemory
-};

@@ -14,27 +14,27 @@
     },
     {
       "filename": "README.md",
-      "updater": "scripts/version-updater.js"
+      "updater": "scripts/version-updater.cjs"
     },
     {
       "filename": "site/index.html",
-      "updater": "scripts/version-updater.js"
+      "updater": "scripts/version-updater.cjs"
     },
     {
       "filename": "docs/architecture.json",
-      "updater": "scripts/version-updater.js"
+      "updater": "scripts/version-updater.cjs"
     },
     {
       "filename": "docs/architecture.html",
-      "updater": "scripts/version-updater.js"
+      "updater": "scripts/version-updater.cjs"
     },
     {
       "filename": "docs/PR-FAQ.md",
-      "updater": "scripts/version-updater.js"
+      "updater": "scripts/version-updater.cjs"
     },
     {
       "filename": "docs/capabilities.json",
-      "updater": "scripts/version-updater.js"
+      "updater": "scripts/version-updater.cjs"
     }
   ]
 }

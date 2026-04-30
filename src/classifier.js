@@ -1,5 +1,5 @@
-const Fuse = require('fuse.js');
-const { loadMemory, learn } = require('./memory');
+import Fuse from 'fuse.js';
+import { getMemory, learn } from './memory.js';
 
 const MESSAGE_CATEGORIES = [
   { name: 'action', patterns: [/^(criando|implementando|refatorando|ajustando|fazendo|resolvendo|preciso|organizar|testar|subir|enviar|build|deploy|setup|clean|task|create|implement|refactor|fix|add|update|making|working|building|testing|commit|push|pull|merge|rebase|branch|stashing|install|npm|deps|dependencies|publish|layout|css|style|component|lint|audit|review|investigar|investigating|debugging|depurando|migrando|migrating|configurando|configuring|monitorando|monitoring|escrevendo|writing|deletando|deleting|removing|removendo|documentando|documenting)\b/i] },
@@ -101,13 +101,13 @@ function runPipeline(input, contextMemory, categories, threshold = 0.4) {
   };
 }
 
-function classifyMessage(text) {
+export async function classifyMessage(text) {
   if (!text) return { category: 'noise', score: 1 };
   
   const normalizedText = text.trim().replace(/\s+/g, ' ').toLowerCase();
   if (!normalizedText) return { category: 'noise', score: 1 };
   
-  const memory = loadMemory().message;
+  const memory = (await getMemory()).message;
   const res = runPipeline(normalizedText, memory, MESSAGE_CATEGORIES);
   const norm = normalize(normalizedText);
   
@@ -135,7 +135,7 @@ function classifyMessage(text) {
   };
 }
 
-function classifyMood(message) {
+export async function classifyMood(message) {
   const msg = message.toLowerCase();
   const validMoods = MOOD_CATEGORIES.map(c => c.name);
   
@@ -151,7 +151,7 @@ function classifyMood(message) {
     }
   }
 
-  const memory = loadMemory().mood;
+  const memory = (await getMemory()).mood;
   const res = runPipeline(message, memory, MOOD_CATEGORIES);
 
   const sentiment = analyzeSentiment(message);
@@ -194,8 +194,4 @@ function classifyMood(message) {
   };
 }
 
-module.exports = {
-  classifyMood,
-  classifyMessage,
-  learn
-};
+export { learn };

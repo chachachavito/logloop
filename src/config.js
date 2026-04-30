@@ -1,9 +1,11 @@
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import pc from 'picocolors';
+import { getDb } from './db.js';
 
-const GLOBAL_DIR = path.join(os.homedir(), '.logloop');
-const DEFAULTS = {
+export const GLOBAL_DIR = path.join(os.homedir(), '.logloop');
+export const DEFAULTS = {
   autoCommit: false,
   moodTracking: true,
   storage: 'repo', // repo | local | mirror
@@ -20,7 +22,6 @@ function ensureDir(dir) {
     try {
       fs.mkdirSync(dir, { recursive: true });
     } catch (err) {
-      const pc = require('picocolors');
       console.error(pc.red(`Error creating directory ${dir}: ${err.message}`));
       return false;
     }
@@ -55,35 +56,51 @@ ensureDir(GLOBAL_DIR);
 ensureDir(path.join(GLOBAL_DIR, 'logs'));
 defensiveCleanup();
 
-function loadConfig(forceRefresh = false) {
+export async function loadConfig(forceRefresh = false) {
   if (_configCache && !forceRefresh) return _configCache;
 
-  let config = { ...DEFAULTS };
-  const globalPath = path.join(GLOBAL_DIR, '.loglooprc');
-  const localPath = path.join(process.cwd(), '.loglooprc');
+  const db = await getDb();
+  let config = { ...DEFAULTS, ...(db.data.config || {}) };
 
-  if (fs.existsSync(globalPath)) {
-    try {
-      const globalData = JSON.parse(fs.readFileSync(globalPath, 'utf8'));
-      config = { ...config, ...globalData };
-    } catch (e) {}
-  }
+  // Migração legada: Carregar de .loglooprc se existir e o db estiver vazio
+  if (Object.keys(db.data.config || {}).length === 0) {
+    const globalPath = path.join(GLOBAL_DIR, '.loglooprc');
+    const localPath = path.join(process.cwd(), '.loglooprc');
 
-  if (fs.existsSync(localPath)) {
-    try {
-      const localData = JSON.parse(fs.readFileSync(localPath, 'utf8'));
-      config = { ...config, ...localData };
-    } catch (e) {}
+    if (fs.existsSync(globalPath)) {
+      try {
+        const globalData = JSON.parse(fs.readFileSync(globalPath, 'utf8'));
+        config = { ...config, ...globalData };
+      } catch (e) {}
+    }
+
+    if (fs.existsSync(localPath)) {
+      try {
+        const localData = JSON.parse(fs.readFileSync(localPath, 'utf8'));
+        config = { ...config, ...localData };
+      } catch (e) {}
+    }
+    
+    // Persistir no novo storage
+    db.data.config = config;
+    await db.write();
   }
 
   _configCache = config;
   return config;
 }
 
-function saveConfig(config) {
-  const globalPath = path.join(GLOBAL_DIR, '.loglooprc');
-  fs.writeFileSync(globalPath, JSON.stringify(config, null, 2));
-  _configCache = config;
+/**
+ * Versão síncrona para compatibilidade com módulos que não podem ser async no topo.
+ * Requer que loadConfig tenha sido chamado ao menos uma vez (no bin/index.js).
+ */
+export function getConfigSync() {
+  return _configCache || DEFAULTS;
 }
 
-module.exports = { loadConfig, saveConfig, GLOBAL_DIR, DEFAULTS };
+export async function saveConfig(config) {
+  const db = await getDb();
+  db.data.config = config;
+  await db.write();
+  _configCache = config;
+}

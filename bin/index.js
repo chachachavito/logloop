@@ -1,22 +1,27 @@
 #!/usr/bin/env node
 
-const path = require('path');
-const fs = require('fs');
-const pc = require('picocolors');
+import path from 'path';
+import fs from 'fs';
+import pc from 'picocolors';
+import { createRequire } from 'module';
+import { loadConfig, saveConfig } from '../src/config.js';
+import * as i18n from '../src/i18n.js';
+import * as classifier from '../src/classifier.js';
+import * as core from '../src/core.js';
+import * as ui from '../src/ui.js';
+import * as commit from '../src/commit.js';
+import { getGitUser } from '../src/git.js';
+import readline from 'readline';
+
+const require = createRequire(import.meta.url);
 const pkg = require('../package.json');
-const { loadConfig, saveConfig } = require('../src/config');
 
-// Lazy load helpers
-const getI18n = () => require('../src/i18n');
-const getClassifier = () => require('../src/classifier');
-const getCore = () => require('../src/core');
-
-const config = loadConfig();
+const config = await loadConfig();
 const args = process.argv.slice(2);
 
 // Handle flags early
 if (args.includes('--debug')) {
-  getCore().setDebug(true);
+  core.setDebug(true);
   args.splice(args.indexOf('--debug'), 1);
 }
 if (args.includes('--durable')) {
@@ -29,7 +34,7 @@ if (args.includes('--standalone')) {
 }
 
 function t(key) {
-  return getI18n().t(key);
+  return i18n.t(key);
 }
 
 // --- Command Handlers ---
@@ -62,11 +67,8 @@ function handleConfig(args) {
   process.exit(0);
 }
 
-function run(note, moodFlag, shouldCommit) {
-  const classifier = getClassifier();
-  const core = getCore();
-  
-  const detected = classifier.classifyMood(note);
+async function run(note, moodFlag, shouldCommit) {
+  const detected = await classifier.classifyMood(note);
   let finalMood = moodFlag;
 
   if (!moodFlag && config.moodTracking) {
@@ -74,9 +76,9 @@ function run(note, moodFlag, shouldCommit) {
   }
 
   try {
-    const success = core.saveLog(note, config, { shouldCommit, mood: finalMood });
+    const success = await core.saveLog(note, config, { shouldCommit, mood: finalMood });
     if (success) {
-      const { category } = classifier.classifyMessage(note);
+      const { category } = await classifier.classifyMessage(note);
       const moodTag = (finalMood && config.moodTracking) ? pc.magenta(` [${finalMood}]`) : '';
       console.log(`${pc.green('✓')} ${pc.gray(`[${category}]`)}${moodTag} ${pc.white(note)}`);
     }
@@ -122,32 +124,27 @@ ${pc.bold(t('cli.configTitle'))}
 if (args[0] === 'config') {
   handleConfig(args.slice(1));
 } else if (args[0] === 'list') {
-  // Lazy load list handler if needed
-  require('../src/ui').handleList(config);
+  await ui.handleList(config);
   process.exit(0);
 } else if (args[0] === 'timeline') {
-  const { renderTimeline } = require('../src/ui');
-  renderTimeline(getCore().getAnalytics(config));
+  ui.renderTimeline(await core.getAnalytics(config));
   process.exit(0);
 } else if (args[0] === 'summary') {
-  const { renderSummary } = require('../src/ui');
-  renderSummary(getCore().getAnalytics(config));
+  ui.renderSummary(await core.getAnalytics(config));
   process.exit(0);
 } else if (args[0] === 'commit') {
-  require('../src/commit').handleCommit(args.slice(1), config);
+  await commit.handleCommit(args.slice(1), config);
   process.exit(0);
 } else if (args[0] === 'global') {
   const globalCmd = args[1];
-  const core = getCore();
-  const ui = require('../src/ui');
-  const globalLogs = core.getGlobalLogs();
+  const globalLogs = await core.getGlobalLogs();
 
   if (!globalCmd || globalCmd === 'list') {
     ui.renderGlobalList(globalLogs);
   } else if (globalCmd === 'timeline') {
-    ui.renderTimeline(core.getAnalytics(config, globalLogs));
+    ui.renderTimeline(await core.getAnalytics(config, globalLogs));
   } else if (globalCmd === 'summary') {
-    ui.renderSummary(core.getAnalytics(config, globalLogs));
+    ui.renderSummary(await core.getAnalytics(config, globalLogs));
   } else if (globalCmd === 'search') {
     const query = args.slice(2).join(' ');
     const results = globalLogs.filter(l => l.note.toLowerCase().includes(query.toLowerCase()));
@@ -184,34 +181,31 @@ if (noCommitFlag) shouldCommit = false;
 else if (commitFlag) shouldCommit = true;
 
 if (noteArg) {
-  run(noteArg, moodFlag, shouldCommit);
+  await run(noteArg, moodFlag, shouldCommit);
 } else {
-  const { startLoop } = require('../src/ui');
-  const { getGitUser } = require('../src/git');
-  const readline = require('readline');
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
-  const start = () => {
+  const start = async () => {
     rl.close();
-    startLoop(config, moodFlag, shouldCommit);
+    await ui.startLoop(config, moodFlag, shouldCommit);
   };
 
   if (!config.userName) {
     const gitUser = config.standalone ? null : getGitUser();
     if (gitUser) {
       config.userName = gitUser;
-      saveConfig(config);
-      start();
+      await saveConfig(config);
+      await start();
     } else {
-      rl.question(`${pc.magenta('› ')}${t('ui.promptName')}`, (answer) => {
+      rl.question(`${pc.magenta('› ')}${t('ui.promptName')}`, async (answer) => {
         if (answer.trim()) {
           config.userName = answer.trim();
-          saveConfig(config);
+          await saveConfig(config);
         }
-        start();
+        await start();
       });
     }
   } else {
-    start();
+    await start();
   }
 }

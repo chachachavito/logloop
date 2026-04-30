@@ -11,6 +11,7 @@ flowchart TD
       src_i18n_js["[MOD] I18n"]
       src_memory_js["[MOD] Memory"]
       src_ui_js["[MOD] Ui"]
+      src_db_js["[NEW] DB (lowdb)"]
   end
   subgraph External ["External"]
       child_process["[EXT] child_process"]
@@ -21,34 +22,47 @@ flowchart TD
       path["[EXT] path"]
       picocolors["[EXT] picocolors"]
       readline["[EXT] readline"]
+      lowdb["[EXT] lowdb"]
   end
   subgraph Dashboard ["Dashboard"]
       dash_backend["[MOD] Backend (NestJS)"]
       dash_frontend["[MOD] Frontend"]
   end
   src_classifier_js --> fuse_js
+  src_classifier_js --> src_memory_js
   src_commit_js --> child_process
   src_commit_js --> isGitRepo
   src_commit_js --> picocolors
   src_commit_js --> readline
+  src_config_js --> src_db_js
   src_config_js --> fs
   src_config_js --> os
   src_config_js --> path
   src_config_js --> picocolors
+  src_core_js --> src_db_js
   src_core_js --> fs
   src_core_js --> isGitRepo
   src_core_js --> os
   src_core_js --> path
   src_git_js --> child_process
   src_git_js --> isGitRepo
+  src_memory_js --> src_db_js
   src_memory_js --> fs
   src_memory_js --> path
+  src_ui_js --> src_db_js
   src_ui_js --> child_process
   src_ui_js --> fs
   src_ui_js --> path
   src_ui_js --> picocolors
   src_ui_js --> readline
+  src_db_js --> lowdb
   dash_backend --> fs
   dash_backend --> dash_frontend
-
 ```
+
+## Storage Strategy
+The system uses a hybrid storage approach:
+- **JSON Database (`lowdb`)**: **Primary source of truth for all READ operations** (CLI list, timeline, summary, search) and metadata.
+- **Markdown Files (`fs`)**: Maintained primarily for **human readability** and version control integration (Git history). Acts as a write-only fallback.
+
+Data is automatically migrated from `fs` to `lowdb` on the first execution of v0.6.0+.

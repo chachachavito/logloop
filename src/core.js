@@ -1,5 +1,9 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import { getGitMetadata, isGitRepo, commitLog } from './git.js';
+import { classifyMessage } from './classifier.js';
+import { add as dbAdd, list as dbList } from './db.js';
 
 // Cache e estado interno
 const _activeLocks = new Set();
@@ -9,7 +13,7 @@ let _monotonicCounter = 0;
 let _debugEnabled = false;
 let _lastSyncTime = 0;
 
-function setDebug(enabled) { _debugEnabled = enabled; }
+export function setDebug(enabled) { _debugEnabled = enabled; }
 
 function logDebug(...args) {
   if (_debugEnabled) {
@@ -17,7 +21,7 @@ function logDebug(...args) {
   }
 }
 
-function resetLocks() {
+export function resetLocks() {
   _activeLocks.clear();
   _pathCache.clear();
   _lastTimestamp = 0;
@@ -62,13 +66,12 @@ function generateId() {
   return `${timestamp}${random}`;
 }
 
-function detectSource() {
+export function detectSource() {
   if (process.env.TERMUX_VERSION || process.env.ANDROID_ROOT) return 'mobile';
   return 'desktop';
 }
 
-function getLogFiles(config) {
-  const os = require('os');
+export function getLogFiles(config) {
   const user = config.userName || 'shared';
   const userSlug = user.toLowerCase().replace(/\s+/g, '-');
   const projectSlug = path.basename(process.cwd());
@@ -83,11 +86,11 @@ function getLogFiles(config) {
   return [repoPath];
 }
 
-function getLogFile(config) {
+export function getLogFile(config) {
   return getLogFiles(config)[0];
 }
 
-function withLock(logFile, action) {
+export function withLock(logFile, action) {
   const resolvedLogFile = resolvePath(logFile);
   const lockFile = resolvedLogFile + '.lock';
   
@@ -209,102 +212,10 @@ function safeWrite(logFile, content, mode = 'append', config = {}) {
   return execute();
 }
 
-function saveLog(note, config, options = {}) {
-  const logFiles = getLogFiles(config);
-  const { getGitMetadata, isGitRepo, commitLog } = require('./git');
-  const { classifyMessage } = require('./classifier');
-  
-  const { hash, branch } = getGitMetadata() || { hash: 'null', branch: 'null' };
-  const { category } = classifyMessage(note);
-  const id = generateId();
-  const mood = options.mood && options.mood !== 'null' ? options.mood.toLowerCase() : 'null';
-  const type = (options.type || category).toLowerCase();
-  const timestamp = getMonotonicTimestamp();
-  const source = detectSource();
-
-  const entry = `\n## [${timestamp}]\nid: ${id}\ncommit: ${hash || 'null'}\nbranch: ${branch || 'null'}\ntype: ${type}\nmood: ${mood}\nsource: ${source}\n\n${note}\n`;
-
-  let overallSuccess = true;
-  for (const logFile of logFiles) {
-    const result = withLock(logFile, () => {
-      const res = safeWrite(logFile, entry, 'append', config);
-      if (res.success && options.shouldCommit && isGitRepo() && !logFile.includes('.logloop/logs/')) {
-        try { commitLog(logFile, note); } catch (e) {}
-      }
-      return res.success;
-    });
-    if (!result) overallSuccess = false;
-  }
-  
-  return overallSuccess;
-}
-
-function updateLastLog(updates, config) {
-  const logFiles = getLogFiles(config);
-  let overallSuccess = true;
-
-  for (const logFile of logFiles) {
-    if (!fs.existsSync(logFile)) continue;
-    const result = withLock(logFile, () => {
-      let content = fs.readFileSync(logFile, 'utf8');
-      const sections = content.split('\n## [');
-      if (sections.length < 2) return false;
-
-      let lastSection = sections[sections.length - 1];
-      const lines = lastSection.split('\n');
-
-      if (updates.type) {
-        const idx = lines.findIndex(l => l.startsWith('type: '));
-        if (idx > -1) lines[idx] = `type: ${updates.type.toLowerCase()}`;
-      }
-
-      if (updates.mood) {
-        const idx = lines.findIndex(l => l.startsWith('mood: '));
-        const moodStr = `mood: ${updates.mood.toLowerCase()}`;
-        if (idx > -1) lines[idx] = moodStr;
-        else {
-          const emptyIdx = lines.findIndex((l, i) => i > 0 && l.trim() === '');
-          lines.splice(emptyIdx, 0, moodStr);
-        }
-      }
-
-      sections[sections.length - 1] = lines.join('\n');
-      const res = safeWrite(logFile, sections.join('\n## ['), 'write', config);
-      return res.success;
-    });
-    if (!result) overallSuccess = false;
-  }
-  return overallSuccess;
-}
-
-function getRecentLogs(config, limit = 5) {
-  const logFile = getLogFile(config);
-  if (!fs.existsSync(logFile)) return [];
-  try {
-    const content = fs.readFileSync(logFile, 'utf8');
-    const entries = content.split('\n## [').slice(1);
-    return entries.slice(-limit).map(entry => {
-      const lines = entry.split('\n');
-      const timestamp = lines[0].replace(']', '');
-      const type = (lines.find(l => l.startsWith('type: ')) || '').replace('type: ', '') || 'unknown';
-      const mood = (lines.find(l => l.startsWith('mood: ')) || '').replace('mood: ', '') || null;
-      const note = lines.slice(lines.findIndex((l, i) => i > 0 && l.trim() === '') + 1).join('\n').trim();
-      const id = (lines.find(l => l.startsWith('id: ')) || '').replace('id: ', '') || 'null';
-      
-      const displayTime = new Date(timestamp.split('.')[0] + 'Z').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-      return {
-        time: displayTime,
-        rawTime: timestamp,
-        id, type, mood,
-        note: note.length > 60 ? note.substring(0, 57) + '...' : note
-      };
-    });
-  } catch (e) { return []; }
-}
-
-function getGlobalLogs() {
-  const os = require('os');
+/**
+ * Função interna para obter logs legados via FS.
+ */
+function _getLegacyGlobalLogs() {
   const logsDir = path.join(os.homedir(), '.logloop', 'logs');
   if (!fs.existsSync(logsDir)) return [];
 
@@ -343,8 +254,110 @@ function getGlobalLogs() {
   return allLogs.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
 }
 
-function getAnalytics(config, customLogs = null) {
-  const logs = customLogs || getRecentLogs(config, 50);
+export async function saveLog(note, config, options = {}) {
+  const logFiles = getLogFiles(config);
+  
+  const { hash, branch } = getGitMetadata() || { hash: 'null', branch: 'null' };
+  const { category } = await classifyMessage(note);
+  const id = generateId();
+  const mood = options.mood && options.mood !== 'null' ? options.mood.toLowerCase() : 'null';
+  const type = (options.type || category).toLowerCase();
+  const timestamp = getMonotonicTimestamp();
+  const source = detectSource();
+
+  const entry = `\n## [${timestamp}]\nid: ${id}\ncommit: ${hash || 'null'}\nbranch: ${branch || 'null'}\ntype: ${type}\nmood: ${mood}\nsource: ${source}\n\n${note}\n`;
+
+  // Auto-migração se o banco estiver vazio
+  const logsInDb = await dbList('logs');
+  if (logsInDb.length === 0) {
+    const legacyLogs = _getLegacyGlobalLogs();
+    for (const log of legacyLogs) {
+      await dbAdd('logs', log).catch(() => {});
+    }
+  }
+
+  // Paralelizar escrita no lowdb
+  dbAdd('logs', { note, id, commit: hash, branch, type, mood, source, timestamp, project: path.basename(process.cwd()) }).catch(e => logDebug('lowdb write failed:', e.message));
+
+  let overallSuccess = true;
+  for (const logFile of logFiles) {
+    const result = withLock(logFile, () => {
+      const res = safeWrite(logFile, entry, 'append', config);
+      if (res.success && options.shouldCommit && isGitRepo() && !logFile.includes('.logloop/logs/')) {
+        try { commitLog(logFile, note); } catch (e) {}
+      }
+      return res.success;
+    });
+    if (!result) overallSuccess = false;
+  }
+  
+  return overallSuccess;
+}
+
+export function updateLastLog(updates, config) {
+  const logFiles = getLogFiles(config);
+  let overallSuccess = true;
+
+  for (const logFile of logFiles) {
+    if (!fs.existsSync(logFile)) continue;
+    const result = withLock(logFile, () => {
+      let content = fs.readFileSync(logFile, 'utf8');
+      const sections = content.split('\n## [');
+      if (sections.length < 2) return false;
+
+      let lastSection = sections[sections.length - 1];
+      const lines = lastSection.split('\n');
+
+      if (updates.type) {
+        const idx = lines.findIndex(l => l.startsWith('type: '));
+        if (idx > -1) lines[idx] = `type: ${updates.type.toLowerCase()}`;
+      }
+
+      if (updates.mood) {
+        const idx = lines.findIndex(l => l.startsWith('mood: '));
+        const moodStr = `mood: ${updates.mood.toLowerCase()}`;
+        if (idx > -1) lines[idx] = moodStr;
+        else {
+          const emptyIdx = lines.findIndex((l, i) => i > 0 && l.trim() === '');
+          lines.splice(emptyIdx, 0, moodStr);
+        }
+      }
+
+      sections[sections.length - 1] = lines.join('\n');
+      const res = safeWrite(logFile, sections.join('\n## ['), 'write', config);
+      return res.success;
+    });
+    if (!result) overallSuccess = false;
+  }
+  return overallSuccess;
+}
+
+export async function getRecentLogs(config, limit = 5) {
+  const projectSlug = path.basename(process.cwd());
+  const allLogs = await dbList('logs', l => l.project === projectSlug);
+  
+  const logs = allLogs.length > 0 ? allLogs : [];
+
+  return logs.slice(-limit).map(log => ({
+    ...log,
+    time: new Date(log.timestamp.split('.')[0] + 'Z').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    rawTime: log.timestamp,
+    note: log.note.length > 60 ? log.note.substring(0, 57) + '...' : log.note
+  }));
+}
+
+export async function getGlobalLogs() {
+  const logs = await dbList('logs');
+  
+  return logs.sort((a, b) => b.timestamp.localeCompare(a.timestamp)).map(log => ({
+    ...log,
+    time: new Date(log.timestamp.split('.')[0] + 'Z').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    rawTime: log.timestamp
+  }));
+}
+
+export async function getAnalytics(config, customLogs = null) {
+  const logs = customLogs || await getRecentLogs(config, 50);
   if (logs.length === 0) return null;
 
   const timeline = new Array(24).fill(0);
@@ -371,5 +384,3 @@ function getAnalytics(config, customLogs = null) {
 
   return { timeline, categories, moods, questions, decisions };
 }
-
-module.exports = { saveLog, updateLastLog, getRecentLogs, getLogFile, withLock, resetLocks, setDebug, getAnalytics, getGlobalLogs, detectSource };

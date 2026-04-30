@@ -1,11 +1,16 @@
-const { loadConfig } = require('./config');
+import { loadConfig } from './config.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const en = require('./locales/en.json');
-const pt = require('./locales/pt.json');
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const en = JSON.parse(fs.readFileSync(path.join(__dirname, './locales/en.json'), 'utf8'));
+const pt = JSON.parse(fs.readFileSync(path.join(__dirname, './locales/pt.json'), 'utf8'));
 
 const locales = { en, pt };
 
-function t(path) {
+export function t(path) {
   const config = loadConfig();
   const lang = config.lang || 'en';
   const strings = locales[lang] || locales['en'];
@@ -18,5 +23,3 @@ function t(path) {
   }
   return value;
 }
-
-module.exports = { t };

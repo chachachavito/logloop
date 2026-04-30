@@ -1,6 +1,6 @@
-const { execSync } = require('child_process');
+import { execSync } from 'child_process';
 
-function isGitRepo() {
+export function isGitRepo() {
   try {
     execSync('git rev-parse --is-inside-work-tree', { stdio: 'ignore' });
     return true;
@@ -9,7 +9,7 @@ function isGitRepo() {
   }
 }
 
-function getGitMetadata() {
+export function getGitMetadata() {
   if (!isGitRepo()) return { branch: null, hash: null };
   try {
     const branch = execSync('git branch --show-current', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
@@ -20,7 +20,7 @@ function getGitMetadata() {
   }
 }
 
-function commitLog(file, message) {
+export function commitLog(file, message) {
   try {
     execSync(`git add "${file}"`, { stdio: 'ignore' });
     execSync(`git commit -m "logloop: ${message.replace(/"/g, '\\"')}"`, { stdio: 'ignore' });
@@ -30,7 +30,7 @@ function commitLog(file, message) {
   }
 }
 
-function isDirty() {
+export function isDirty() {
   if (!isGitRepo()) return false;
   try {
     const status = execSync('git status --porcelain', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
@@ -40,18 +40,10 @@ function isDirty() {
   }
 }
 
-function getGitUser() {
+export function getGitUser() {
   try {
     return execSync('git config user.name', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
   } catch (e) {
     return null;
   }
 }
-
-module.exports = {
-  isGitRepo,
-  getGitMetadata,
-  commitLog,
-  isDirty,
-  getGitUser
-};
