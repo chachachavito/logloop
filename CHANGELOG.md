@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.7.1](https://github.com/chachachavito/logloop/compare/v0.7.0...v0.7.1) (2026-04-30)
+
+
+### Features
+
+* **core:** implement dual-write strategy with lowdb integration ([67402fe](https://github.com/chachachavito/logloop/commit/67402fe9fb5b078d1110a285fa832d4278b10eb5))
+
 ## [0.7.0](https://github.com/chachachavito/logloop/compare/v0.6.0...v0.7.0) (2026-04-30)
 
 ### Refactoring
