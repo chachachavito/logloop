@@ -1,6 +1,7 @@
 {
   "name": "logloop",
-  "version": "0.5.0",
+  "version": "0.6.0",
+  "type": "module",
   "description": "Continuous loop of personal logs in the terminal",
   "main": "bin/index.js",
   "bin": {
@@ -21,7 +22,8 @@
     "dashboard:frontend": "npm run dev --prefix dashboard/frontend",
     "release": "standard-version && git push origin main --follow-tags && npm publish",
     "release:minor": "standard-version --release-as minor && git push origin main --follow-tags && npm publish",
-    "release:dry": "standard-version --dry-run"
+    "release:dry": "standard-version --dry-run",
+    "context": "bash scripts/sync-context.sh"
   },
   "keywords": [
     "cli",
@@ -36,6 +38,7 @@
   "license": "MIT",
   "dependencies": {
     "fuse.js": "^7.3.0",
+    "lowdb": "^7.0.1",
     "picocolors": "^1.1.1"
   },
   "devDependencies": {

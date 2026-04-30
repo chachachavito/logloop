@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.6.0](https://github.com/chachachavito/logloop/compare/v0.5.0...v0.6.0) (2026-04-30)
+
+
+### Features
+
+* **logs:** add global log retrieval and enhance dashboard functionality ([b2610cd](https://github.com/chachachavito/logloop/commit/b2610cd1cca79248f2c8ab5d06b91e5072c19a65))
+* **logs:** add global log retrieval functionality ([b2194fa](https://github.com/chachachavito/logloop/commit/b2194fa9e5aeb1afbac850263208f578af538887))
+
 ## [0.5.0](https://github.com/chachachavito/logloop/compare/v0.3.7...v0.5.0) (2026-04-29)
 
 ### [0.3.7](https://github.com/chachachavito/logloop/compare/v0.3.6...v0.3.7) (2026-04-29)
