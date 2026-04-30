@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.7.2](https://github.com/chachachavito/logloop/compare/v0.7.1...v0.7.2) (2026-04-30)
+
+
+### Features
+
+* **db:** enhance context command with granular export options ([c336fc5](https://github.com/chachachavito/logloop/commit/c336fc5e996de32b370b7964043b86467613b22d))
+
 ### [0.7.1](https://github.com/chachachavito/logloop/compare/v0.7.0...v0.7.1) (2026-04-30)
 
 
