@@ -1,6 +1,6 @@
 {
   "name": "logloop",
-  "version": "0.7.5",
+  "version": "0.7.3",
   "type": "module",
   "description": "Continuous loop of personal logs in the terminal",
   "main": "bin/index.js",
