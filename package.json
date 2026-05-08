@@ -23,7 +23,8 @@
     "release": "standard-version && git push origin main --follow-tags && npm publish",
     "release:minor": "standard-version --release-as minor && git push origin main --follow-tags && npm publish",
     "release:dry": "standard-version --dry-run",
-    "context": "bash scripts/sync-context.sh"
+    "context": "bash scripts/sync-context.sh",
+    "migrate": "node scripts/migrate-logs.mjs"
   },
   "keywords": [
     "cli",

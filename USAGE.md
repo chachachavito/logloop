@@ -11,3 +11,9 @@
 
 ## Context Sync
 - `npm run context`: Exports current documentation to `.context/` for AI use.
+
+## 🔄 Migration
+If you are upgrading from an older version, migrate your legacy logs to the new database:
+```bash
+npm run migrate
+```

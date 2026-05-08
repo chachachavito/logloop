@@ -42,6 +42,14 @@ logloop "Refactoring auth service to use hooks."
 
 *Note: Logloop degrades gracefully. If you run it outside a Git repository or use the `--standalone` flag, it skips Git linking and continues to work flawlessly.*
 
+### 🔄 Migration
+If you are upgrading from a version older than **v0.7.2**, you should migrate your legacy Markdown logs to the new JSON database to enable full analytics and global search:
+```bash
+npm run migrate
+```
+*This command is safe to run multiple times; it will only import new entries.*
+
+
 
 ---
 
