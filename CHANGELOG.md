@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.7.4](https://github.com/chachachavito/logloop/compare/v0.7.2...v0.7.4) (2026-08-05)
+
+
+### Bug Fixes
+
+* repair the store layer and get the test suite running again ([e0da673](https://github.com/chachachavito/logloop/commit/e0da67308470bf34482bdcb2ce7ec2612b5c2893))
+
+
+### Documentation
+
+* **context:** add comprehensive architectural context and usage documentation ([ea42d5a](https://github.com/chachachavito/logloop/commit/ea42d5afa135da5ced1caafc31f53a4bfa42b9ac))
+
 ### [0.7.2](https://github.com/chachachavito/logloop/compare/v0.7.1...v0.7.2) (2026-04-30)
 
 
