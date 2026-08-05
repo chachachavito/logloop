@@ -39,7 +39,10 @@ function t(key) {
 
 // --- Command Handlers ---
 
-function handleConfig(args) {
+// saveConfig() is async (it awaits db.write()), so this has to be async too —
+// the process.exit(0) at the end kills the process before an un-awaited write
+// reaches disk, and the setting is silently lost.
+async function handleConfig(args) {
   const [cmd, key, value] = args;
   if (!cmd || (cmd !== 'get' && cmd !== 'set')) {
     console.log(`${t('cli.configUsage')}`);
@@ -60,7 +63,7 @@ function handleConfig(args) {
       if (value === 'true') val = true;
       if (value === 'false') val = false;
       config[key] = val;
-      saveConfig(config);
+      await saveConfig(config);
       console.log(`Config "${key}" set to ${val}`);
     }
   }
@@ -122,7 +125,7 @@ ${pc.bold(t('cli.configTitle'))}
 }
 
 if (args[0] === 'config') {
-  handleConfig(args.slice(1));
+  await handleConfig(args.slice(1));
 } else if (args[0] === 'list') {
   await ui.handleList(config);
   process.exit(0);

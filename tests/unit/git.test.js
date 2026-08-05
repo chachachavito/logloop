@@ -1,13 +1,24 @@
-const { isGitRepo, getGitMetadata, commitLog, isDirty, getGitUser } = require('../../src/git');
-const { execSync } = require('child_process');
+/**
+ * src/git.js is native ESM, so the mock has to be registered with
+ * jest.unstable_mockModule before the module under test is imported — a
+ * jest.mock() factory would never run in time. Hence the dynamic imports.
+ */
+import { jest } from '@jest/globals';
 
-jest.mock('child_process', () => ({
-  execSync: jest.fn()
+const execSync = jest.fn();
+
+jest.unstable_mockModule('child_process', () => ({
+  execSync,
+  default: { execSync }
 }));
+
+const { isGitRepo, getGitMetadata, commitLog, isDirty, getGitUser } =
+  await import('../../src/git.js');
 
 describe('git.js unit tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    execSync.mockReset();
   });
 
   describe('isGitRepo', () => {
@@ -28,7 +39,7 @@ describe('git.js unit tests', () => {
       execSync.mockReturnValueOnce(Buffer.from('true'))
               .mockReturnValueOnce(Buffer.from('main\n'))
               .mockReturnValueOnce(Buffer.from('abc12345\n'));
-      
+
       const meta = getGitMetadata();
       expect(meta.branch).toBe('main');
       expect(meta.hash).toBe('abc12345');
@@ -43,7 +54,7 @@ describe('git.js unit tests', () => {
       execSync.mockReturnValueOnce(Buffer.from('true')) // isGitRepo
               .mockReturnValueOnce(Buffer.from(''))     // branch --show-current
               .mockReturnValueOnce(Buffer.from('abc12345\n')); // rev-parse HEAD
-      
+
       const meta = getGitMetadata();
       expect(meta.branch).toBe('detached');
     });

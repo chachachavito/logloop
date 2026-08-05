@@ -1,10 +1,10 @@
 import fs from 'fs';
 import path from 'path';
-import os from 'os';
 import pc from 'picocolors';
 import { getDb } from './db.js';
+import { GLOBAL_DIR, LOGS_DIR } from './paths.js';
 
-export const GLOBAL_DIR = path.join(os.homedir(), '.logloop');
+export { GLOBAL_DIR };
 export const DEFAULTS = {
   autoCommit: false,
   moodTracking: true,
@@ -53,7 +53,7 @@ function defensiveCleanup() {
 }
 
 ensureDir(GLOBAL_DIR);
-ensureDir(path.join(GLOBAL_DIR, 'logs'));
+ensureDir(LOGS_DIR);
 defensiveCleanup();
 
 export async function loadConfig(forceRefresh = false) {

@@ -1,4 +1,4 @@
-const { t } = require('../../src/i18n');
+import { t } from '../../src/i18n.js';
 
 describe('I18n Module', () => {
   test('should return the key if translation is missing', () => {

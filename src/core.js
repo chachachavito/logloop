@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import os from 'os';
+import { LOGS_DIR } from './paths.js';
 import { getGitMetadata, isGitRepo, commitLog } from './git.js';
 import { classifyMessage } from './classifier.js';
 import { add as dbAdd, list as dbList } from './db.js';
@@ -30,6 +30,11 @@ export function resetLocks() {
 
 /**
  * Gera um timestamp único e crescente.
+ *
+ * toISOString() já devolve a fração de segundos (.819) e o Z, então o contador
+ * monotônico é anexado *dentro* da fração — 2026-08-05T12:10:41.819000Z — e não
+ * como uma segunda fração. O resultado tem 6 dígitos de fração, é ISO 8601
+ * válido, new Date() parseia, e a ordem lexicográfica continua cronológica.
  */
 function getMonotonicTimestamp() {
   const now = Date.now();
@@ -39,7 +44,36 @@ function getMonotonicTimestamp() {
     _lastTimestamp = now;
     _monotonicCounter = 0;
   }
-  return `${new Date(_lastTimestamp).toISOString().replace('Z', '')}.${_monotonicCounter.toString().padStart(3, '0')}Z`;
+  return new Date(_lastTimestamp).toISOString()
+    .replace('Z', `${_monotonicCounter.toString().padStart(3, '0')}Z`);
+}
+
+// Entradas gravadas antes da correção acima carregam duas frações de segundo:
+// 2026-08-05T12:10:41.819.000Z — o segundo grupo é o contador monotônico.
+const LEGACY_TIMESTAMP_RE = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3})\.(\d+)Z$/;
+
+/**
+ * Lê um timestamp de log em qualquer um dos dois formatos.
+ *
+ * Os timestamps quebrados foram gravados nos .md e no lowdb, e os .md vivem
+ * dentro dos repositórios dos usuários — reescrevê-los produziria um diff em
+ * todo projeto que usa logloop. Por isso a compatibilidade fica na leitura:
+ * todo histórico, antigo ou novo, passa por aqui.
+ *
+ * @returns {Date|null} null quando o valor está ausente ou é impossível de ler.
+ */
+export function parseLogTimestamp(value) {
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  if (typeof value !== 'string' || !value) return null;
+
+  const legacy = value.match(LEGACY_TIMESTAMP_RE);
+  const date = new Date(legacy ? `${legacy[1]}Z` : value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatLogTime(value) {
+  const date = parseLogTimestamp(value);
+  return date ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--';
 }
 
 function resolvePath(targetPath) {
@@ -77,8 +111,7 @@ export function getLogFiles(config) {
   const projectSlug = path.basename(process.cwd());
   
   const repoPath = resolvePath(path.join(process.cwd(), user === 'shared' ? 'logloop.md' : `logloop.${userSlug}.md`));
-  const logsDir = path.join(os.homedir(), '.logloop', 'logs');
-  const localPath = resolvePath(path.join(logsDir, `${projectSlug}.${userSlug}.md`));
+  const localPath = resolvePath(path.join(LOGS_DIR, `${projectSlug}.${userSlug}.md`));
 
   const strategy = config.storage || 'repo';
   if (strategy === 'mirror') return [repoPath, localPath];
@@ -216,7 +249,7 @@ function safeWrite(logFile, content, mode = 'append', config = {}) {
  * Função interna para obter logs legados via FS.
  */
 function _getLegacyGlobalLogs() {
-  const logsDir = path.join(os.homedir(), '.logloop', 'logs');
+  const logsDir = LOGS_DIR;
   if (!fs.existsSync(logsDir)) return [];
 
   const files = fs.readdirSync(logsDir).filter(f => f.endsWith('.md'));
@@ -245,7 +278,7 @@ function _getLegacyGlobalLogs() {
           id, commit, branch, type, mood, source, project,
           note,
           message: note,
-          time: new Date(timestamp.split('.')[0] + 'Z').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          time: formatLogTime(timestamp)
         });
       }
     });
@@ -276,21 +309,30 @@ export async function saveLog(note, config, options = {}) {
     }
   }
 
-  // Paralelizar escrita no lowdb
-  dbAdd('logs', { note, id, commit: hash, branch, type, mood, source, timestamp, project: path.basename(process.cwd()) }).catch(e => logDebug('lowdb write failed:', e.message));
+  // Escrita no lowdb. Precisa ser aguardada: quem chama saveLog costuma ler o
+  // banco logo em seguida (getRecentLogs) e pode encerrar o processo logo
+  // depois (/q -> process.exit), o que descartaria uma escrita ainda pendente.
+  const dbWrite = dbAdd('logs', { note, id, commit: hash, branch, type, mood, source, timestamp, project: path.basename(process.cwd()) })
+    .catch(e => logDebug('lowdb write failed:', e.message));
 
   let overallSuccess = true;
   for (const logFile of logFiles) {
     const result = withLock(logFile, () => {
       const res = safeWrite(logFile, entry, 'append', config);
-      if (res.success && options.shouldCommit && isGitRepo() && !logFile.includes('.logloop/logs/')) {
+      // Never git-commit the private local mirror — only the in-repo log.
+      // Comparing against LOGS_DIR rather than matching the literal
+      // '.logloop/logs/' keeps this correct when the store has been relocated.
+      if (res.success && options.shouldCommit && isGitRepo() && !logFile.startsWith(LOGS_DIR)) {
         try { commitLog(logFile, note); } catch (e) {}
       }
       return res.success;
     });
     if (!result) overallSuccess = false;
   }
-  
+
+  // Os .md acima foram escritos em paralelo com o lowdb; só agora esperamos.
+  await dbWrite;
+
   return overallSuccess;
 }
 
@@ -340,7 +382,7 @@ export async function getRecentLogs(config, limit = 5) {
 
   return logs.slice(-limit).map(log => ({
     ...log,
-    time: new Date(log.timestamp.split('.')[0] + 'Z').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    time: formatLogTime(log.timestamp),
     rawTime: log.timestamp,
     note: log.note.length > 60 ? log.note.substring(0, 57) + '...' : log.note
   }));
@@ -351,7 +393,7 @@ export async function getGlobalLogs() {
   
   return logs.sort((a, b) => b.timestamp.localeCompare(a.timestamp)).map(log => ({
     ...log,
-    time: new Date(log.timestamp.split('.')[0] + 'Z').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    time: formatLogTime(log.timestamp),
     rawTime: log.timestamp
   }));
 }
@@ -368,9 +410,9 @@ export async function getAnalytics(config, customLogs = null) {
 
   logs.forEach(log => {
     try {
-      const hour = new Date(log.rawTime.split('.')[0] + 'Z').getHours();
-      timeline[hour]++;
-      
+      const loggedAt = parseLogTimestamp(log.rawTime ?? log.timestamp);
+      if (loggedAt) timeline[loggedAt.getHours()]++;
+
       const type = log.type || 'unknown';
       categories[type] = (categories[type] || 0) + 1;
       if (log.mood && log.mood !== 'null') {

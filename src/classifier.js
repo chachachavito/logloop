@@ -3,7 +3,9 @@ import { getMemory, learn } from './memory.js';
 
 const MESSAGE_CATEGORIES = [
   { name: 'action', patterns: [/^(criando|implementando|refatorando|ajustando|fazendo|resolvendo|preciso|organizar|testar|subir|enviar|build|deploy|setup|clean|task|create|implement|refactor|fix|add|update|making|working|building|testing|commit|push|pull|merge|rebase|branch|stashing|install|npm|deps|dependencies|publish|layout|css|style|component|lint|audit|review|investigar|investigating|debugging|depurando|migrando|migrating|configurando|configuring|monitorando|monitoring|escrevendo|writing|deletando|deleting|removing|removendo|documentando|documenting)\b/i] },
-  { name: 'decision', patterns: [/decidi|decisão|vou usar|escolhi|definido|decided|picked|chosen|set to|optei|definimos|concordamos|assumindo|opted|agreed|assumed|selected|selecionado/i] },
+  // Patterns are matched against normalize()d text, which strips diacritics, so
+  // an accented character here can never match. Always write them unaccented.
+  { name: 'decision', patterns: [/decidi|decisao|vou usar|escolhi|definido|decided|picked|chosen|set to|optei|definimos|concordamos|assumindo|opted|agreed|assumed|selected|selecionado/i] },
   { name: 'question', patterns: [/\?/] },
   { name: 'media', patterns: [/\.(jpg|jpeg|png|gif|webp|svg|bmp)$/i, /!\[.*\]\(.*\)/] },
   { name: 'noise', patterns: [/^(test|teste|ss|log|hi|oi|ok|ready|pronto|feito|done)$/i] },

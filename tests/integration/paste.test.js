@@ -1,185 +1,159 @@
-const readline = require('readline');
-const core = require('../../src/core');
-const config = require('../../src/config');
-const EventEmitter = require('events');
+import { jest } from '@jest/globals';
+import { registerUiMocks, useBufferTimers, flush, silenceOutput } from '../helpers/ui-harness.mjs';
 
-jest.mock('../../src/core');
-jest.mock('../../src/config');
-jest.mock('../../src/memory');
-jest.mock('../../src/git', () => ({
-  getGitMetadata: jest.fn().mockReturnValue({ branch: 'main' }),
-  isGitRepo: jest.fn().mockReturnValue(true),
-  getLogFile: jest.fn().mockReturnValue('logloop.md')
-}));
-jest.mock('fs');
-jest.mock('child_process', () => ({
-  execSync: jest.fn()
-}));
+const mocks = registerUiMocks();
+const { startLoop } = await import('../../src/ui.js');
 
-const { startLoop } = require('../../src/ui');
-
+/**
+ * ui.js does not save a line as soon as it arrives. It buffers lines and only
+ * commits them 50ms after the last one, so a multi-line paste — which arrives
+ * as a burst of 'line' events — becomes a single log entry instead of one entry
+ * per line. A slash command flushes the buffer immediately rather than waiting.
+ */
 describe('UI Integration: Multi-line Paste Support', () => {
-  let mockRl;
   let mockConfig;
+  let restoreOutput;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.useFakeTimers();
-    
+    useBufferTimers();
+    restoreOutput = silenceOutput();
+
     mockConfig = {
       storage: 'repo',
       userName: 'test-user',
       autoCommit: false,
       moodTracking: true,
+      zenMode: true,
       lang: 'en'
     };
-    config.loadConfig.mockReturnValue(mockConfig);
 
-    mockRl = new EventEmitter();
-    mockRl.prompt = jest.fn();
-    mockRl.close = jest.fn();
-    readline.createInterface = jest.fn().mockReturnValue(mockRl);
-
-    core.getRecentLogs.mockReturnValue([]);
-    core.getAnalytics.mockReturnValue(null);
+    mocks.core.getRecentLogs.mockResolvedValue([]);
   });
 
   afterEach(() => {
     jest.useRealTimers();
+    restoreOutput();
   });
 
-  test('should group rapid lines into a single log entry (paste simulation)', () => {
-    startLoop(mockConfig);
+  const paste = (lines) => lines.forEach(line => mocks.rl.emit('line', line));
 
-    mockRl.emit('line', 'First line of paste');
-    mockRl.emit('line', 'Second line of paste');
-    mockRl.emit('line', 'Third line of paste');
-
-    // SaveLog should NOT have been called yet
-    expect(core.saveLog).not.toHaveBeenCalled();
-
-    // Advance time by 50ms
+  const settle = async () => {
     jest.advanceTimersByTime(50);
+    await flush();
+  };
 
-    expect(core.saveLog).toHaveBeenCalledTimes(1);
-    expect(core.saveLog).toHaveBeenCalledWith(
+  test('should group rapid lines into a single log entry (paste simulation)', async () => {
+    await startLoop(mockConfig);
+
+    paste(['First line of paste', 'Second line of paste', 'Third line of paste']);
+
+    // Nothing is committed while the burst is still arriving.
+    expect(mocks.core.saveLog).not.toHaveBeenCalled();
+
+    await settle();
+
+    expect(mocks.core.saveLog).toHaveBeenCalledTimes(1);
+    expect(mocks.core.saveLog).toHaveBeenCalledWith(
       'First line of paste\nSecond line of paste\nThird line of paste',
       mockConfig,
       expect.any(Object)
     );
   });
 
-  test('should flush buffer when a command line is received', () => {
-    startLoop(mockConfig);
+  test('should flush buffer when a command line is received', async () => {
+    await startLoop(mockConfig);
 
-    mockRl.emit('line', 'Some text before command');
-    
-    // Immediate command
-    mockRl.emit('line', '/c');
+    mocks.rl.emit('line', 'Some text before command');
+    mocks.rl.emit('line', '/c');
+    await flush();
 
-    // Buffer should be flushed immediately by the command handler
-    expect(core.saveLog).toHaveBeenCalledWith(
+    expect(mocks.core.saveLog).toHaveBeenCalledWith(
       'Some text before command',
       mockConfig,
       expect.any(Object)
     );
 
-    // Run timers to ensure nothing else happens
-    jest.runAllTimers();
-    expect(core.saveLog).toHaveBeenCalledTimes(1);
+    // The command must not leave a second, duplicate entry behind.
+    await settle();
+    expect(mocks.core.saveLog).toHaveBeenCalledTimes(1);
   });
 
-  test('should handle commands mixed with pastes correctly', () => {
-    startLoop(mockConfig);
+  test('should handle commands mixed with pastes correctly', async () => {
+    await startLoop(mockConfig);
 
-    mockRl.emit('line', 'Pre-command text');
-    mockRl.emit('line', '/c');
-    mockRl.emit('line', 'Post-command line 1');
-    mockRl.emit('line', 'Post-command line 2');
+    mocks.rl.emit('line', 'Pre-command text');
+    mocks.rl.emit('line', '/c');
+    await flush();
 
-    // Pre-command text should be saved immediately
-    expect(core.saveLog).toHaveBeenCalledWith(
+    expect(mocks.core.saveLog).toHaveBeenCalledWith(
       'Pre-command text',
       mockConfig,
       expect.any(Object)
     );
 
-    // Advance 50ms for the post-command paste
-    jest.advanceTimersByTime(50);
+    paste(['Post-command line 1', 'Post-command line 2']);
+    await settle();
 
-    expect(core.saveLog).toHaveBeenCalledWith(
+    expect(mocks.core.saveLog).toHaveBeenCalledWith(
       'Post-command line 1\nPost-command line 2',
       mockConfig,
       expect.any(Object)
     );
-    
-    expect(core.saveLog).toHaveBeenCalledTimes(2);
+    expect(mocks.core.saveLog).toHaveBeenCalledTimes(2);
   });
 
-  test('should handle Word-formatted text (smart quotes, bullets, extra spacing)', () => {
-    startLoop(mockConfig);
+  test('should handle Word-formatted text (smart quotes, bullets, extra spacing)', async () => {
+    await startLoop(mockConfig);
 
-    const wordTextLines = [
+    paste([
       '• First item with “smart quotes”',
       '',
       '• Second item with an em-dash — cool',
       '  Indented line with multiple spaces'
-    ];
+    ]);
+    await settle();
 
-    wordTextLines.forEach(line => mockRl.emit('line', line));
-
-    jest.advanceTimersByTime(50);
-
-    expect(core.saveLog).toHaveBeenCalledWith(
+    expect(mocks.core.saveLog).toHaveBeenCalledWith(
       '• First item with “smart quotes”\n\n• Second item with an em-dash — cool\n  Indented line with multiple spaces',
       mockConfig,
       expect.any(Object)
     );
   });
 
-  test('should detect mood correctly in a multi-line paste', () => {
-    startLoop(mockConfig);
+  test('should classify the joined paste, not the individual lines', async () => {
+    await startLoop(mockConfig);
 
-    mockRl.emit('line', 'I am very');
-    mockRl.emit('line', 'happy with this result');
+    paste(['I am very', 'happy with this result']);
+    await settle();
 
-    jest.advanceTimersByTime(50);
-
-    // The classifier (mocked indirectly via core.saveLog) should receive the joined string
-    expect(core.saveLog).toHaveBeenCalledWith(
+    expect(mocks.classifier.classifyMood).toHaveBeenCalledWith('I am very\nhappy with this result');
+    expect(mocks.core.saveLog).toHaveBeenCalledWith(
       'I am very\nhappy with this result',
+      mockConfig,
+      expect.objectContaining({ mood: 'focused' })
+    );
+  });
+
+  test('should not save a log entry if the paste is only whitespace', async () => {
+    await startLoop(mockConfig);
+
+    paste(['   ', '', '\n']);
+    await settle();
+
+    expect(mocks.core.saveLog).not.toHaveBeenCalled();
+  });
+
+  test('should pass a single pasted path straight through', async () => {
+    await startLoop(mockConfig);
+
+    paste(['screenshot.png']);
+    await settle();
+
+    expect(mocks.core.saveLog).toHaveBeenCalledWith(
+      'screenshot.png',
       mockConfig,
       expect.any(Object)
     );
-  });
-
-  test('should not save a log entry if the paste is only whitespace', () => {
-    startLoop(mockConfig);
-
-    mockRl.emit('line', '   ');
-    mockRl.emit('line', '');
-    mockRl.emit('line', '\n');
-
-    jest.advanceTimersByTime(50);
-
-    // saveLog should NOT have been called because input.trim() would be empty
-    expect(core.saveLog).not.toHaveBeenCalled();
-  });
-
-  test('should classify image paths and markdown images as media', () => {
-    startLoop(mockConfig);
-
-    mockRl.emit('line', 'screenshot.png');
-    jest.advanceTimersByTime(50);
-
-    expect(core.saveLog).toHaveBeenCalledWith(
-      'screenshot.png',
-      mockConfig,
-      expect.objectContaining({ mood: null })
-    );
-    
-    // We can't easily check the classifier result here because core.saveLog is mocked,
-    // but we can verify it doesn't crash and the flow is correct.
-    // To truly verify classification, we'd need a classifier unit test or a less mocked integration test.
   });
 });

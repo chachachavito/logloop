@@ -14,7 +14,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "jest --coverage",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest --coverage",
     "dev": "node bin/index.js",
     "site": "open site/index.html",
     "preview": "open site/index.html && npm run dev",

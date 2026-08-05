@@ -1,122 +1,116 @@
-const { exec } = require('child_process');
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
-const core = require('../../src/core');
+import { execFile } from 'child_process';
+import { promisify } from 'util';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import { fileURLToPath } from 'url';
+
+import { saveLog, withLock, resetLocks } from '../../src/core.js';
+import { resetDb } from '../../src/db.js';
+
+const execFileAsync = promisify(execFile);
+const here = path.dirname(fileURLToPath(import.meta.url));
 
 describe('Resilience & High-Performance Suite', () => {
-  const testDir = path.join(os.tmpdir(), `logloop-fortress-${Date.now()}`);
-  const binPath = path.join(__dirname, '../../bin/index.js');
+  const testDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'logloop-fortress-')));
+  const binPath = path.join(here, '../../bin/index.js');
   const logFile = path.join(testDir, 'logloop.md');
   const lockFile = `${logFile}.lock`;
   const tmpFile = `${logFile}.tmp`;
 
+  let originalCwd;
+
   beforeAll(() => {
-    if (!fs.existsSync(testDir)) fs.mkdirSync(testDir, { recursive: true });
-    fs.writeFileSync(path.join(testDir, '.loglooprc'), JSON.stringify({ storage: 'repo', userName: 'shared' }));
+    fs.writeFileSync(
+      path.join(testDir, '.loglooprc'),
+      JSON.stringify({ storage: 'repo', userName: 'shared' })
+    );
   });
 
   afterAll(() => {
-    if (fs.existsSync(testDir)) {
-      try { fs.rmSync(testDir, { recursive: true, force: true }); } catch (e) {}
-    }
+    try { fs.rmSync(testDir, { recursive: true, force: true }); } catch (e) {}
   });
 
   beforeEach(() => {
-    core.resetLocks();
+    originalCwd = process.cwd();
+    resetLocks();
+    resetDb();
   });
 
-  test('should handle intensive high-frequency sequential writes', () => {
-    const config = { storage: 'repo', userName: 'shared' };
-    const numWrites = 50; // Aumentado para validar cache
-    
-    const originalCwd = process.cwd();
-    process.chdir(testDir);
-    
-    try {
-      for (let i = 0; i < numWrites; i++) {
-        const success = core.saveLog(`Intensive write ${i}`, config);
-        expect(success).toBe(true);
-      }
+  afterEach(() => {
+    process.chdir(originalCwd);
+  });
 
-      const content = fs.readFileSync(logFile, 'utf8');
-      const sections = content.split('\n## [').slice(1);
-      expect(sections.length).toBe(numWrites);
-    } finally {
-      process.chdir(originalCwd);
+  test('should handle intensive high-frequency sequential writes', async () => {
+    const config = { storage: 'repo', userName: 'shared' };
+    const numWrites = 50;
+
+    process.chdir(testDir);
+    try { fs.unlinkSync(logFile); } catch (e) {}
+
+    for (let i = 0; i < numWrites; i++) {
+      await expect(saveLog(`Intensive write ${i}`, config)).resolves.toBe(true);
     }
+
+    const sections = fs.readFileSync(logFile, 'utf8').split('\n## [').slice(1);
+    expect(sections).toHaveLength(numWrites);
+
+    // Every entry must be intact — a torn write would show up as a section
+    // without an id header.
+    sections.forEach(section => expect(section).toMatch(/id: [0-9a-f]{8}/));
   });
 
   test('should handle reentrancy correctly', () => {
-    const config = { storage: 'repo', userName: 'shared' };
-    const originalCwd = process.cwd();
     process.chdir(testDir);
-    
-    try {
-      // Tentar adquirir lock duas vezes no mesmo processo
-      core.withLock(logFile, () => {
-        core.withLock(logFile, () => {
-          core.saveLog('Reentrant log', config);
-        });
-      });
-      
-      expect(fs.existsSync(lockFile)).toBe(false);
-    } finally {
-      process.chdir(originalCwd);
-    }
+
+    let innerRan = false;
+    withLock(logFile, () => {
+      // Re-entering the same lock from the same process must not deadlock.
+      withLock(logFile, () => { innerRan = true; });
+    });
+
+    expect(innerRan).toBe(true);
+    // The outer release is the one that removes the file; the inner must not.
+    expect(fs.existsSync(lockFile)).toBe(false);
   });
 
-  test('should recover from crash (stale .tmp and .lock)', (done) => {
-    // 1. Criar arquivos órfãos antigos
+  test('should recover from crash (stale .tmp and .lock)', async () => {
     fs.writeFileSync(lockFile, 'stale lock');
     fs.writeFileSync(tmpFile, 'stale tmp');
-    
+
+    // defensiveCleanup only reaps leftovers older than 10s, so backdate them.
     const oldTime = (Date.now() - 15000) / 1000;
     fs.utimesSync(lockFile, oldTime, oldTime);
     fs.utimesSync(tmpFile, oldTime, oldTime);
-    
-    // 2. Chamar CLI (deve limpar no startup)
-    exec(`node ${binPath} --help`, { cwd: testDir }, (error) => {
-      expect(fs.existsSync(lockFile)).toBe(false);
-      expect(fs.existsSync(tmpFile)).toBe(false);
-      done();
-    });
+
+    await execFileAsync('node', [binPath, '--help'], { cwd: testDir });
+
+    expect(fs.existsSync(lockFile)).toBe(false);
+    expect(fs.existsSync(tmpFile)).toBe(false);
   });
 
-  test('should handle batch concurrency without data corruption', (done) => {
+  test('should handle batch concurrency without data corruption', async () => {
     const numParallel = 5;
-    let completed = 0;
-    const results = [];
 
-    for (let i = 0; i < numParallel; i++) {
-      exec(`node ${binPath} "concurrent note ${i}"`, { cwd: testDir }, (error, stdout, stderr) => {
-        results.push({ error, stdout, stderr });
-        completed++;
-        if (completed === numParallel) {
-          verify();
-        }
+    const results = await Promise.allSettled(
+      Array.from({ length: numParallel }, (_, i) =>
+        execFileAsync('node', [binPath, `concurrent note ${i}`], { cwd: testDir })
+      )
+    );
+
+    const successes = results.filter(r => r.status === 'fulfilled');
+    expect(successes.length + results.filter(r => r.status === 'rejected').length).toBe(numParallel);
+
+    // Whatever the outcome per process, the file must stay readable and every
+    // section it does contain must be a complete entry.
+    if (fs.existsSync(logFile)) {
+      const sections = fs.readFileSync(logFile, 'utf8').split('\n## [').slice(1);
+      expect(sections.length).toBeGreaterThanOrEqual(successes.length);
+
+      sections.forEach(section => {
+        expect(section).toMatch(/id: [0-9a-f]{8}/);
+        expect(section.trim()).not.toBe('');
       });
-    }
-
-    function verify() {
-      const successes = results.filter(r => !r.error);
-      const failures = results.filter(r => r.error);
-      
-      // Integridade: Sucessos + Falhas = Total
-      expect(successes.length + failures.length).toBe(numParallel);
-      
-      // Verificar se o arquivo é legível e não truncado
-      if (fs.existsSync(logFile)) {
-        const content = fs.readFileSync(logFile, 'utf8');
-        const sections = content.split('\n## [').slice(1);
-        expect(sections.length).toBeGreaterThanOrEqual(successes.length);
-        
-        sections.forEach(s => {
-          expect(s).toMatch(/id: [0-9a-f]{8}/);
-          expect(s.trim()).not.toBe('');
-        });
-      }
-      done();
     }
   }, 20000);
 });

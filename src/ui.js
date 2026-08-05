@@ -1,5 +1,5 @@
 import readline from 'readline';
-import { saveLog, getRecentLogs, updateLastLog, getAnalytics, getLogFile, getGlobalLogs as fetchGlobalLogs } from './core.js';
+import { saveLog, getRecentLogs, updateLastLog, getAnalytics, getLogFile, getGlobalLogs as fetchGlobalLogs, parseLogTimestamp } from './core.js';
 import { saveConfig, GLOBAL_DIR } from './config.js';
 import { t } from './i18n.js';
 import { learn, exportMemory, importMemory } from './memory.js';
@@ -39,7 +39,8 @@ export async function handleList(config) {
   Object.entries(projects).forEach(([name, data]) => {
     const project = name.toUpperCase().padEnd(20);
     const count = data.count.toString().padEnd(10);
-    const lastUpdate = new Date(data.lastUpdate).toLocaleDateString();
+    const lastUpdated = parseLogTimestamp(data.lastUpdate);
+    const lastUpdate = lastUpdated ? lastUpdated.toLocaleDateString() : 'unknown';
     console.log(`${project} ${count} ${lastUpdate}`);
   });
 }
@@ -194,20 +195,20 @@ export async function startLoop(config, initialMood = null, initialCommit = null
         case '/zen':
           helpVisible = !helpVisible;
           config.zenMode = !helpVisible;
-          saveConfig(config);
+          await saveConfig(config);
           break;
         case '/c': autoCommit = !autoCommit; break;
         case '/m': 
           config.moodTracking = !config.moodTracking; 
-          saveConfig(config);
+          await saveConfig(config);
           break;
         case '/s':
           config.storage = config.storage === 'repo' ? 'local' : 'repo';
-          saveConfig(config);
+          await saveConfig(config);
           break;
         case '/t':
           config.trainingMode = !config.trainingMode;
-          saveConfig(config);
+          await saveConfig(config);
           break;
         case '/e':
           const logFile = getLogFile(config);

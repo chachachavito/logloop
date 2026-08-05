@@ -1,13 +1,13 @@
 {
   "name": "logloop",
-  "version": "0.5.0",
+  "version": "0.7.3",
   "description": "Continuous loop of personal logs in the terminal with AI-less semantic classification.",
   "core_concepts": [
     "semantic_classification",
     "git_linking",
-    "local_first_storage",
-    "active_learning_memory",
-    "zero_friction_mood_tracking"
+    "storage_strategies",
+    "active_learning",
+    "mood_tracking"
   ],
   "storage_modes": {
     "repo": "Stores logloop.md locally in the project directory for team sharing.",

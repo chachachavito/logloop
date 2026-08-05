@@ -119,6 +119,15 @@ This means your data is never trapped in a single format; you can always read yo
 
 *(Pro Tip: Use `/s` in the interactive loop to toggle quickly).*
 
+### 📂 Relocating the store
+Everything Logloop owns — `db.json`, `logs/`, the global `.loglooprc` — lives in `~/.logloop` by default. Set `LOGLOOP_HOME` to put it somewhere else:
+
+```bash
+LOGLOOP_HOME=~/Dropbox/logloop logloop
+```
+
+Useful for keeping separate profiles, or for putting the store on a synced drive. The path is resolved once at startup.
+
 ### 📱 Platform Context (Source)
 Logloop automatically detects the log origin (`desktop` or `mobile`) to allow correlation between spontaneous ideas and technical execution. This is populated automatically to keep you in the flow.
 

@@ -1,164 +1,144 @@
-const { startLoop } = require('../../src/ui');
-const readline = require('readline');
-const core = require('../../src/core');
-const configModule = require('../../src/config');
-const memory = require('../../src/memory');
-const { execSync } = require('child_process');
+import { jest } from '@jest/globals';
+import { registerUiMocks, useBufferTimers, flush, silenceOutput } from '../helpers/ui-harness.mjs';
 
-jest.mock('readline');
-jest.mock('../../src/core');
-jest.mock('../../src/config');
-jest.mock('../../src/memory');
-jest.mock('../../src/classifier', () => ({
-  classifyMessage: () => ({ category: 'action' }),
-  classifyMood: () => ({ category: 'focused' })
-}));
-jest.mock('../../src/git', () => ({
-  getGitMetadata: () => ({ branch: 'main' })
-}));
-jest.mock('../../src/i18n', () => ({
-  t: (k) => k
-}));
-jest.mock('child_process', () => ({
-  execSync: jest.fn()
-}));
+const mocks = registerUiMocks();
+const { startLoop } = await import('../../src/ui.js');
 
 describe('ui.js unit tests', () => {
-  let mockRl;
-  const config = { storage: 'repo', moodTracking: true, trainingMode: false, autoCommit: false };
+  const baseConfig = { storage: 'repo', moodTracking: true, trainingMode: false, autoCommit: false, zenMode: true };
+  let config;
+  let restoreOutput;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.useFakeTimers();
-    mockRl = {
-      on: jest.fn(),
-      prompt: jest.fn(),
-      close: jest.fn(),
-      question: jest.fn()
-    };
-    readline.createInterface.mockReturnValue(mockRl);
-    core.getRecentLogs.mockReturnValue([]);
-    // Mock process.exit to prevent test runner from exiting
+    useBufferTimers();
+    restoreOutput = silenceOutput();
+    config = { ...baseConfig };
+    mocks.core.getRecentLogs.mockResolvedValue([]);
     jest.spyOn(process, 'exit').mockImplementation(() => {});
   });
 
   afterEach(() => {
     jest.useRealTimers();
+    restoreOutput();
     process.exit.mockRestore();
   });
 
-  it('should start the loop and register line handler', () => {
-    startLoop(config);
-    expect(readline.createInterface).toHaveBeenCalled();
-    expect(mockRl.on).toHaveBeenCalledWith('line', expect.any(Function));
+  /** Send a slash command and let its async handler settle. */
+  const sendCommand = async (line) => {
+    mocks.rl.emit('line', line);
+    await flush();
+  };
+
+  it('should start the loop and register line handler', async () => {
+    await startLoop(config);
+    expect(mocks.readline.createInterface).toHaveBeenCalled();
+    expect(mocks.rl.listenerCount('line')).toBe(1);
   });
 
-  it('should toggle trainingMode with /t', () => {
-    startLoop(config);
-    const lineHandler = mockRl.on.mock.calls.find(call => call[0] === 'line')[1];
-    
-    lineHandler('/t');
-    expect(configModule.saveConfig).toHaveBeenCalledWith(expect.objectContaining({ trainingMode: true }));
+  it('should toggle trainingMode with /t', async () => {
+    await startLoop(config);
+    await sendCommand('/t');
+
+    expect(mocks.config.saveConfig).toHaveBeenCalledWith(expect.objectContaining({ trainingMode: true }));
   });
 
-  it('should enter training flow when trainingMode is ON', () => {
-    const trainingConfig = { ...config, trainingMode: true };
-    startLoop(trainingConfig);
-    const lineHandler = mockRl.on.mock.calls.find(call => call[0] === 'line')[1];
+  it('should enter training flow when trainingMode is ON', async () => {
+    config.trainingMode = true;
+    await startLoop(config);
 
-    lineHandler('test note');
-    jest.advanceTimersByTime(100); // Flush buffer
+    mocks.rl.emit('line', 'test note');
+    jest.advanceTimersByTime(50); // flush the paste buffer
+    await flush();
 
-    // Check first question (TYPE)
-    expect(mockRl.question).toHaveBeenCalledWith(expect.stringContaining('TYPE'), expect.any(Function));
-    
-    // Trigger callback for TYPE
-    const typeCallback = mockRl.question.mock.calls[0][1];
-    typeCallback('2'); // decision
+    // First question: TYPE, pre-filled with the classifier's guess.
+    expect(mocks.rl.question).toHaveBeenCalledWith(expect.stringContaining('TYPE'), expect.any(Function));
 
-    // Check second question (MOOD)
-    expect(mockRl.question).toHaveBeenCalledWith(expect.stringContaining('MOOD'), expect.any(Function));
-    
-    // Trigger callback for MOOD
-    const moodCallback = mockRl.question.mock.calls[1][1];
-    moodCallback(''); // keep default (focused)
+    const typeCallback = mocks.rl.question.mock.calls[0][1];
+    await typeCallback('2'); // decision
 
-    expect(memory.learn).toHaveBeenCalledWith('test note', 'decision', 'decision', 'message');
-    expect(core.saveLog).toHaveBeenCalledWith('test note', expect.anything(), expect.objectContaining({
+    expect(mocks.rl.question).toHaveBeenCalledWith(expect.stringContaining('MOOD'), expect.any(Function));
+
+    const moodCallback = mocks.rl.question.mock.calls[1][1];
+    await moodCallback(''); // keep the detected mood (focused)
+    await flush();
+
+    // Only the corrected axis is learned: the type was overridden, the mood was not.
+    expect(mocks.memory.learn).toHaveBeenCalledWith('test note', 'decision', 'decision', 'message');
+    expect(mocks.memory.learn).toHaveBeenCalledTimes(1);
+
+    expect(mocks.core.saveLog).toHaveBeenCalledWith('test note', config, expect.objectContaining({
       type: 'decision',
       mood: 'focused'
     }));
   });
 
-  it('should quit with /q', () => {
-    startLoop(config);
-    const lineHandler = mockRl.on.mock.calls.find(call => call[0] === 'line')[1];
-    lineHandler('/q');
-    expect(mockRl.close).toHaveBeenCalled();
+  it('should quit with /q', async () => {
+    await startLoop(config);
+    await sendCommand('/q');
+
+    expect(mocks.rl.close).toHaveBeenCalled();
   });
 
-  it('should handle /as command', () => {
-    core.getRecentLogs.mockReturnValue([{ note: 'test', type: 'thought' }]);
-    startLoop(config);
-    const lineHandler = mockRl.on.mock.calls.find(call => call[0] === 'line')[1];
-    
-    lineHandler('/as decision');
-    expect(core.updateLastLog).toHaveBeenCalledWith({ type: 'decision' }, expect.anything());
-    expect(memory.learn).toHaveBeenCalledWith('test', 'decision', 'decision', 'message');
+  it('should handle /as command', async () => {
+    mocks.core.getRecentLogs.mockResolvedValue([{ note: 'test', type: 'thought' }]);
+    await startLoop(config);
+    await sendCommand('/as decision');
+
+    expect(mocks.core.updateLastLog).toHaveBeenCalledWith({ type: 'decision' }, config);
+    expect(mocks.memory.learn).toHaveBeenCalledWith('test', 'decision', 'decision', 'message');
   });
 
-  it('should handle /feel command', () => {
-    core.getRecentLogs.mockReturnValue([{ note: 'test', mood: 'neutral' }]);
-    startLoop(config);
-    const lineHandler = mockRl.on.mock.calls.find(call => call[0] === 'line')[1];
-    
-    lineHandler('/feel happy');
-    expect(core.updateLastLog).toHaveBeenCalledWith({ mood: 'happy' }, expect.anything());
-    expect(memory.learn).toHaveBeenCalledWith('test', 'happy', 'happy', 'mood');
+  it('should refuse /as when there is no log to train on', async () => {
+    mocks.core.getRecentLogs.mockResolvedValue([]);
+    await startLoop(config);
+    await sendCommand('/as decision');
+
+    expect(mocks.core.updateLastLog).not.toHaveBeenCalled();
+    expect(mocks.memory.learn).not.toHaveBeenCalled();
   });
 
-  it('should handle /timeline command', () => {
-    core.getAnalytics.mockReturnValue({ timeline: [1,0], moods: {}, decisions: [], questions: [], categories: {} });
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-    startLoop(config);
-    const lineHandler = mockRl.on.mock.calls.find(call => call[0] === 'line')[1];
-    
-    lineHandler('/timeline');
-    expect(core.getAnalytics).toHaveBeenCalled();
-    console.log.mockRestore();
+  it('should handle /feel command', async () => {
+    mocks.core.getRecentLogs.mockResolvedValue([{ note: 'test', mood: 'neutral' }]);
+    await startLoop(config);
+    await sendCommand('/feel happy');
+
+    expect(mocks.core.updateLastLog).toHaveBeenCalledWith({ mood: 'happy' }, config);
+    expect(mocks.memory.learn).toHaveBeenCalledWith('test', 'happy', 'happy', 'mood');
   });
 
-  it('should handle /summary command', () => {
-    core.getAnalytics.mockReturnValue({ timeline: [], moods: { focused: 1 }, decisions: ['decided X'], questions: ['why?'], categories: {} });
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-    startLoop(config);
-    const lineHandler = mockRl.on.mock.calls.find(call => call[0] === 'line')[1];
-    
-    lineHandler('/summary');
-    expect(core.getAnalytics).toHaveBeenCalled();
-    console.log.mockRestore();
+  it('should handle /timeline command', async () => {
+    await startLoop(config);
+    await sendCommand('/timeline');
+
+    expect(mocks.core.getAnalytics).toHaveBeenCalled();
   });
 
-  it('should handle /brain-in and /brain-out commands', () => {
-    memory.exportMemory.mockReturnValue(true);
-    memory.importMemory.mockReturnValue(true);
-    startLoop(config);
-    const lineHandler = mockRl.on.mock.calls.find(call => call[0] === 'line')[1];
-    
-    lineHandler('/brain-out /tmp/mem.json');
-    expect(memory.exportMemory).toHaveBeenCalledWith('/tmp/mem.json');
+  it('should handle /summary command', async () => {
+    mocks.core.getAnalytics.mockResolvedValue({
+      timeline: [], moods: { focused: 1 }, decisions: ['decided X'], questions: ['why?'], categories: {}
+    });
+    await startLoop(config);
+    await sendCommand('/summary');
 
-    lineHandler('/brain-in /tmp/mem.json');
-    expect(memory.importMemory).toHaveBeenCalledWith('/tmp/mem.json');
+    expect(mocks.core.getAnalytics).toHaveBeenCalled();
   });
 
-  it('should handle /e command to open editor', () => {
+  it('should handle /brain-in and /brain-out commands', async () => {
+    await startLoop(config);
+
+    await sendCommand('/brain-out /tmp/mem.json');
+    expect(mocks.memory.exportMemory).toHaveBeenCalledWith('/tmp/mem.json');
+
+    await sendCommand('/brain-in /tmp/mem.json');
+    expect(mocks.memory.importMemory).toHaveBeenCalledWith('/tmp/mem.json');
+  });
+
+  it('should handle /e command to open editor', async () => {
     process.env.EDITOR = 'nano';
-    execSync.mockClear();
-    startLoop(config);
-    const lineHandler = mockRl.on.mock.calls.find(call => call[0] === 'line')[1];
-    
-    lineHandler('/e');
-    expect(execSync).toHaveBeenCalledWith(expect.stringContaining('nano'), expect.anything());
+    await startLoop(config);
+    await sendCommand('/e');
+
+    expect(mocks.execSync).toHaveBeenCalledWith(expect.stringContaining('nano'), expect.anything());
   });
 });

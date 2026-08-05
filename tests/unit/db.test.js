@@ -1,4 +1,4 @@
-import { add, list, remove, getDb } from '../../src/db.js';
+import { add, list, remove, resetDb } from '../../src/db.js';
 import fs from 'fs';
 import path from 'path';
 import { GLOBAL_DIR } from '../../src/config.js';
@@ -7,8 +7,17 @@ describe('Database Module (lowdb)', () => {
   const dbPath = path.join(GLOBAL_DIR, 'db.json');
 
   beforeEach(async () => {
+    // Deleting the file is not enough on its own: db.js memoizes one lowdb
+    // instance per process, and that instance keeps its data in memory. Drop
+    // the memo too so the next getDb() starts from the (now absent) file.
     if (fs.existsSync(dbPath)) fs.unlinkSync(dbPath);
-    // Reiniciar o banco para cada teste
+    resetDb();
+  });
+
+  afterAll(() => {
+    // Other suites share this HOME and this db.json — hand it back clean.
+    if (fs.existsSync(dbPath)) fs.unlinkSync(dbPath);
+    resetDb();
   });
 
   test('should add a log entry with validation', async () => {
